@@ -34,7 +34,7 @@
             <button 
               type="submit"
               :disabled="loading"
-              class="bg-kros-blue hover:bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-[0_4px_20px_rgba(0,123,255,0.4)] active:scale-95 disabled:opacity-50"
+              class="btn-primary text-[10px] font-bold uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all active:scale-95 disabled:opacity-50"
             >
               {{ loading ? 'Salvando...' : 'Salvar Configurações API' }}
             </button>

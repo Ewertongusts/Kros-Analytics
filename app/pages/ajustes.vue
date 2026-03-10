@@ -1,30 +1,142 @@
 <template>
-  <div class="min-h-screen p-8 md:p-12">
-    <div class="max-w-7xl mx-auto space-y-8">
-      <div>
-        <h1 class="text-3xl font-bold text-kros-text dark:text-kros-surface tracking-tighter uppercase">
-          Configurações <span class="text-kros-blue">do Sistema</span>
-        </h1>
-        <p class="text-[10px] text-kros-text/40 dark:text-kros-surface/40 tracking-widest font-medium uppercase mt-1">Personalização e Chaves de API</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div v-for="i in 4" :key="i" class="p-6 rounded-2xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] flex items-center gap-6">
-          <div class="w-12 h-12 rounded-xl bg-kros-blue/10 flex items-center justify-center text-kros-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  <div class="min-h-screen p-8 md:p-12 overflow-hidden">
+    <div class="max-w-4xl mx-auto space-y-10">
+      <!-- HEADER -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 text-[10px] font-bold text-kros-blue uppercase tracking-[0.3em]">
+            <span>Configurações</span>
+            <span class="text-white/20">/</span>
+            <span class="text-white/60">Geral</span>
           </div>
-          <div class="flex-1">
-            <div class="h-4 w-32 bg-kros-text/10 dark:bg-white/10 rounded-full mb-2"></div>
-            <div class="h-2 w-48 bg-kros-text/5 dark:bg-white/5 rounded-full"></div>
-          </div>
+          <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
+            Ajustes do <span class="text-kros-blue">Sistema</span>
+          </h1>
+          <p class="text-xs text-white/40 tracking-widest font-medium uppercase">Gerencie seu perfil, segurança e preferências</p>
+        </div>
+        
+        <div class="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-white/60">Sistema Online</span>
         </div>
       </div>
+
+      <!-- TABS -->
+      <UiKTabs v-model="activeTab" :tabs="tabs" class="animate-in fade-in duration-1000 delay-200" />
+
+      <!-- CONTENT VIEWS -->
+      <div class="relative bg-[#0D0D0E]/50 border border-white/10 rounded-[2.5rem] p-8 md:p-12 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+        
+        <!-- Tab: Perfil -->
+        <BlocksKSettingsProfile 
+          v-if="activeTab === 'profile'" 
+          :user="user" 
+          :profile-data="profileData"
+          @save="handleSaveProfile"
+        />
+
+        <!-- Tab: Segurança -->
+        <BlocksKSettingsSecurity v-if="activeTab === 'security'" />
+
+        <!-- Tab: Preferências -->
+        <BlocksKSettingsPreferences v-if="activeTab === 'preferences'" />
+
+        <!-- Tab: White Label -->
+        <BlocksKSettingsWhiteLabel 
+          v-if="activeTab === 'white-label'"
+          :settings="wlSettings"
+          :loading="wlLoading"
+          :status="wlStatus"
+          @save="handleSaveWhiteLabel"
+          @upload="handleFileUpload"
+        />
+      </div>
+      <!-- GLOW EFFECTS -->
+      <div class="fixed -top-40 -right-40 w-96 h-96 bg-kros-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <div class="fixed top-1/2 -left-40 w-80 h-80 bg-kros-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
+      
+      <BlocksKGlobalFooter />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { useWhiteLabel } from '~/composables/useWhiteLabel'
+
 definePageMeta({
   middleware: 'auth'
 })
+
+const user = useSupabaseUser()
+const { settings: wlSettings, saveSettings: wlSave, fetchSettings: wlFetch, loading: wlLoading, uploadImage: wlUpload } = useWhiteLabel()
+
+const activeTab = ref('profile')
+const wlStatus = ref<{ success: boolean; message: string } | null>(null)
+
+const tabs = [
+  { id: 'profile', name: 'Meu Perfil' },
+  { id: 'security', name: 'Segurança' },
+  { id: 'preferences', name: 'Preferências' },
+  { id: 'white-label', name: 'White Label' }
+]
+
+const profileData = reactive({
+  name: user.value?.user_metadata?.full_name || '',
+  role: 'admin',
+  phone: '(81) 98371-7272'
+})
+
+onMounted(async () => {
+  await wlFetch()
+})
+
+const handleSaveProfile = (data: any) => {
+  Object.assign(profileData, data)
+  // Aqui você pode adicionar a lógica de salvar no Supabase se desejar
+  alert('Perfil atualizado localmente!')
+}
+
+const handleSaveWhiteLabel = async (data: any) => {
+  const res = await wlSave(data)
+  if (res.success) {
+    wlStatus.value = { success: true, message: 'Identidade atualizada com sucesso!' }
+  } else {
+    wlStatus.value = { success: false, message: 'Erro ao aplicar identidade.' }
+  }
+  
+  setTimeout(() => { wlStatus.value = null }, 3000)
+}
+
+const handleFileUpload = async (event: Event, type: 'logo' | 'favicon') => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  console.log(`Fazendo upload de ${type}...`)
+  const res = await wlUpload(file, type)
+  
+  if (res.success && res.url) {
+    console.log('Upload sucesso. Nova URL:', res.url)
+    
+    // Forçar atualização do objeto para garantir reatividade profunda
+    const current = { ...wlSettings.value }
+    if (type === 'logo') current.logo_url = res.url
+    else current.favicon_url = res.url
+    
+    wlSettings.value = current
+    
+    wlStatus.value = { success: true, message: `${type.toUpperCase()} carregado com sucesso!` }
+  } else {
+    console.error('Erro no upload:', res.error)
+    wlStatus.value = { success: false, message: `Erro ao fazer upload do ${type}.` }
+  }
+  
+  setTimeout(() => { wlStatus.value = null }, 3000)
+}
 </script>
+
+<style scoped>
+.text-glow-blue {
+  text-shadow: 0 0 10px rgba(var(--kros-blue-rgb, 0, 123, 255), 0.3);
+}
+</style>

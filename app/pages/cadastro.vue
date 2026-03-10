@@ -15,8 +15,8 @@
       <div class="max-w-md w-full mx-auto mt-12 sm:mt-0">
         <!-- Títulos -->
         <div class="text-center sm:text-left mb-10">
-          <h1 class="text-3xl font-semibold mb-2">Criar Conta</h1>
-          <p class="text-kros-text/60 dark:text-kros-surface/60">Junte-se ao Kros e transforme sua gestão financeira.</p>
+          <h1 class="text-3xl font-semibold mb-2">Criar Conta no {{ settings.system_name || 'Kros' }}</h1>
+          <p class="text-kros-text/60 dark:text-kros-surface/60">Junte-se ao {{ settings.system_name || 'Kros' }} e transforme sua gestão financeira.</p>
         </div>
 
         <!-- Formulário Componentizado (Lógica inteiramente encapsulada) -->
@@ -29,5 +29,6 @@
 </template>
 
 <script setup lang="ts">
-// Página livre de lógica interna! O roteamento cuidará da exibição.
+import { useWhiteLabel } from '~/composables/useWhiteLabel'
+const { settings } = useWhiteLabel()
 </script>

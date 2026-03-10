@@ -6,8 +6,8 @@
         <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Crie e gerencie os planos oferecidos pela agência</p>
       </div>
       <button 
-        @click="openNewModal"
-        class="bg-kros-blue hover:bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest px-6 py-3 rounded-xl transition-all shadow-[0_4px_20px_rgba(0,123,255,0.4)] active:scale-95 flex items-center gap-2"
+        @click="$emit('add-plan')"
+        class="btn-primary text-[10px] font-bold uppercase tracking-widest px-6 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
         Novo Plano

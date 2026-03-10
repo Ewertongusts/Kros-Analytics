@@ -29,32 +29,21 @@ export const useCompanies = () => {
     error.value = null
     try {
       const { data, error: fetchError } = await (supabase.from('companies') as any)
-        .select(`
-          *,
-          tags,
-          subscriptions (
-            plan_name,
-            monthly_price,
-            is_active,
-            billing_cycle,
-            billing_day,
-            instalment_count,
-            instalment_value
-          )
-        `)
+        .select(`*`)
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
       companies.value = (data as any[]).map(company => ({
         ...company,
-        plan_name: company.subscriptions?.[0]?.plan_name || 'Nenhum',
-        monthly_price: company.subscriptions?.[0]?.monthly_price || 0,
-        billing_cycle: company.subscriptions?.[0]?.billing_cycle || 'Mensal',
-        billing_day: company.subscriptions?.[0]?.billing_day || 1,
-        instalment_count: company.subscriptions?.[0]?.instalment_count || 1,
-        instalment_value: company.subscriptions?.[0]?.instalment_value || 0
+        // Garantir valores padrão caso venham nulos
+        plan_name: company.plan_name || 'Individual',
+        monthly_price: Number(company.monthly_price || 0),
+        billing_cycle: company.billing_cycle || 'Mensal',
+        billing_day: company.billing_day || 1,
+        tags: company.tags || []
       }))
     } catch (e: any) {
+      console.error('Erro ao buscar empresas:', e.message)
       error.value = e.message
     } finally {
       loading.value = false
@@ -63,48 +52,101 @@ export const useCompanies = () => {
 
   const upsertCompany = async (company: Partial<Company>) => {
     loading.value = true
+    error.value = null
+    console.log('Iniciando upsert da empresa:', company)
+    
     try {
+      const user = useSupabaseUser()
+      
+      const payload: any = {
+        name: company.name,
+        is_active: company.is_active,
+        email: company.email,
+        whatsapp: company.whatsapp,
+        representative_name: company.representative_name,
+        notes: company.notes,
+        tags: company.tags || [],
+        plan_name: company.plan_name,
+        monthly_price: company.monthly_price,
+        billing_cycle: company.billing_cycle,
+        billing_day: company.billing_day
+      }
+
+      // Se for edição, mandamos o ID. Se for nova, deixamos o banco gerar.
+      if (company.id) {
+        payload.id = company.id
+      }
+
+      // Tenta anexar o user_id se estiver logado para evitar falha de segurança
+      if (user.value) {
+        payload.user_id = user.value.id
+      }
+
       const { data: companyData, error: companyError } = await (supabase.from('companies') as any)
-        .upsert({
-          id: company.id || undefined,
-          name: company.name,
-          is_active: company.is_active,
-          email: company.email,
-          whatsapp: company.whatsapp,
-          representative_name: company.representative_name,
-          notes: company.notes,
-          tags: company.tags || []
-        })
+        .upsert(payload, { onConflict: 'id' })
         .select()
         .single()
 
-      if (companyError) throw companyError
+      if (companyError) {
+        console.error('Erro retornado pelo Supabase (Companies):', companyError)
+        throw companyError
+      }
 
-      if (company.plan_name || company.monthly_price) {
-        const { error: subError } = await (supabase.from('subscriptions') as any)
-          .upsert({
+      console.log('Empresa salva com sucesso:', companyData)
+
+      // Se empresa foi inativada, cancelar cobranças pendentes
+      if (!company.is_active) {
+        await (supabase.from('payments') as any)
+          .update({ status: 'cancelled' })
+          .eq('company_id', companyData.id)
+          .eq('status', 'pending')
+      }
+
+      // Sincronizar cobranças
+      if (company.is_active && company.monthly_price && Number(company.monthly_price) > 0) {
+        const now = new Date()
+        const billingDay = company.billing_day || 1
+        const dueDate = new Date(now.getFullYear(), now.getMonth(), billingDay)
+        const dueDateStr = dueDate.toISOString().split('T')[0]
+
+        const { data: pendingPayments } = await (supabase.from('payments') as any)
+          .select('id, status')
+          .eq('company_id', companyData.id)
+          .in('status', ['pending', 'overdue'])
+
+        if (pendingPayments && pendingPayments.length > 0) {
+          for (const pay of pendingPayments) {
+            await (supabase.from('payments') as any)
+              .update({ 
+                amount: company.monthly_price,
+                plan_name: company.plan_name || 'Individual'
+              })
+              .eq('id', pay.id)
+          }
+        } 
+        
+        const { data: monthPayment } = await (supabase.from('payments') as any)
+          .select('id')
+          .eq('company_id', companyData.id)
+          .eq('due_date', dueDateStr)
+          .maybeSingle()
+
+        if (!monthPayment) {
+          await (supabase.from('payments') as any).insert({
             company_id: companyData.id,
-            plan_name: company.plan_name,
-            monthly_price: company.monthly_price,
-            is_active: company.is_active,
-            billing_cycle: company.billing_cycle,
-            billing_day: company.billing_day,
-            instalment_count: company.instalment_count,
-            instalment_value: company.instalment_value,
-            start_date: companyData.created_at || new Date().toISOString()
+            amount: company.monthly_price,
+            status: 'pending',
+            due_date: dueDateStr,
+            plan_name: company.plan_name || 'Individual'
           })
-
-        if (subError) throw subError
+        }
       }
 
       await fetchCompanies()
       return { success: true }
     } catch (e: any) {
+      console.error('FATAL ERROR em upsertCompany:', e)
       error.value = e.message
-      // Tratamento para nome duplicado
-      if (e.code === '23505' || e.message?.includes('companies_name_unique')) {
-        return { success: false, error: 'Já existe uma empresa cadastrada com este nome.' }
-      }
       return { success: false, error: e.message }
     } finally {
       loading.value = false
@@ -114,6 +156,13 @@ export const useCompanies = () => {
   const deleteCompany = async (id: string) => {
     loading.value = true
     try {
+      // 1. Apagar pagamentos vinculados
+      await (supabase.from('payments') as any).delete().eq('company_id', id)
+
+      // 2. Apagar transações vinculadas (não existem mais assinaturas isoladas)
+      // await (supabase.from('transactions') as any).delete().eq('company_id', id)
+
+      // 4. Agora apagar a empresa
       const { error: deleteError } = await (supabase.from('companies') as any)
         .delete()
         .eq('id', id)
@@ -123,9 +172,6 @@ export const useCompanies = () => {
       return { success: true }
     } catch (e: any) {
       error.value = e.message
-      if (e.message?.includes('violates foreign key constraint')) {
-        return { success: false, error: 'Não é possível excluir: existem dados vinculados a esta empresa.' }
-      }
       return { success: false, error: e.message }
     } finally {
       loading.value = false

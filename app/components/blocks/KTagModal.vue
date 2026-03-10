@@ -70,7 +70,7 @@
           <button 
             type="submit"
             :disabled="submitting"
-            class="flex-1 bg-kros-blue text-white py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest shadow-[0_10px_30px_rgba(0,123,255,0.2)] hover:bg-blue-600 transition-all disabled:opacity-50"
+            class="flex-1 btn-primary py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
           >
             {{ submitting ? 'SINC...' : 'CONFIRMAR' }}
           </button>

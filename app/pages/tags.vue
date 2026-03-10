@@ -1,16 +1,23 @@
 <template>
   <div class="min-h-screen p-8 md:p-12">
     <div class="max-w-7xl mx-auto space-y-8">
-      <BlocksKTagsHeader @create="openModal()" />
-      
-      <BlocksKTagsGrid 
-        :tags="tags" 
-        :loading="loading" 
-        @edit="openModal" 
-        @delete="handleDelete" 
+      <UiKLoader 
+        v-if="loading && tags.length === 0" 
+        message="Indexando Tags e Segmentos..." 
       />
+      
+      <div v-else class="space-y-8">
+        <BlocksKTagsHeader @create="openModal()" />
+        
+        <BlocksKTagsGrid 
+          :tags="tags" 
+          :loading="loading" 
+          @edit="openModal" 
+          @delete="handleDelete" 
+        />
 
-      <BlocksKGlobalFooter />
+        <BlocksKGlobalFooter />
+      </div>
     </div>
 
     <BlocksKTagModal 

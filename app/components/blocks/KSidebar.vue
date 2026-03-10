@@ -9,12 +9,7 @@
   >
     <!-- Logo Section -->
     <div class="h-20 flex items-center px-6 flex-shrink-0">
-      <div class="flex items-center gap-3 overflow-hidden">
-        <UiKLogo size="sm" :collapsed="!isExpanded" />
-        <span v-if="isExpanded" class="font-black text-xl tracking-tighter uppercase italic text-kros-text dark:text-kros-surface">
-          Kros
-        </span>
-      </div>
+      <UiKLogo size="sm" :collapsed="!isExpanded" />
     </div>
 
     <!-- Navigation -->
@@ -24,7 +19,7 @@
         :key="item.path"
         :to="item.path" 
         class="group flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative"
-        :class="route.path === item.path ? 'bg-kros-blue text-white shadow-[0_10px_20px_rgba(0,123,255,0.3)]' : 'text-kros-text/60 dark:text-white/60 hover:bg-kros-text/5 dark:hover:bg-white/5 hover:text-kros-blue'"
+        :class="route.path === item.path ? 'btn-primary text-white' : 'text-kros-text/60 dark:text-white/60 hover:bg-kros-text/5 dark:hover:bg-white/5 hover:text-kros-blue'"
       >
         <div class="flex-shrink-0">
           <component :is="item.icon" class="w-5 h-5" />
@@ -106,6 +101,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useWhiteLabel } from '~/composables/useWhiteLabel'
 import { 
   LayoutDashboard,
   Building2, 
@@ -117,6 +113,7 @@ import {
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const route = useRoute()
+const { settings } = useWhiteLabel()
 
 const { isExpanded, toggleSidebar } = useSidebar()
 const isAutoHidden = ref(false)

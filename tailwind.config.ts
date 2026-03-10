@@ -20,7 +20,7 @@ export default {
             colors: {
                 'kros-main': '#FFFFFF',
                 'kros-surface': '#F8FAFC',
-                'kros-blue': '#007BFF',
+                'kros-blue': 'var(--kros-blue, #007BFF)',
                 'kros-text': '#0F172A',
                 'kros-outline': '#E2E8F0',
             },

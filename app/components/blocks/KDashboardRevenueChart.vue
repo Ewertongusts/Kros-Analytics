@@ -7,7 +7,7 @@
       </div>
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-kros-blue"></span>
+          <span class="w-2.5 h-2.5 rounded-full btn-primary"></span>
           <span class="text-[10px] font-bold opacity-80 text-white uppercase tracking-tighter">Receita Ativa</span>
         </div>
         <div class="flex items-center gap-2">
@@ -40,7 +40,7 @@
                <div class="space-y-1.5">
                   <div class="flex items-center justify-between gap-4">
                      <div class="flex items-center gap-1.5 opacity-70 font-bold">
-                        <span class="w-1.5 h-1.5 rounded-full bg-kros-blue"></span>
+                        <span class="w-1.5 h-1.5 rounded-full btn-primary"></span>
                         Receita:
                      </div>
                      <span class="font-black text-[11px] tracking-tighter text-blue-500 font-bold">{{ formatCurrency(1000 + hoveredPoint.val * 150) }}</span>
@@ -67,9 +67,9 @@
         <svg class="w-full h-full relative z-10 overflow-visible" viewBox="0 0 1000 300" preserveAspectRatio="none">
            <defs>
              <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-               <stop offset="0%" stop-color="#007BFF" stop-opacity="0.35" />
-               <stop offset="60%" stop-color="#007BFF" stop-opacity="0.1" />
-               <stop offset="100%" stop-color="#007BFF" stop-opacity="0" />
+               <stop offset="0%" stop-color="var(--kros-blue, #007BFF)" stop-opacity="0.35" />
+               <stop offset="60%" stop-color="var(--kros-blue, #007BFF)" stop-opacity="0.1" />
+               <stop offset="100%" stop-color="var(--kros-blue, #007BFF)" stop-opacity="0" />
              </linearGradient>
            </defs>
            
@@ -94,11 +94,11 @@
            <path 
               :d="mrrLinePath" 
               fill="none" 
-              stroke="#007BFF" 
+              stroke="var(--kros-blue, #007BFF)" 
               stroke-width="4" 
               stroke-linecap="round" 
               stroke-linejoin="round"
-              class="transition-all duration-1000 ease-out shadow-lg"
+              class="transition-all duration-1000 ease-out"
            />
 
            <!-- Pontos Interativos (Markers) -->
@@ -109,9 +109,9 @@
               <circle 
                  :cx="p.x" 
                  :cy="p.y" 
-                 r="6" 
-                 fill="#007BFF" 
-                 :class="['transition-all duration-200 cursor-pointer', hoveredPoint?.idx === idx ? 'opacity-100 r-8 scale-150' : 'opacity-0 group-hover/point:opacity-100']"
+                 :r="hoveredPoint?.idx === idx ? 8 : 4" 
+                 fill="var(--kros-blue, #007BFF)" 
+                 :class="['transition-all duration-300 pointer-events-none', hoveredPoint?.idx === idx ? 'opacity-100' : 'opacity-0 group-hover/point:opacity-100']"
               />
               <circle 
                  :cx="p.x" :cy="p.y" r="25" 

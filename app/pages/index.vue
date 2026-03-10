@@ -15,7 +15,7 @@
       <div class="max-w-md w-full mx-auto mt-12 sm:mt-0">
         <!-- Títulos -->
         <div class="text-center sm:text-left mb-10">
-          <h1 class="text-3xl font-semibold mb-2">Bem-vindo ao Kros</h1>
+          <h1 class="text-3xl font-semibold mb-2">Bem-vindo ao {{ settings.system_name || 'Kros' }}</h1>
           <p class="text-kros-text/60 dark:text-kros-surface/60">Acesse sua inteligência financeira com segurança.</p>
         </div>
 
@@ -29,6 +29,7 @@
 </template>
 
 <script setup lang="ts">
-// Página livre de lógica interna! O roteamento cuidará da exibição.
+import { useWhiteLabel } from '~/composables/useWhiteLabel'
+const { settings } = useWhiteLabel()
 </script>
 

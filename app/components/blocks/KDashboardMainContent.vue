@@ -29,7 +29,7 @@
 
        <div class="space-y-4">
           <div class="h-2 w-full bg-kros-text/5 dark:bg-kros-surface/5 rounded-full overflow-hidden">
-             <div class="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-1000" :style="{ width: (profitabilityRatio * 100) + '%' }"></div>
+             <div class="h-full bg-emerald-500 rounded-full transition-all duration-1000" :style="{ width: (profitabilityRatio * 100) + '%' }"></div>
           </div>
           <div class="flex justify-between items-center bg-emerald-500/[0.03] border border-emerald-500/10 p-3 rounded-xl">
              <span class="text-[10px] font-bold opacity-80 text-white uppercase tracking-tighter">Lucro Líquido Real</span>
@@ -60,7 +60,7 @@
                 <span class="text-sm font-bold tracking-tight text-kros-blue">{{ Math.round((stats.mrr / 80000) * 100) }}% da Meta</span>
              </div>
              <div class="h-2 w-full bg-kros-text/5 dark:bg-kros-surface/5 rounded-full overflow-hidden">
-                <div class="h-full bg-kros-blue rounded-full shadow-[0_0_15px_rgba(0,123,255,0.4)] transition-all duration-1000" :style="{ width: Math.min((stats.mrr / 80000 * 100), 100) + '%' }"></div>
+                <div class="h-full btn-primary rounded-full transition-all duration-1000" :style="{ width: Math.min((stats.mrr / 80000 * 100), 100) + '%' }"></div>
              </div>
              <div class="flex justify-between text-[10px] font-medium opacity-80 text-white/80 uppercase tracking-widest pt-1">
                 <span>{{ formatCurrency(stats.mrr) }} real</span>

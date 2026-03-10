@@ -1,25 +1,19 @@
 <template>
   <div class="min-h-screen p-8 md:p-12">
     <div class="max-w-7xl mx-auto space-y-8">
-      <div v-if="loading" class="flex flex-col items-center justify-center h-[70vh] gap-6 animate-pulse">
-        <div class="w-16 h-16 bg-kros-blue/10 rounded-3xl flex items-center justify-center text-kros-blue">
-          <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        </div>
-        <p class="text-[11px] font-black uppercase tracking-[0.4em] opacity-30 text-white">Carregando Fluxo Financeiro...</p>
-      </div>
+      <UiKLoader 
+        v-if="loading" 
+        message="Processando Fluxo Financeiro..." 
+      />
 
       <div v-else class="space-y-8 animate-in fade-in duration-700">
         <BlocksKFinanceHeader @sync="fetchStats" @add-expense="isModalOpen = true" />
         
         <!-- TABS -->
-        <div class="flex items-center gap-2 border-b border-kros-outline dark:border-[#1F1F21] pb-4 overflow-x-auto custom-scrollbar">
-            <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
-              class="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap"
-              :class="activeTab === tab.id ? 'bg-kros-blue text-white shadow-[0_4px_15px_rgba(0,123,255,0.2)]' : 'text-kros-text/40 dark:text-white/40 hover:bg-kros-text/5 dark:hover:bg-white/5 hover:text-kros-text dark:hover:text-white'"
-            >
-              {{ tab.name }}
-            </button>
-        </div>
+        <UiKTabs 
+          v-model="activeTab" 
+          :tabs="tabs" 
+        />
 
         <!-- TAB VIEWS -->
         <div v-if="activeTab === 'overview'" class="space-y-12 animate-in fade-in duration-500">
@@ -118,23 +112,20 @@ const handleSaveExpense = async (data: any) => {
   }
 }
 
-// Gera a lista do Board baseado nas empresas reais
+// Gera a lista do Board baseado nos pagamentos REAIS do banco
 const financialRecords = computed(() => {
-  return companies.value.map(company => ({
-    id: company.id,
-    company_name: company.name,
-    plan_name: company.plan_name || 'Individual',
-    due_date: new Date(new Date().getFullYear(), new Date().getMonth(), 10).toISOString(), // Dia 10 simulado
-    amount: company.monthly_price || 0,
-    status: company.is_active ? 'Pago' : 'Pendente',
-    company_whatsapp: company.whatsapp || ''
+  return stats.value.paymentsList.map(payment => ({
+    id: payment.id,
+    company_name: payment.companies?.name || 'Empresa desconhecida',
+    plan_name: payment.plan_name || 'Individual',
+    due_date: payment.due_date,
+    amount: payment.amount || 0,
+    status: payment.status === 'paid' ? 'Pago' : (payment.status === 'overdue' ? 'Atrasado' : 'Pendente'),
+    company_whatsapp: payment.companies?.whatsapp || ''
   }))
 })
 
 onMounted(async () => {
-  await Promise.all([
-    fetchStats(),
-    fetchCompanies()
-  ])
+  await fetchStats()
 })
 </script>

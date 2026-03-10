@@ -4,7 +4,7 @@
     
       <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-lg p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
         <div class="mb-8 text-center relative z-10">
-          <div class="w-12 h-12 bg-kros-blue/10 rounded-2xl flex items-center justify-center text-kros-blue mx-auto mb-4 border border-kros-blue/20 shadow-[0_0_30px_rgba(0,123,255,0.2)]">
+          <div class="w-12 h-12 bg-kros-blue/10 rounded-2xl flex items-center justify-center text-kros-blue mx-auto mb-4 border border-kros-blue/20">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
           </div>
           <h3 class="text-lg font-bold italic uppercase tracking-tighter text-white">
@@ -65,7 +65,7 @@
           <button 
             type="submit"
             :disabled="submitting || !selectedTemplateId || !settings?.api_url"
-            class="flex-[2] bg-kros-blue text-white py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest shadow-[0_10px_30px_rgba(0,123,255,0.2)] hover:bg-blue-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            class="flex-[2] btn-primary py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <svg v-if="submitting" class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
             <span v-else>📤 ENVIAR AGORA</span>

@@ -6,7 +6,7 @@
         <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Status de pagamentos e ações via WhatsApp/Email</p>
       </div>
       <div class="flex items-center gap-2 bg-black/20 p-1 rounded-xl border border-white/5 shadow-inner">
-          <button class="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest rounded-lg bg-kros-blue text-white shadow-lg">Todos</button>
+          <button class="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest rounded-lg btn-primary">Todos</button>
           <button class="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest rounded-lg text-white/40 hover:text-white/80 transition-all">Pendentes</button>
           <button class="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest rounded-lg text-white/40 hover:text-white/80 transition-all">Atrasados</button>
       </div>
@@ -61,7 +61,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-14h.8A8.38 8.38 0 0 1 21 11.5Z"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M8 12h.01"/></svg>
                   </button>
                   <button 
-                    class="p-2.5 rounded-xl bg-white/5 text-white/40 hover:bg-kros-blue hover:text-white transition-all"
+                    class="p-2.5 rounded-xl bg-white/5 text-white/40 hover:btn-primary transition-all"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                   </button>
