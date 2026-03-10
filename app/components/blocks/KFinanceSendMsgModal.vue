@@ -10,7 +10,17 @@
           <h3 class="text-lg font-bold italic uppercase tracking-tighter text-white">
             ENVIAR <span class="text-kros-blue text-glow-blue">MENSAGEM</span>
           </h3>
-          <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Para: <span class="text-white">{{ payment?.company_name }}</span> ({{ payment?.company_whatsapp }})</p>
+          <!-- Recipient info card -->
+          <div class="mt-4 flex items-center justify-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3">
+            <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+            </div>
+            <div class="text-left">
+              <p class="text-[9px] text-white/40 uppercase tracking-widest font-semibold">Destinatário</p>
+              <p class="text-sm font-bold text-white leading-tight">{{ payment?.company_name }}</p>
+              <p class="text-emerald-400 text-xs font-semibold tracking-wider">{{ payment?.company_whatsapp }}</p>
+            </div>
+          </div>
         </div>
 
       <div v-if="loading" class="flex justify-center py-10">
