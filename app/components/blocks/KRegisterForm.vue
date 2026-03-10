@@ -41,8 +41,12 @@
     </div>
 
     <div class="pt-2">
-      <UiKButton type="submit">
-        Criar Conta
+      <p v-if="error" class="text-red-500 text-sm mb-3 text-center">{{ error }}</p>
+      <div v-if="success" class="text-green-400 text-sm mb-3 text-center p-3 rounded-lg bg-green-400/10">
+        Conta criada! Verifique seu e-mail para confirmar o cadastro.
+      </div>
+      <UiKButton type="submit" :disabled="loading || success">
+        {{ loading ? 'Criando conta...' : 'Criar Conta' }}
       </UiKButton>
     </div>
     
@@ -58,21 +62,39 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+const supabase = useSupabaseClient()
 const name = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
+const error = ref('')
+const success = ref(false)
+const loading = ref(false)
 
-const handleRegister = () => {
+const handleRegister = async () => {
   if (password.value !== passwordConfirm.value) {
-    alert("As senhas não coincidem!")
+    error.value = 'As senhas não coincidem.'
     return
   }
 
-  console.log('Cadastro submetido:', {
-    name: name.value,
+  loading.value = true
+  error.value = ''
+
+  const { error: err } = await supabase.auth.signUp({
     email: email.value,
-    password: password.value
+    password: password.value,
+    options: {
+      data: { full_name: name.value }
+    }
   })
+
+  if (err) {
+    error.value = err.message
+  } else {
+    success.value = true
+  }
+
+  loading.value = false
 }
 </script>
+

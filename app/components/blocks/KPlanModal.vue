@@ -1,0 +1,120 @@
+<template>
+  <div v-if="isOpen" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
+    <div @click="$emit('close')" class="absolute inset-0 bg-black/90 backdrop-blur-xl"></div>
+    
+      <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[440px] p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+        <div class="mb-8 text-center">
+          <h3 class="text-lg font-bold italic uppercase tracking-tighter text-white">
+            {{ isEditing ? 'EDITAR' : 'NOVO' }} <span class="text-kros-blue text-glow-blue">PLANO</span>
+          </h3>
+          <div class="h-1 w-8 bg-kros-blue mx-auto mt-3 rounded-full opacity-50"></div>
+        </div>
+
+      <form @submit.prevent="handleSave" class="space-y-6">
+        <div class="space-y-2">
+          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Nome do Plano</label>
+          <input 
+            v-model="form.name"
+            type="text"
+            required
+            placeholder="Ex: Start, Pro, Enterprise"
+            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-3.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Valor (R$)</label>
+            <input 
+                v-model.number="form.price"
+                type="number"
+                step="0.01"
+                required
+                placeholder="0.00"
+                class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-3.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+            </div>
+
+            <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Recorrência</label>
+            <select 
+                v-model="form.billing_cycle"
+                required
+                class="w-full bg-[#111112] border border-white/10 rounded-xl px-4 py-3.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none"
+            >
+                <option value="Mensal">Mensal</option>
+                <option value="Semestral">Semestral</option>
+                <option value="Anual">Anual</option>
+                <option value="Único">Pagamento Único</option>
+            </select>
+            </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button 
+            type="button"
+            @click="$emit('close')"
+            class="flex-1 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit"
+            :disabled="submitting"
+            class="flex-1 bg-kros-blue text-white py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest shadow-[0_10px_30px_rgba(0,123,255,0.2)] hover:bg-blue-600 transition-all disabled:opacity-50"
+          >
+            {{ submitting ? 'SALVANDO...' : 'SALVAR PLANO' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { reactive, watch, computed } from 'vue'
+import type { PlanDefinition } from '~/composables/usePlans'
+
+const props = defineProps<{
+  isOpen: boolean
+  initialData?: PlanDefinition | null
+  submitting?: boolean
+}>()
+
+const emit = defineEmits(['close', 'save'])
+
+const isEditing = computed(() => !!props.initialData?.id)
+
+const form = reactive({
+  id: '',
+  name: '',
+  price: 0,
+  billing_cycle: 'Mensal'
+})
+
+watch(() => props.isOpen, (val) => {
+  if (val) {
+    if (props.initialData) {
+        form.id = props.initialData.id || ''
+        form.name = props.initialData.name
+        form.price = props.initialData.price
+        form.billing_cycle = props.initialData.billing_cycle
+    } else {
+        form.id = ''
+        form.name = ''
+        form.price = 0
+        form.billing_cycle = 'Mensal'
+    }
+  }
+})
+
+const handleSave = () => {
+  emit('save', { ...form })
+}
+</script>
+
+<style scoped>
+.text-glow-blue {
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+</style>

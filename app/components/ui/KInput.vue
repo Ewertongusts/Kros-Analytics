@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-1.5">
-    <label v-if="label" :for="id" class="block text-sm font-medium text-kros-text dark:text-kros-surface">
+    <label v-if="label" :for="id" class="block text-sm font-semibold text-kros-text dark:text-white/80">
       {{ label }}
     </label>
     <div class="relative">
@@ -11,7 +11,7 @@
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         :placeholder="placeholder"
         :required="required"
-        class="w-full bg-kros-surface dark:bg-[#1A1A1A] border border-kros-outline dark:border-[#333333] rounded-lg px-4 py-3 text-kros-text dark:text-kros-surface text-sm transition-colors duration-200 outline-none focus:border-kros-blue focus:ring-1 focus:ring-kros-blue placeholder:text-kros-text/40 dark:placeholder:text-kros-surface/40"
+        class="w-full bg-kros-surface dark:bg-[#1A1A1A] border border-kros-outline dark:border-[#333333] rounded-lg px-4 py-3 text-kros-text dark:text-kros-surface text-sm transition-colors duration-200 outline-none focus:border-kros-blue focus:ring-1 focus:ring-kros-blue placeholder:text-kros-text/40 dark:placeholder:text-white/40"
       />
       <slot name="icon"></slot>
     </div>

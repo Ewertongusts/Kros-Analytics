@@ -26,8 +26,9 @@
     </div>
 
     <div class="pt-2">
-      <UiKButton type="submit">
-        Entrar
+      <p v-if="error" class="text-red-500 text-sm mb-3 text-center">{{ error }}</p>
+      <UiKButton type="submit" :disabled="loading">
+        {{ loading ? 'Entrando...' : 'Entrar' }}
       </UiKButton>
     </div>
     
@@ -43,13 +44,27 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+const supabase = useSupabaseClient()
 const email = ref('')
 const password = ref('')
+const error = ref('')
+const loading = ref(false)
 
-const handleLogin = () => {
-  console.log('Login submetido:', {
+const handleLogin = async () => {
+  loading.value = true
+  error.value = ''
+
+  const { error: err } = await supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value
   })
+
+  if (err) {
+    error.value = 'E-mail ou senha inválidos.'
+  } else {
+    await navigateTo('/dashboard')
+  }
+
+  loading.value = false
 }
 </script>

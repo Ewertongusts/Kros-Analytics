@@ -13,6 +13,10 @@ export default {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+                inter: ['Inter', 'sans-serif']
+            },
             colors: {
                 'kros-main': '#FFFFFF',
                 'kros-surface': '#F8FAFC',
