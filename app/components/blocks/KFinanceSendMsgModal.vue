@@ -71,6 +71,19 @@
             <span v-else>📤 ENVIAR AGORA</span>
           </button>
         </div>
+
+        <!-- Resposta da API (debug / feedback) -->
+        <div v-if="apiResult" :class="[
+          'mt-4 rounded-2xl p-4 border text-xs font-mono leading-relaxed whitespace-pre-wrap break-all',
+          apiResult.ok
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-red-500/10 border-red-500/30 text-red-300'
+        ]">
+          <p class="text-[9px] font-bold uppercase tracking-widest mb-2 opacity-60">
+            {{ apiResult.ok ? '✅ Resposta da API (Sucesso)' : '❌ Resposta da API (Erro)' }}
+          </p>
+          {{ apiResult.body }}
+        </div>
       </form>
 
       <!-- Glow -->
@@ -93,6 +106,7 @@ const emit = defineEmits(['close', 'sent'])
 const { settings, templates, loading, fetchCrmData } = useCrm()
 const submitting = ref(false)
 const selectedTemplateId = ref('')
+const apiResult = ref<{ ok: boolean; body: string } | null>(null)
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
@@ -126,28 +140,28 @@ const handleSend = async () => {
   if (!settings.value?.api_url) return
   
   submitting.value = true
+  apiResult.value = null
   try {
     const rawNum = props.payment.company_whatsapp?.replace(/\D/g, '') || ''
     // Usamos a nossa rota de proxy no Backend (Nitro) para evitar bloqueio de CORS do Navegador
     const response = await fetch('/api/messages/send', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        number: rawNum,
-        body: compiledMessage.value
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number: rawNum, body: compiledMessage.value })
     })
 
-    if (!response.ok) {
-        throw new Error(`Erro da API: ${response.statusText}`)
-    }
+    // Tenta capturar o corpo da resposta como texto sempre
+    let bodyText = ''
+    try { bodyText = await response.text() } catch { bodyText = '(sem corpo na resposta)' }
 
-    emit('sent')
+    apiResult.value = { ok: response.ok, body: bodyText }
+
+    if (response.ok) {
+      emit('sent')
+    }
   } catch (err: any) {
     console.error('Erro ao enviar mensagem:', err)
-    alert('Ops! Ocorreu um erro ao tentar enviar a mensagem. Verifique o console e a sua API.')
+    apiResult.value = { ok: false, body: err?.message || 'Erro de rede desconhecido' }
   } finally {
     submitting.value = false
   }
