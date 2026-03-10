@@ -118,13 +118,11 @@ const handleSend = async () => {
   submitting.value = true
   try {
     const rawNum = props.payment.company_whatsapp?.replace(/\D/g, '') || ''
-    
-    // API Call Exemplo fornecido pelo user:
-    const response = await fetch(settings.value.api_url, {
+    // Usamos a nossa rota de proxy no Backend (Nitro) para evitar bloqueio de CORS do Navegador
+    const response = await fetch('/api/messages/send', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${settings.value.api_token}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         number: rawNum,
