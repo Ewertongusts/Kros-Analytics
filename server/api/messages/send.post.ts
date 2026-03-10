@@ -1,11 +1,11 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   try {
      const body = await readBody(event)
      
      // 1. Obter configs do Supabase para ter a URL da API e Token com segurança
-     const supabase = await serverSupabaseServiceRole(event)
+     const supabase = await serverSupabaseClient(event)
      const { data: crmSettings, error: crmErr } = await supabase
       .from('crm_settings')
       .select('*')

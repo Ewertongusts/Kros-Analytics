@@ -1,4 +1,4 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   // Configuração básica para proteger a rota de acessos indevidos (Ideal para produção)
@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   // }
 
   try {
-    const supabase = await serverSupabaseServiceRole(event)
+    const supabase = await serverSupabaseClient(event)
 
     // 1. Obter a configuração do CRM
     const { data: crmSettings, error: crmErr } = await supabase
