@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center justify-center gap-1 group relative">
+  <div class="relative group/logstatus inline-flex">
     <button 
       @click="$emit('open-logs')"
       title="Histórico desta Cobrança"
@@ -16,12 +16,15 @@
     
     <!-- Tooltip / Status Message -->
     <div :class="[
-      'absolute -top-8 right-0 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg text-[8px] font-bold uppercase tracking-widest pointer-events-none z-10',
-      !lastLog ? 'bg-white/10 text-white/50 border border-white/10' :
-      isSuccess ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/10' : 'bg-red-500/20 text-red-500 border border-red-500/20 shadow-lg shadow-red-500/10'
+      'absolute -top-10 right-0 whitespace-nowrap opacity-0 group-hover/logstatus:opacity-100 transition-all duration-300 translate-y-2 group-hover/logstatus:translate-y-0 px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest pointer-events-none z-[130] border shadow-2xl backdrop-blur-md',
+      !lastLog ? 'bg-black/90 text-white/40 border-white/10' :
+      isSuccess ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
     ]">
-      <span v-if="lastLog">{{ lastLog.is_cron ? 'ROBÔ:' : 'MANUAL:' }} {{ isSuccess ? 'SUCESSO' : 'FALHOU' }}</span>
-      <span v-else>NENHUM DISPARO</span>
+      <span v-if="lastLog" class="flex items-center gap-2">
+        <span class="opacity-50 tracking-[.2em]">{{ lastLog.is_cron ? 'ROBÔ:' : 'MANUAL:' }}</span>
+        <span :class="isSuccess ? 'text-emerald-500' : 'text-red-500'">{{ isSuccess ? 'SUCESSO' : 'FALHOU' }}</span>
+      </span>
+      <span v-else class="opacity-50">NENHUM DISPARO</span>
     </div>
   </div>
 </template>

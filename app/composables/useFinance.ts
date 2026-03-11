@@ -48,22 +48,30 @@ export const useFinance = () => {
     }
   }
 
-  const togglePaymentStatus = async (payment: any) => {
-    const isPaid = payment.status === 'Pago'
+  const confirmPayment = async (paymentId: string, currentStatus: string, data?: { amount?: number; notes?: string }) => {
+    const isPaid = currentStatus === 'Pago'
     loading.value = true
     try {
+      const updatePayload: any = {
+        status: isPaid ? 'pending' : 'paid',
+        paid_at: isPaid ? null : new Date().toISOString()
+      }
+
+      // Se estiver marcando como PAGO e houver dados extras (parcial/notas)
+      if (!isPaid && data) {
+        if (data.amount !== undefined) updatePayload.amount = data.amount
+        if (data.notes !== undefined) updatePayload.notes = data.notes
+      }
+
       const { error } = await (supabase.from('payments') as any)
-        .update({
-          status: isPaid ? 'pending' : 'paid',
-          paid_at: isPaid ? null : new Date().toISOString()
-        })
-        .eq('id', payment.id)
+        .update(updatePayload)
+        .eq('id', paymentId)
 
       if (error) throw error
       await fetchStats(true)
       return { success: true, isPaid: !isPaid }
     } catch (err: any) {
-      console.error('Erro ao alternar status do pagamento:', err)
+      console.error('Erro ao processar pagamento:', err)
       return { success: false, error: err.message }
     } finally {
       loading.value = false
@@ -128,7 +136,7 @@ export const useFinance = () => {
   return {
     loading,
     saveExpense,
-    togglePaymentStatus,
+    confirmPayment,
     toggleAutoBilling,
     processRecords
   }

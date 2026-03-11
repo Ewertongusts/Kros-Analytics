@@ -3,51 +3,16 @@
     <div class="max-w-7xl mx-auto space-y-8">
       <UiKLoader 
         v-if="loadingAnalytics || loadingFinance" 
-        message="Processando Fluxo Financeiro..." 
+        message="Sincronizando Agenda Global..." 
       />
 
-      <div v-else class="space-y-8 animate-in fade-in duration-700">
-        <BlocksKFinanceHeader @sync="fetchStats" @add-expense="isModalOpen = true" />
-        
-        <!-- TABS -->
-        <UiKTabs 
-          v-model="activeTab" 
-          :tabs="tabs" 
-        />
-
-        <!-- TAB VIEWS -->
-        <div v-if="activeTab === 'overview'" class="space-y-12 animate-in fade-in duration-500">
-          <BlocksKFinanceMetrics :stats="stats" />
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              <BlocksKFinanceCollectionBoard :payments="financialRecords" @toggle-status="handleTogglePaymentStatus" @toggle-autobilling="handleToggleAutoBilling" @open-logs="handleOpenLogs" />
-              <BlocksKFinanceExpenses :expenses="stats.transactionsList" />
-          </div>
-        </div>
-
-        <div v-if="activeTab === 'collections'" class="space-y-12 animate-in fade-in duration-500">
-          <BlocksKFinanceCollectionBoard :payments="financialRecords" @toggle-status="handleTogglePaymentStatus" @toggle-autobilling="handleToggleAutoBilling" @open-logs="handleOpenLogs" />
-        </div>
-
-        <div v-if="activeTab === 'expenses'" class="space-y-12 animate-in fade-in duration-500">
-          <BlocksKFinanceExpenses :expenses="stats.transactionsList" />
-        </div>
-
-        <div v-if="activeTab === 'plans'" class="space-y-12 animate-in fade-in duration-500">
-          <BlocksKFinancePlans />
-        </div>
-
-        <div v-if="activeTab === 'calendar'" class="space-y-12 animate-in fade-in duration-500">
-          <div class="flex flex-col items-center justify-center py-20 opacity-40">
-             <div class="p-6 bg-white/5 rounded-full mb-4">
-                <div class="w-12 h-12 border-2 border-dashed border-white/20 rounded-xl animate-spin"></div>
-             </div>
-             <h3 class="font-bold uppercase tracking-widest text-[10px] text-white">Calendário em construção</h3>
-             <p class="text-[9px] text-white/30 mt-2">Estamos integrando com o motor de agendamentos</p>
-          </div>
-        </div>
-
-        <div v-if="activeTab === 'settings'" class="space-y-12 animate-in fade-in duration-500">
-          <BlocksKFinanceCrmSettings />
+      <div v-else class="space-y-12 animate-in fade-in duration-500 min-h-[60vh] flex flex-col items-center justify-center">
+        <div class="flex flex-col items-center justify-center py-20 opacity-40">
+           <div class="p-8 bg-white/5 rounded-3xl mb-6">
+              <div class="w-16 h-16 border-4 border-dashed border-kros-blue/40 rounded-2xl animate-[spin_4s_linear_infinite]"></div>
+           </div>
+           <h3 class="text-2xl font-bold uppercase tracking-[0.3em] text-white">Calendário</h3>
+           <p class="text-[10px] font-bold uppercase tracking-widest text-white/30 mt-4 px-6 py-2 bg-white/5 rounded-full">Integrando com Motor de Agendamentos</p>
         </div>
         
         <BlocksKGlobalFooter />
@@ -90,10 +55,8 @@ const { stats, loading: loadingAnalytics, fetchStats } = useAnalytics()
 const { loading: loadingFinance, saveExpense, togglePaymentStatus, toggleAutoBilling, processRecords } = useFinance()
 
 const isModalOpen = ref(false)
-const activeTab = ref('overview')
+const activeTab = ref('expenses')
 const tabs = [
-  { id: 'overview', name: 'Visão Geral' },
-  { id: 'collections', name: 'Cobranças' },
   { id: 'expenses', name: 'Saídas' },
   { id: 'plans', name: 'Planos' },
   { id: 'calendar', name: 'Calendário' },

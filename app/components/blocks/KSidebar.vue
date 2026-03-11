@@ -105,9 +105,11 @@ import { useWhiteLabel } from '~/composables/useWhiteLabel'
 import { 
   LayoutDashboard,
   Building2, 
-  Receipt, 
+  Receipt,
   Settings,
-  Hash
+  Hash,
+  CreditCard,
+  Calendar
 } from 'lucide-vue-next'
 
 const supabase = useSupabaseClient()
@@ -121,9 +123,10 @@ let hideTimer: any = null
 
 const navItems = [
   { name: 'Visão Geral', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Empresas', path: '/empresas', icon: Building2 },
+  { name: 'Cobranças', path: '/cobrancas', icon: Receipt },
+  { name: 'Despesas', path: '/despesas', icon: CreditCard },
+  { name: 'Calendário', path: '/calendario', icon: Calendar },
   { name: 'Tags', path: '/tags', icon: Hash },
-  { name: 'Financeiro', path: '/financeiro', icon: Receipt },
   { name: 'Ajustes', path: '/ajustes', icon: Settings },
 ]
 

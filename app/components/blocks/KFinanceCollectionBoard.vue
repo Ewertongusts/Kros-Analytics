@@ -1,18 +1,40 @@
 <template>
   <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group hover:border-kros-blue/5 transition-all">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8">
-      <div>
-        <h3 class="font-bold text-xl text-white tracking-tight">Board de Cobrança</h3>
-        <p class="text-xs text-white/60 font-medium uppercase tracking-[0.1em] mt-1.5">Status de pagamentos e ações via WhatsApp</p>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+      <!-- TABS INTEGRADAS -->
+      <div class="flex items-center gap-1 bg-black/20 p-1 rounded-xl shadow-inner self-start">
+          <button 
+            @click="$emit('update:activeSubTab', 'operational')"
+            :class="[
+              'px-4 py-2 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+              activeSubTab === 'operational' 
+                ? 'bg-kros-blue text-white shadow-lg' 
+                : 'text-white/20 hover:text-white/60 hover:bg-white/5'
+            ]"
+          >
+            Gestão
+          </button>
+          <button 
+            @click="$emit('update:activeSubTab', 'history')"
+            :class="[
+              'px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all',
+              activeSubTab === 'history' 
+                ? 'bg-kros-blue text-white shadow-lg' 
+                : 'text-white/20 hover:text-white/60 hover:bg-white/5'
+            ]"
+          >
+            Histórico
+          </button>
       </div>
-      <div class="flex flex-wrap items-center gap-4">
+
+      <div class="flex flex-wrap items-center gap-3 sm:gap-4 lg:flex-1 lg:justify-end">
           <!-- Novo Filtro de Tags (Dropdown Multi-select) -->
-          <div class="relative group/tags">
+          <div class="relative group/tags shrink-0">
              <button 
                @click="isTagDropdownOpen = !isTagDropdownOpen"
                class="flex items-center gap-2.5 px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all text-white/70 hover:text-white"
              >
-               <span class="text-xs font-bold uppercase tracking-widest">Tags</span>
+               <span class="text-xs font-bold uppercase tracking-widest text-[9px] sm:text-xs">Tags</span>
                <div v-if="selectedTags.length > 0" class="flex items-center justify-center min-w-[20px] h-[20px] bg-kros-blue text-white rounded-full text-[10px] font-bold">
                  {{ selectedTags.length }}
                </div>
@@ -22,7 +44,7 @@
              <!-- Dropdown Menu -->
              <div 
                v-if="isTagDropdownOpen" 
-               class="absolute top-full right-0 mt-2 w-64 bg-[#111112] border border-white/10 rounded-2xl shadow-2xl z-[100] p-2 overflow-hidden"
+               class="absolute top-full right-0 lg:left-0 lg:right-auto mt-3 w-60 sm:w-64 bg-[#111112] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] z-[100] p-2 overflow-hidden"
              >
                 <div class="max-h-64 overflow-y-auto custom-scrollbar p-2 space-y-1">
                    <button 
@@ -44,7 +66,7 @@
                      class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition-all text-left group/item"
                    >
                      <div class="flex items-center gap-3">
-                        <div :style="{ backgroundColor: tag.color }" class="w-3 h-3 rounded-sm shadow-[0_0_8px_rgba(0,0,0,0.5)]"></div>
+                        <div :style="{ backgroundColor: tag.color }" class="w-2.5 h-2.5 rounded-sm shadow-[0_0_8px_rgba(0,0,0,0.5)]"></div>
                         <span class="text-[10px] font-bold text-white/50 group-hover/item:text-white uppercase tracking-widest transition-colors">{{ tag.name }}</span>
                      </div>
                      <div :class="['w-4 h-4 rounded border flex items-center justify-center transition-all', selectedTags.includes(tag.name) ? 'bg-kros-blue border-kros-blue' : 'border-white/20']">
@@ -68,32 +90,95 @@
             <button 
                @click="$emit('open-logs')"
                title="Logs de Disparos e Cobrança"
-               class="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-white transition-all border border-transparent hover:border-white/10 flex items-center justify-center shrink-0"
+               class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-white transition-all border border-transparent hover:border-white/10 flex items-center justify-center shrink-0"
             >
                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16 20h.01"/><path d="M3 14h.01"/><path d="M8 14h.01"/><path d="M3 10h.01"/><path d="M8 10h.01"/><path d="M3 6h.01"/><path d="M8 6h.01"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
             </button>
-            <UiKFilterTabs v-model="activeFilter" :options="filterOptions" />
+            <div class="shrink-0 scale-90 sm:scale-100 origin-right">
+               <UiKFilterTabs v-model="activeFilter" :options="filterOptions" />
+            </div>
+          </div>
+          <!-- Botões Globais Integrados -->
+          <div class="flex items-center gap-2 ml-2 pl-4 border-l border-white/5">
+              <button 
+                @click="$emit('config')"
+                class="p-2.5 bg-white/5 hover:bg-white/10 text-white/30 hover:text-white rounded-xl transition-all border border-transparent hover:border-white/10"
+                title="Gerenciar Empresas"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              </button>
+              <button 
+                @click="$emit('sync')"
+                class="p-2.5 bg-white/5 hover:bg-white/10 text-white/30 hover:text-white rounded-xl transition-all border border-transparent hover:border-white/10"
+                title="Sincronizar Dados"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/><path d="M22 3v5h-5"/></svg>
+              </button>
+          </div>
+          <!-- Seleção em Massa -->
+          <div v-if="selectedIds.length > 0" class="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
+             <div class="h-8 w-px bg-white/10 mx-2"></div>
+             <div class="px-3 py-1.5 bg-kros-blue/10 rounded-xl border border-kros-blue/20 flex items-center gap-3">
+                <span class="text-[10px] font-black text-kros-blue uppercase tracking-widest">{{ selectedIds.length }} selecionados</span>
+                <div class="flex items-center gap-1.5">
+                   <button 
+                     @click="batchAction('whatsapp-api')"
+                     class="p-2 hover:bg-emerald-500/20 text-emerald-500 rounded-lg transition-all"
+                     title="Cobrar Selecionados (WhatsApp Template)"
+                   >
+                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 448 512" fill="currentColor"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l115.3-30.2c32.4 17.7 68.8 27 108.6 27 122.4 0 222-99.6 222-222 0-59.3-23-115.1-65-157.1zM223.9 446.7c-33.1 0-65.6-8.9-93.9-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 54 81.2 54.1 130.5 0 101.7-82.8 184.5-184.6 184.5zm100.5-137c-5.5-2.8-32.6-16.1-37.7-17.9-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.2-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.5-11.3 2.5-2.5 5.5-6.5 8.3-9.7 2.8-3.2 3.7-5.5 5.6-9.2 1.9-3.7 1-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.6-13.3 37.2-26.2 4.6-12.9 4.6-24 3.2-26.2-1.4-2.3-5.1-3.7-10.6-6.5z"/></svg>
+                   </button>
+                   <button 
+                     @click="batchAction('auto-billing-on')"
+                     class="p-2 hover:bg-emerald-500/20 text-emerald-500 rounded-lg transition-all"
+                     title="Ativar Cobrança Automática em Massa"
+                   >
+                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/></svg>
+                   </button>
+                   <button 
+                     @click="batchAction('auto-billing-off')"
+                     class="p-2 hover:bg-red-500/20 text-red-500 rounded-lg transition-all"
+                     title="Desativar Cobrança Automática"
+                   >
+                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 10-7 7-7-7"/></svg>
+                   </button>
+                </div>
+             </div>
+             <button @click="selectedIds = []" class="text-[9px] font-bold text-white/30 hover:text-white uppercase tracking-widest">Cancelar</button>
           </div>
       </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-separate border-spacing-y-3">
+    <div class="overflow-x-auto no-scrollbar">
+      <table class="w-full min-w-[1000px] text-left border-separate border-spacing-y-3">
         <thead>
           <tr class="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50">
+            <th class="px-4 py-3 w-10">
+              <div @click="toggleSelectAll" class="w-5 h-5 rounded-md border border-white/10 flex items-center justify-center cursor-pointer hover:border-kros-blue transition-all" :class="isAllSelected ? 'bg-kros-blue border-kros-blue' : ''">
+                <svg v-if="isAllSelected" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            </th>
             <th class="px-4 py-3">Empresa / Parceiro</th>
             <th class="px-4 py-3 text-center">Cadastro</th>
             <th class="px-4 py-3">Vencimento</th>
             <th class="px-4 py-3">Valor</th>
             <th class="px-4 py-3">LTV Pago</th>
             <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3 text-right">Cobrar</th>
+            <th class="px-4 py-3">Tags</th>
+            <th class="px-4 py-3 text-right sticky right-0 bg-[#111112] text-white/50 z-20">Ações</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="payment in filteredPayments" :key="payment.id" 
-              class="group/row bg-white/[0.02] hover:bg-white/[0.05] transition-all rounded-2xl border border-transparent hover:border-kros-blue/10">
+              class="group/row bg-white/[0.02] hover:bg-white/[0.05] transition-all rounded-2xl border border-transparent hover:border-kros-blue/10"
+              :class="selectedIds.includes(payment.id) ? 'bg-kros-blue/5 border-kros-blue/20' : ''"
+          >
             <td class="px-4 py-5 first:rounded-l-2xl">
+              <div @click="toggleSelect(payment.id)" class="w-5 h-5 rounded-md border border-white/5 flex items-center justify-center cursor-pointer hover:border-kros-blue transition-all" :class="selectedIds.includes(payment.id) ? 'bg-kros-blue border-kros-blue' : ''">
+                <svg v-if="selectedIds.includes(payment.id)" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            </td>
+            <td class="px-4 py-5">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-kros-blue/10 flex items-center justify-center text-kros-blue font-bold text-[10px] border border-kros-blue/10">
                   {{ payment.company_name?.charAt(0) }}
@@ -102,19 +187,6 @@
                    <p class="font-semibold text-sm text-white uppercase tracking-tight">{{ payment.company_name }}</p>
                    <p class="text-xs text-white/70 font-medium uppercase tracking-tighter">{{ payment.plan_name }}</p>
                    <p class="text-xs text-white/60 font-medium uppercase tracking-widest" v-if="payment.company_rep">REP: {{ payment.company_rep }}</p>
-                   
-                   <!-- Seção de Tags -->
-                   <div v-if="payment.tags && payment.tags.length" class="flex flex-wrap gap-1 mt-1.5">
-                      <span 
-                        v-for="tag in payment.tags" 
-                        :key="tag"
-                        :style="getTagStyle(tag)"
-                        :title="getTagDescription(tag)"
-                        class="text-[10px] font-bold px-2.5 py-1 rounded-lg border uppercase tracking-wider"
-                      >
-                        {{ tag }}
-                      </span>
-                   </div>
                 </div>
               </div>
             </td>
@@ -138,7 +210,62 @@
                   </span>
                </div>
             </td>
-            <td class="px-4 py-5 last:rounded-r-2xl text-right">
+            <td class="px-4 py-5">
+              <!-- Gerenciamento de Tags On-the-fly -->
+              <div class="flex items-center gap-1.5 flex-wrap max-w-[200px]">
+                <div 
+                  v-for="tag in payment.tags" 
+                  :key="tag"
+                  class="group/tag relative"
+                >
+                  <span 
+                    :style="getTagStyle(tag)"
+                    class="text-[9px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider flex items-center gap-1 transition-all cursor-help"
+                  >
+                    {{ tag }}
+                    <button 
+                      @click="removeTag(payment, tag)"
+                      class="hover:text-red-500 opacity-40 hover:opacity-100 transition-opacity"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </span>
+                  
+                  <!-- Descrição da Tag no Hover -->
+                  <div v-if="getTagDescription(tag)" class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-black/90 text-[8px] text-white font-bold uppercase tracking-widest rounded-lg opacity-0 group-hover/tag:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[110] border border-white/10 shadow-xl">
+                    {{ getTagDescription(tag) }}
+                  </div>
+                </div>
+
+                <!-- Botão Adicionar Tag -->
+                <div class="relative">
+                  <button 
+                    @click="activeTagPicker = activeTagPicker === payment.id ? null : payment.id"
+                    class="w-5 h-5 rounded-md border border-dashed border-white/20 flex items-center justify-center text-white/40 hover:text-white hover:border-white/40 transition-all"
+                    title="Adicionar Tag"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  </button>
+
+                  <!-- Picker de Tags -->
+                  <div v-if="activeTagPicker === payment.id" class="absolute top-full left-0 mt-2 w-48 bg-[#111112] border border-white/10 rounded-xl shadow-2xl z-[120] p-1 animate-in fade-in zoom-in-95 duration-200">
+                    <div class="max-h-40 overflow-y-auto custom-scrollbar">
+                      <button 
+                        v-for="tag in availableTagsForPayment(payment)" 
+                        :key="tag.id"
+                        @click="addTag(payment, tag.name)"
+                        class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all text-left"
+                      >
+                        <div :style="{ backgroundColor: tag.color }" class="w-2 h-2 rounded-sm shrink-0"></div>
+                        <span class="text-[9px] font-bold text-white/60 uppercase tracking-widest truncate">{{ tag.name }}</span>
+                      </button>
+                      <div v-if="availableTagsForPayment(payment).length === 0" class="p-4 text-center text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">Sem mais tags</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-5 text-right sticky right-0 bg-[#161617] group-hover/row:bg-[#1c1c1d] transition-colors z-10 border-l border-white/5">
                 <div class="flex items-center justify-end gap-2 pr-1">
                   <!-- 1. Botão Toggle Status do Pagamento -->
                   <button 
@@ -175,10 +302,15 @@
                     </svg>
                   </button>
 
-                  <!-- 4. Botão de Logs (Sempre por último à direita) -->
+                  <!-- 4. Botão de Logs -->
                   <UiKPaymentLogStatusBtn 
                      :payment-id="payment.id"
                      @open-logs="$emit('open-logs', payment.id)"
+                  />
+
+                  <!-- 5. Botão Histórico Individual (Extrema Direita) -->
+                  <UiKPaymentHistoryBtn 
+                    @open-history="$emit('open-history', payment.company_id)"
                   />
                </div>
             </td>
@@ -200,6 +332,15 @@
       @close="isMsgModalOpen = false"
       @sent="handleMessageSent"
     />
+
+    <!-- Modal de Envio em Massa via API HTTP -->
+    <BlocksKFinanceBatchMsgModal 
+      v-if="isBatchMsgModalOpen"
+      :is-open="isBatchMsgModalOpen"
+      :payments="selectedPaymentsForBatch"
+      @close="isBatchMsgModalOpen = false"
+      @sent="handleBatchSent"
+    />
   </div>
 </template>
 
@@ -208,23 +349,86 @@ import { ref, computed, onMounted } from 'vue'
 import { useTags } from '~/composables/useTags'
 
 const props = defineProps<{
-  payments: any[]
+  payments: any[],
+  activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'open-logs'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config'])
 
 const isMsgModalOpen = ref(false)
+const isBatchMsgModalOpen = ref(false)
 const selectedPayment = ref<any>(null)
+const selectedPaymentsForBatch = ref<any[]>([])
 const { tags: tagDefinitions, fetchTags } = useTags()
 
 const activeFilter = ref('Todos')
 const isTagDropdownOpen = ref(false)
 const selectedTags = ref<string[]>([])
+const selectedIds = ref<string[]>([])
+const activeTagPicker = ref<string | null>(null)
+
+const isAllSelected = computed(() => {
+  return filteredPayments.value.length > 0 && selectedIds.value.length === filteredPayments.value.length
+})
+
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedIds.value = []
+  } else {
+    selectedIds.value = filteredPayments.value.map(p => p.id)
+  }
+}
+
+const toggleSelect = (id: string) => {
+  const index = selectedIds.value.indexOf(id)
+  if (index === -1) {
+    selectedIds.value.push(id)
+  } else {
+    selectedIds.value.splice(index, 1)
+  }
+}
+
+const batchAction = async (type: string) => {
+  const selectedPayments = props.payments.filter(p => selectedIds.value.includes(p.id))
+  
+  if (type === 'whatsapp-api') {
+    selectedPaymentsForBatch.value = selectedPayments
+    isBatchMsgModalOpen.value = true
+  } else if (type === 'auto-billing-on') {
+    emit('batch-autobilling', selectedPayments)
+  } else if (type === 'auto-billing-off') {
+    if (!confirm(`Deseja desativar a cobrança automática para as ${selectedIds.value.length} empresas selecionadas?`)) return
+    for (const p of selectedPayments) {
+      emit('toggle-autobilling', p) // Se já estiver desativado, o toggle lida (ou o pai verifica)
+    }
+    selectedIds.value = []
+  }
+}
+
+const availableTagsForPayment = (payment: any) => {
+  return tagDefinitions.value.filter(t => !payment.tags?.includes(t.name))
+}
+
+const addTag = (payment: any, tagName: string) => {
+  const currentTags = [...(payment.tags || [])]
+  if (!currentTags.includes(tagName)) {
+    currentTags.push(tagName)
+    emit('update-company-tags', { companyId: payment.company_id, tags: currentTags })
+  }
+  activeTagPicker.value = null
+}
+
+const removeTag = (payment: any, tagName: string) => {
+  if (!confirm(`Deseja remover a tag "${tagName}"?`)) return
+  const currentTags = (payment.tags || []).filter((t: string) => t !== tagName)
+  emit('update-company-tags', { companyId: payment.company_id, tags: currentTags })
+}
 
 const filterOptions = [
   { id: 'Todos', label: 'Todos' },
   { id: 'Pendente', label: 'Pendentes' },
   { id: 'Atrasado', label: 'Atrasados' },
+  { id: 'Semana', label: 'Essa Semana' },
   { id: 'Pago', label: 'Pagos' }
 ]
 
@@ -246,9 +450,29 @@ const toggleAllTags = () => {
 }
 
 const filteredPayments = computed(() => {
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+
+  const endOfWeek = new Date(now)
+  endOfWeek.setDate(now.getDate() + (6 - now.getDay()))
+  endOfWeek.setHours(23, 59, 59, 999)
+
   return props.payments.filter(p => {
     // Filtro por Status
-    const matchesStatus = activeFilter.value === 'Todos' || p.status === activeFilter.value
+    let matchesStatus = false
+    if (activeFilter.value === 'Todos') {
+      matchesStatus = true
+    } else if (activeFilter.value === 'Semana') {
+      if (p.due_date) {
+        const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
+        const dueDate = new Date(dueDateString)
+        matchesStatus = dueDate >= startOfWeek && dueDate <= endOfWeek
+      }
+    } else {
+      matchesStatus = p.status === activeFilter.value
+    }
     
     // Filtro por Multi-Tags (Se houver tags selecionadas, o registro deve ter PELO MENOS UMA delas)
     const matchesTag = selectedTags.value.length === 0 || 
@@ -332,6 +556,11 @@ const openMsgModal = (payment: any) => {
 const handleMessageSent = () => {
   isMsgModalOpen.value = false
   alert('Mensagem enviada com sucesso!')
+}
+
+const handleBatchSent = () => {
+  isBatchMsgModalOpen.value = false
+  selectedIds.value = []
 }
 
 const toggleAutoBilling = (payment: any) => {

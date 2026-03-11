@@ -8,7 +8,12 @@
       
       <div v-else class="space-y-12 mb-20 animate-in fade-in duration-700">
         <BlocksKDashboardPageHeader @sync="fetchStats" />
-        <BlocksKDashboardMetrics :stats="stats" />
+        
+        <div class="space-y-8">
+           <BlocksKDashboardMetrics :stats="stats" />
+           <BlocksKFinanceMetrics :stats="stats" />
+        </div>
+
         <BlocksKDashboardOperationStats :stats="stats" />
         <BlocksKDashboardMainContent :stats="stats" />
         <BlocksKGlobalFooter />

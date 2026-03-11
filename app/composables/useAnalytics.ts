@@ -21,11 +21,11 @@ const isFetching = ref(false)
 export const useAnalytics = () => {
     const supabase = useSupabaseClient()
 
-    const fetchStats = async (force = false) => {
+    const fetchStats = async (force = false, silent = false) => {
         if (isFetching.value && !force) return
 
         isFetching.value = true
-        loading.value = true
+        if (!silent) loading.value = true
 
         try {
             // 1. EMPRESAS (fonte principal de dados)
@@ -75,7 +75,7 @@ export const useAnalytics = () => {
 
             // 2. PAGAMENTOS - só de empresas ATIVAS
             const { data: paymentsData, error: paymentsError } = await (supabase.from('payments') as any)
-                .select('id, company_id, amount, status, due_date, paid_at, plan_name, auto_billing_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags)')
+                .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags)')
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 

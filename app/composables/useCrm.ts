@@ -4,18 +4,32 @@ export type CrmSettings = {
   id?: string
   api_url: string
   api_token: string
+  delay_min: number
+  delay_max: number
+  break_after: number
+  break_delay_min: number
+  break_delay_max: number
 }
 
 export type MessageTemplate = {
   id?: string
   name: string
   body: string
+  is_default?: boolean
 }
 
 export const useCrm = () => {
   const supabase = useSupabaseClient()
   
-  const settings = ref<CrmSettings>({ api_url: 'https://api.legendaryhub.com.br/api/messages/send', api_token: '' })
+  const settings = ref<CrmSettings>({ 
+    api_url: 'https://api.legendaryhub.com.br/api/messages/send', 
+    api_token: '',
+    delay_min: 15,
+    delay_max: 30,
+    break_after: 10,
+    break_delay_min: 300,
+    break_delay_max: 600
+  })
   const templates = ref<MessageTemplate[]>([])
   
   const loading = ref(false)
@@ -90,14 +104,22 @@ export const useCrm = () => {
   const createTemplate = async (tmpl: MessageTemplate) => {
     loading.value = true
     try {
+      // Se for default, desmarcar outros localmente antes (opcional, o DB deve lidar via triggers ou fazemos aqui)
+      if (tmpl.is_default) {
+         await (supabase as any).from('message_templates').update({ is_default: false }).neq('id', '00000000-0000-0000-0000-000000000000')
+      }
+
       const { data, error: err } = await supabase
         .from('message_templates')
         // @ts-ignore
-        .insert([{ name: tmpl.name, body: tmpl.body } as any])
+        .insert([{ name: tmpl.name, body: tmpl.body, is_default: tmpl.is_default || false } as any])
         .select()
         .single()
       
       if (err) throw err
+      if (tmpl.is_default) {
+         templates.value.forEach(t => t.is_default = false)
+      }
       templates.value.unshift(data)
       return data
     } catch (err: any) {
@@ -110,6 +132,12 @@ export const useCrm = () => {
   const updateTemplate = async (id: string, tmpl: Partial<MessageTemplate>) => {
     loading.value = true
     try {
+      if (tmpl.is_default) {
+         // Desmarca todos
+         await (supabase as any).from('message_templates').update({ is_default: false }).neq('id', id)
+         templates.value.forEach(t => t.is_default = false)
+      }
+
       const { data, error: err } = await supabase
         .from('message_templates')
         // @ts-ignore

@@ -33,6 +33,15 @@
           @save="handleSaveWhiteLabel"
           @upload="handleFileUpload"
         />
+
+        <!-- Tab: Planos -->
+        <BlocksKFinancePlans v-if="activeTab === 'plans'" />
+
+        <!-- Tab: Config. API -->
+        <BlocksKFinanceCrmSettings v-if="activeTab === 'settings'" />
+
+        <!-- Tab: Empresas -->
+        <BlocksKCompaniesManagement v-if="activeTab === 'companies'" />
       </div>
       <!-- GLOW EFFECTS -->
       <div class="fixed -top-40 -right-40 w-96 h-96 bg-kros-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -51,17 +60,22 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const route = useRoute()
 const user = useSupabaseUser()
 const { settings: wlSettings, saveSettings: wlSave, fetchSettings: wlFetch, loading: wlLoading, uploadImage: wlUpload } = useWhiteLabel()
+const { stats, fetchStats: fetchAnalyticsStats } = useAnalytics()
 
-const activeTab = ref('profile')
+const activeTab = ref(route.query.tab?.toString() || 'profile')
 const wlStatus = ref<{ success: boolean; message: string } | null>(null)
 
 const tabs = [
   { id: 'profile', name: 'Meu Perfil' },
   { id: 'security', name: 'Segurança' },
   { id: 'preferences', name: 'Preferências' },
-  { id: 'white-label', name: 'White Label' }
+  { id: 'white-label', name: 'White Label' },
+  { id: 'plans', name: 'Planos' },
+  { id: 'settings', name: 'Config. API' },
+  { id: 'companies', name: 'Empresas' }
 ]
 
 const activeTabName = computed(() => {
@@ -76,6 +90,7 @@ const profileData = reactive({
 
 onMounted(async () => {
   await wlFetch()
+  await fetchAnalyticsStats()
 })
 
 const handleSaveProfile = (data: any) => {

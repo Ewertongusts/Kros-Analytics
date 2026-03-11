@@ -1,11 +1,5 @@
 <template>
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 transition-all">
-    <div class="space-y-1">
-      <h1 class="text-3xl font-bold text-kros-text dark:text-kros-surface tracking-tighter uppercase italic">
-        {{ settings.system_name?.toUpperCase() || 'KROS' }} <span class="text-kros-blue">ANALYTICS</span>
-      </h1>
-      <p class="text-[10px] text-kros-blue font-bold uppercase tracking-[0.3em] mt-1">{{ settings.system_name || 'Kros' }} - Visão Consolidada de Receita e Performance</p>
-    </div>
     
     <div class="flex items-center gap-4 bg-[#111112] p-1 rounded-xl border border-white/5 shadow-inner">
       <select 

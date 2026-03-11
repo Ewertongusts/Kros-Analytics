@@ -23,6 +23,17 @@
               <p class="text-emerald-400 text-xs font-semibold tracking-wider">{{ payment?.company_whatsapp }}</p>
             </div>
           </div>
+
+          <!-- Alerta de "Já Enviado" -->
+          <div v-if="lastSentRecord" class="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3 animate-bounce">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </div>
+            <div class="text-left">
+               <p class="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none">Atenção!</p>
+               <p class="text-[11px] font-bold text-white mt-1">Este contato já recebeu uma cobrança em <span class="text-amber-400">{{ formatDateTime(lastSentRecord.created_at) }}</span></p>
+            </div>
+          </div>
         </div>
 
       <div v-if="loading" class="flex justify-center py-10">
@@ -109,6 +120,30 @@ const { settings, templates, loading, fetchCrmData } = useCrm()
 const submitting = ref(false)
 const selectedTemplateId = ref('')
 const apiResult = ref<{ ok: boolean; body: string } | null>(null)
+const lastSentRecord = ref<any>(null)
+
+const fetchLastSent = async () => {
+   if (!props.payment?.company_name) return
+   try {
+      const { data, error } = await (useSupabaseClient() as any)
+         .from('message_logs')
+         .select('*')
+         .eq('company_name', props.payment.company_name)
+         .or('status.ilike.%Sucesso%,status.ilike.%Enviado%')
+         .order('created_at', { ascending: false })
+         .limit(1)
+         .single()
+      
+      if (data) lastSentRecord.value = data
+   } catch (err) {
+      // Ignora erro se não encontrar nada
+   }
+}
+
+const formatDateTime = (date: string) => {
+   if (!date) return '-'
+   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date))
+}
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
@@ -136,6 +171,7 @@ const compiledMessage = computed(() => {
 
 onMounted(() => {
   fetchCrmData()
+  fetchLastSent()
 })
 
 const handleSend = async () => {

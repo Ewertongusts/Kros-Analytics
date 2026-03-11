@@ -4,7 +4,7 @@
       <h1 class="text-3xl font-bold text-kros-text dark:text-kros-surface tracking-tighter uppercase italic">
         GESTÃO <span class="text-kros-blue">FINANCEIRA</span>
       </h1>
-      <p class="text-xs text-white/70 tracking-widest font-bold uppercase">Controle de Fluxo de Caixa, Cobranças e Despesas</p>
+      <p class="text-xs text-white/70 tracking-widest font-bold uppercase">Gestão de Custos Fixos, Variáveis e Despesas</p>
     </div>
     
     <div class="flex items-center gap-3">

@@ -1,11 +1,6 @@
 <template>
   <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-    <div>
-      <h1 class="text-3xl font-bold text-kros-text dark:text-kros-surface tracking-tighter uppercase italic">
-        DEFINIÇÕES DE <span class="text-kros-blue">TAGS</span>
-      </h1>
-      <p class="text-[10px] text-kros-blue font-bold uppercase tracking-[0.3em] mt-2">Personalize cores e categorias globais</p>
-    </div>
+    <div></div>
     
     <button 
       @click="$emit('create')"

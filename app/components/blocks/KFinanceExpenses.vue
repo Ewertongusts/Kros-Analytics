@@ -1,12 +1,12 @@
 <template>
   <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group hover:border-kros-blue/5 transition-all">
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
         <h3 class="font-bold text-lg text-white">Gestão de Saídas (Custos)</h3>
-        <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Controle de infraestrutura e assinaturas ativas</p>
+        <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1 opacity-60">Controle de infraestrutura e assinaturas ativas</p>
       </div>
-      <div class="flex items-center gap-2">
-         <span class="text-xs font-bold text-white/40 uppercase tracking-tighter">Total no Mês:</span>
+      <div class="flex items-center gap-2 bg-red-500/5 px-4 py-2 rounded-xl border border-red-500/10 w-fit">
+         <span class="text-[10px] font-bold text-white/40 uppercase tracking-widest">Total no Mês:</span>
          <span class="text-sm font-black text-red-500">{{ formatCurrency(totalExpenses) }}</span>
       </div>
     </div>
