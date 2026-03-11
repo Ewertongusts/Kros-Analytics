@@ -26,6 +26,8 @@ export const useAnalytics = () => {
 
         isFetching.value = true
         if (!silent) loading.value = true
+        const now = new Date()
+        now.setHours(0, 0, 0, 0)
 
         try {
             // 1. EMPRESAS (fonte principal de dados)
@@ -57,7 +59,6 @@ export const useAnalytics = () => {
                 stats.value.activeCompanies = activeCompanies.length
                 stats.value.inactiveCompanies = companies.filter(c => !c.is_active).length
 
-                const now = new Date()
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
                 stats.value.newClients = activeCompanies.filter(c => new Date(c.created_at) >= startOfMonth).length
 
@@ -80,28 +81,64 @@ export const useAnalytics = () => {
                 .order('due_date', { ascending: true })
 
             if (paymentsData) {
+                // 2.1 Buscar últimos logs para identificar o último alerta
+                const { data: logsData } = await supabase
+                    .from('message_logs')
+                    .select('payment_id, created_at')
+                    .order('created_at', { ascending: false })
+
+                const lastAlertsMap = new Map()
+                if (logsData) {
+                    (logsData as any[]).forEach(log => {
+                        if (!lastAlertsMap.has(log.payment_id)) {
+                            lastAlertsMap.set(log.payment_id, log.created_at)
+                        }
+                    })
+                }
+
                 const payments = (paymentsData as any[]).map(p => {
                     const companyInfo = companiesMap.get(p.company_id)
+                    let enrichedStatus = p.status
+
+                    if (p.status !== 'paid' && p.due_date) {
+                        const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
+                        const dueDate = new Date(dueDateString)
+                        if (dueDate < now) {
+                            const diffTime = now.getTime() - dueDate.getTime()
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                            if (diffDays >= 30) {
+                                enrichedStatus = 'Churn'
+                            } else {
+                                enrichedStatus = 'Atrasado'
+                            }
+                        } else {
+                            enrichedStatus = 'Pendente'
+                        }
+                    } else if (p.status === 'paid') {
+                        enrichedStatus = 'Pago'
+                    }
+
                     return {
                         ...p,
+                        status: enrichedStatus,
+                        last_alert_at: lastAlertsMap.get(p.id) || null,
                         company_ltv: companyInfo?.ltv || 0,
                         company_created_at: companyInfo?.created_at || p.due_date,
                         company_rep: companyInfo?.representative_name || ''
                     }
                 })
-                const now = new Date()
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
                 const currentMonth = now.getMonth()
                 const currentYear = now.getFullYear()
 
                 // Recebido no mês atual (considerando a data de pagamento)
                 stats.value.receivedMonth = payments
-                    .filter(p => p.status === 'paid' && p.paid_at && new Date(p.paid_at) >= startOfMonth)
+                    .filter(p => p.status === 'Pago' && p.paid_at && new Date(p.paid_at) >= startOfMonth)
                     .reduce((acc, p) => acc + Number(p.amount || 0), 0)
 
                 // A receber (pendente) deste mês + Atrasados
                 const pendingThisMonth = payments.filter(p => {
-                    if (p.status !== 'pending' && p.status !== 'overdue') return false
+                    if (p.status !== 'Pendente' && p.status !== 'Atrasado') return false
                     const dueDate = new Date(p.due_date)
                     // Inclui tudo que vence até o final deste mês
                     const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0)
@@ -111,7 +148,7 @@ export const useAnalytics = () => {
                 stats.value.pendingAmount = pendingThisMonth
                     .reduce((acc, p) => acc + Number(p.amount || 0), 0)
 
-                stats.value.paidPaymentsCount = payments.filter(p => p.status === 'paid').length
+                stats.value.paidPaymentsCount = payments.filter(p => p.status === 'Pago').length
                 stats.value.pendingPaymentsCount = pendingThisMonth.length
                 stats.value.paymentsList = payments
             }

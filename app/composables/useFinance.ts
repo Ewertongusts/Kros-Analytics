@@ -7,13 +7,14 @@ export interface FinancialRecord {
   plan_name: string
   due_date: string
   amount: number
-  status: 'Pago' | 'Pendente' | 'Atrasado'
+  status: 'Pago' | 'Pendente' | 'Atrasado' | 'Churn'
   company_whatsapp: string
   company_ltv: number
   company_created_at: string
   company_rep: string
   tags: string[]
   auto_billing_enabled: boolean
+  last_alert_at?: string | null
 }
 
 export const useFinance = () => {
@@ -103,7 +104,7 @@ export const useFinance = () => {
 
   const processRecords = (paymentsList: any[]): FinancialRecord[] => {
     return paymentsList.map(payment => {
-      let currentStatus: 'Pago' | 'Pendente' | 'Atrasado' = payment.status === 'paid' ? 'Pago' : 'Pendente'
+      let currentStatus: 'Pago' | 'Pendente' | 'Atrasado' | 'Churn' = payment.status === 'paid' ? 'Pago' : 'Pendente'
       
       if (currentStatus === 'Pendente' && payment.due_date) {
         const dueDate = new Date(payment.due_date + 'T00:00:00')
@@ -111,7 +112,14 @@ export const useFinance = () => {
         today.setHours(0, 0, 0, 0)
         
         if (dueDate < today) {
-          currentStatus = 'Atrasado'
+          const diffTime = today.getTime() - dueDate.getTime()
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          
+          if (diffDays >= 30) {
+            currentStatus = 'Churn'
+          } else {
+            currentStatus = 'Atrasado'
+          }
         }
       }
 
@@ -128,7 +136,8 @@ export const useFinance = () => {
         company_created_at: payment.company_created_at || payment.due_date,
         company_rep: payment.company_rep || '',
         tags: payment.companies?.tags || [],
-        auto_billing_enabled: !!payment.auto_billing_enabled
+        auto_billing_enabled: !!payment.auto_billing_enabled,
+        last_alert_at: payment.last_alert_at || null
       }
     })
   }

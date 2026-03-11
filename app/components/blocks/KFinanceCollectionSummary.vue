@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
     <!-- Card: Pendentes -->
     <div class="p-5 rounded-3xl bg-white/[0.03] border border-white/5 backdrop-blur-xl relative overflow-hidden group">
       <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
@@ -27,6 +27,21 @@
       <div class="flex items-baseline gap-2">
         <span class="text-xl font-black text-red-500 tracking-tighter">{{ formatCurrency(summary.overdueAmount) }}</span>
         <span class="text-[10px] font-bold text-red-500/60 uppercase">{{ summary.overdueCount }} pendências</span>
+      </div>
+    </div>
+
+    <!-- Card: Churn -->
+    <div class="p-5 rounded-3xl bg-white/[0.03] border border-white/5 backdrop-blur-xl relative overflow-hidden group">
+      <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-950/20 rounded-full blur-2xl group-hover:bg-red-900/30 transition-all"></div>
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-xl bg-red-950/40 flex items-center justify-center text-red-800 border border-red-500/20">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+        </div>
+        <span class="text-[9px] font-bold text-red-500/40 uppercase tracking-widest">Churn (30d+)</span>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <span class="text-xl font-black text-red-900 tracking-tighter">{{ formatCurrency(summary.churnAmount) }}</span>
+        <span class="text-[10px] font-bold text-red-900 uppercase">{{ summary.churnCount }} perdidos</span>
       </div>
     </div>
 
@@ -78,23 +93,24 @@ const summary = computed(() => {
 
   return props.payments.reduce((acc, p) => {
     const amount = Number(p.amount) || 0
-    const isPaid = p.status === 'paid'
-    const isOverdue = p.status === 'overdue'
-    const isPending = p.status === 'pending'
+    const status = p.status
     
     // Filtro básico para o mês atual nas liquidações
     const payDate = p.paid_at ? new Date(p.paid_at) : null
     const isThisMonth = payDate && payDate.getMonth() === currentMonth && payDate.getFullYear() === currentYear
 
-    if (isPaid && isThisMonth) {
+    if (status === 'Pago' && isThisMonth) {
       acc.paidAmount += amount
       acc.paidCount++
-    } else if (isOverdue) {
+    } else if (status === 'Atrasado') {
       acc.overdueAmount += amount
       acc.overdueCount++
-    } else if (isPending) {
+    } else if (status === 'Pendente') {
       acc.pendingAmount += amount
       acc.pendingCount++
+    } else if (status === 'Churn') {
+      acc.churnAmount += amount
+      acc.churnCount++
     }
 
     return acc
@@ -103,6 +119,8 @@ const summary = computed(() => {
     pendingCount: 0,
     overdueAmount: 0,
     overdueCount: 0,
+    churnAmount: 0,
+    churnCount: 0,
     paidAmount: 0,
     paidCount: 0
   })

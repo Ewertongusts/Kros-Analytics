@@ -15,7 +15,17 @@
         </div>
 
         <BlocksKDashboardOperationStats :stats="stats" />
+        
+        <!-- INTELIGÊNCIA DE COBRANÇA -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+           <BlocksKFinanceConversionFunnel :payments="stats.paymentsList" />
+           <BlocksKFinanceCashflowForecast :payments="stats.paymentsList" />
+           <BlocksKFinanceChurnRisk :payments="stats.paymentsList" />
+        </div>
+
+        <!-- PERFORMANCE E GRÁFICOS -->
         <BlocksKDashboardMainContent :stats="stats" />
+
         <BlocksKGlobalFooter />
       </div>
     </div>
