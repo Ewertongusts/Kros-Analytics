@@ -2,11 +2,31 @@
   <div class="space-y-12">
     <!-- 1. Configurações da API HTTP -->
     <div class="space-y-8">
-      <div>
-        <h3 class="font-bold text-lg text-white">Configurações de Integração CRM</h3>
-        <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Conecte sua API de envio para WhatsApp, SMS ou Email</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-lg text-white">Configurações de Integração CRM</h3>
+          <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Conecte sua API de envio para WhatsApp, SMS ou Email</p>
+        </div>
+        
+        <!-- Status Indicator -->
+        <div class="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
+           <div class="relative flex items-center justify-center w-2.5 h-2.5">
+              <div :class="[
+                'absolute inset-0 rounded-full animate-ping opacity-20',
+                settings?.last_test_status === 'success' ? 'bg-emerald-500' : (settings?.last_test_status === 'error' ? 'bg-red-500' : 'bg-white/20')
+              ]"></div>
+              <div :class="[
+                'w-2 h-2 rounded-full relative z-10',
+                settings?.last_test_status === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : (settings?.last_test_status === 'error' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-white/20')
+              ]"></div>
+           </div>
+           <span class="text-[9px] font-bold uppercase tracking-widest" :class="settings?.last_test_status === 'success' ? 'text-emerald-400' : (settings?.last_test_status === 'error' ? 'text-red-400' : 'text-white/40')">
+              {{ settings?.last_test_status === 'success' ? 'WhatsApp Conectado' : (settings?.last_test_status === 'error' ? 'Falha na Conexão' : 'Não Testado') }}
+           </span>
+        </div>
       </div>
 
+      <!-- ROW 1: API Configuration (Full Width) -->
       <div class="p-8 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21]">
         <form @submit.prevent="handleSaveSettings" class="space-y-8">
           <!-- API Keys -->
@@ -69,19 +89,6 @@
                    <p class="text-[8px] text-white/30 uppercase font-black pl-1">Minutos (Randômico)</p>
                 </div>
              </div>
-
-             <!-- Resumo -->
-             <div class="bg-kros-blue/5 border border-kros-blue/10 rounded-2xl p-4 flex flex-wrap items-center gap-4">
-                <span class="text-[9px] font-bold text-white/40 uppercase tracking-widest pl-1">Resumo da Proteção:</span>
-                <div class="flex items-center gap-2">
-                   <div class="px-3 py-1 bg-kros-blue/20 rounded-lg text-[9px] font-bold text-kros-blue uppercase tracking-widest border border-kros-blue/20">
-                     Intervalo: {{ configForm.delay_min }}s {{ configForm.delay_min !== configForm.delay_max ? 'a ' + configForm.delay_max + 's' : '' }}
-                   </div>
-                   <div class="px-3 py-1 bg-emerald-500/20 rounded-lg text-[9px] font-bold text-emerald-500 uppercase tracking-widest border border-emerald-500/20">
-                     Pausa após {{ configForm.break_after }} msgs: {{ configForm.break_delay_min }} {{ configForm.break_delay_min !== configForm.break_delay_max ? 'a ' + configForm.break_delay_max : '' }} min
-                   </div>
-                </div>
-             </div>
           </div>
 
           <div class="flex justify-end pt-4">
@@ -95,155 +102,125 @@
           </div>
         </form>
       </div>
-    </div>
 
-    <!-- 2. Gestor de Modelos de Mensagem -->
-    <div class="space-y-8">
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="font-bold text-lg text-white">Modelos de Mensagem (Templates)</h3>
-          <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Defina as mensagens padrão para cobrança com variáveis dinâmicas</p>
-        </div>
-        <button 
-          @click="startNewTemplate"
-          class="bg-white/5 hover:bg-white/10 text-white border border-white/10 text-[10px] font-bold uppercase tracking-widest px-6 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          Novo Modelo
-        </button>
-      </div>
-
+      <!-- ROW 2: Testing & Logs (Side by Side) -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         
-         <!-- Lista de Templates -->
-         <div class="space-y-4">
-            <div 
-               v-for="tmpl in templates" 
-               :key="tmpl.id" 
-               :class="[
-                 'p-5 rounded-2xl border transition-all group flex flex-col gap-3 relative',
-                 tmpl.is_default 
-                   ? 'bg-kros-blue/5 border-kros-blue/25 shadow-[0_0_20px_rgba(59,130,246,0.05)]' 
-                   : 'bg-white/[0.02] border-transparent hover:border-white/10'
-               ]"
-            >
-               <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 flex-1 overflow-hidden">
-                     <h5 class="font-bold text-sm text-white uppercase tracking-tight truncate">{{ tmpl.name }}</h5>
-                     <!-- Default Badge -->
-                     <span 
-                       v-if="tmpl.is_default"
-                       class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-kros-blue/15 border border-kros-blue/30 text-kros-blue text-[8px] font-black uppercase tracking-widest shrink-0"
-                     >
-                       <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                       Padrão
-                     </span>
-                  </div>
-                  <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                     <button @click="editTemplate(tmpl)" class="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                     </button>
-                     <button @click="handleDeleteTemplate(tmpl.id!)" class="p-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                     </button>
-                  </div>
-               </div>
-               <p class="text-xs text-white/40 leading-relaxed max-h-20 overflow-hidden text-ellipsis">{{ tmpl.body }}</p>
-            </div>
+        <!-- Testing Section -->
+        <div class="p-8 rounded-3xl bg-white/[0.02] border border-white/10 flex flex-col gap-8 h-full">
+           <div>
+              <h4 class="text-xs font-bold text-white uppercase tracking-widest">Testar Envio Manual</h4>
+              <p class="text-[9px] text-white/40 uppercase tracking-widest mt-1">Validação instantânea de conectividade</p>
+           </div>
 
-            <div v-if="templates.length === 0" class="flex flex-col items-center justify-center py-12 opacity-40 border border-dashed border-white/10 rounded-2xl">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 text-white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              <p class="font-bold uppercase tracking-widest text-[9px] text-white">Nenhum modelo criado</p>
-            </div>
-         </div>
-
-         <!-- Editor de Template -->
-         <div v-if="editingTemplate" class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-blue/30 relative">
-            <h4 class="text-xs font-bold text-kros-blue uppercase tracking-widest mb-6">
-              {{ editingTemplate.id ? 'Editando Modelo' : 'Novo Modelo' }}
-            </h4>
-
-            <form @submit.prevent="handleSaveTemplate" class="space-y-5">
+           <div class="space-y-5">
               <div class="space-y-2">
-                <label class="text-[10px] font-semibold text-white/50 uppercase tracking-[0.2em] pl-1">Nome de Identificação</label>
-                <input 
-                  v-model="editingTemplate.name"
-                  type="text"
-                  required
-                  placeholder="Ex: Cobrança Padrão, Mensagem de Atraso"
-                  class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-kros-blue transition-all"
-                />
+                 <label class="text-[9px] font-bold text-white/30 uppercase tracking-widest pl-1">Número de Destino</label>
+                 <input 
+                   v-model="testPhone"
+                   type="text"
+                   placeholder="5581900000000"
+                   class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-xs text-white outline-none focus:border-kros-blue transition-all"
+                 />
               </div>
 
-              <div class="space-y-2">
-                <div class="flex items-end justify-between">
-                   <label class="text-[10px] font-semibold text-white/50 uppercase tracking-[0.2em] pl-1">Corpo da Mensagem</label>
-                   <div class="flex gap-1">
-                      <button type="button" @click="insertVar('{{empresa}}')" class="px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-[9px] font-bold text-kros-blue">{emp}</button>
-                      <button type="button" @click="insertVar('{{valor}}')" class="px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-[9px] font-bold text-kros-blue">{val}</button>
-                      <button type="button" @click="insertVar('{{vencimento}}')" class="px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-[9px] font-bold text-kros-blue">{data}</button>
-                      <button type="button" @click="insertVar('{{plano}}')" class="px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-[9px] font-bold text-kros-blue">{plano}</button>
-                   </div>
-                </div>
-                <textarea 
-                  v-model="editingTemplate.body"
-                  required
-                  rows="6"
-                  placeholder="Olá {{empresa}}, notamos que..."
-                  class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-kros-blue transition-all resize-none overflow-y-auto"
-                ></textarea>
-                <p v-pre class="text-[9px] text-white/40 leading-relaxed mt-1">Variáveis disponíveis: {{empresa}}, {{vencimento}}, {{valor}}, {{plano}}</p>
-              </div>
+              <button 
+                @click="handleTestApi"
+                :disabled="testing || !configForm.api_url"
+                class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                 <div v-if="testing" class="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                 {{ testing ? 'ENVIANDO...' : 'TESTAR AGORA' }}
+              </button>
+           </div>
 
-              <!-- Default Toggle -->
-              <div class="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl">
-                 <div class="flex items-center gap-2">
-                    <div :class="['w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.3)]', editingTemplate.is_default ? 'bg-kros-blue' : 'bg-white/20']"></div>
-                    <span class="text-[10px] font-bold text-white/50 uppercase tracking-widest">Padrão de Cobrança</span>
+           <!-- Last Result -->
+           <div v-if="settings?.last_test_at" class="pt-6 border-t border-white/5 mt-auto">
+              <div class="flex items-center justify-between mb-3">
+                 <span class="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">Último Verificado</span>
+                 <span class="text-[9px] font-black text-white/60 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-md">{{ formatDate(settings.last_test_at) }}</span>
+              </div>
+              <div :class="[
+                'p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-500',
+                settings.last_test_status === 'success' 
+                 ? 'bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.05)]' 
+                 : 'bg-red-500/5 border border-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.05)]'
+              ]">
+                 <div :class="['w-8 h-8 rounded-full flex items-center justify-center shrink-0 border', settings.last_test_status === 'success' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20']">
+                    <svg v-if="settings.last_test_status === 'success'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                  </div>
-                 <label class="relative inline-flex items-center cursor-pointer scale-90">
-                    <input type="checkbox" v-model="editingTemplate.is_default" class="sr-only peer">
-                    <div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white/40 peer-checked:after:bg-kros-blue after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-kros-blue/20"></div>
-                 </label>
+                 <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5">{{ settings.last_test_status === 'success' ? 'Conexão Estável' : 'Conexão Interrompida' }}</p>
+                    <p class="text-[11px] font-medium leading-tight truncate">{{ settings.last_test_response }}</p>
+                 </div>
               </div>
+           </div>
+        </div>
 
-              <div class="flex gap-3 pt-2">
-                <button 
-                  type="button"
-                  @click="editingTemplate = null"
-                  class="flex-1 py-3 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  :disabled="loading"
-                  class="flex-1 bg-white/10 text-white hover:bg-kros-blue py-3 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
-                >
-                  Salvar Modelo
-                </button>
+        <!-- Connectivity History Section -->
+        <div class="p-8 rounded-3xl bg-[#0D0D0E] border border-white/5 flex flex-col gap-6 shadow-2xl relative overflow-hidden h-full">
+           <div class="flex items-center justify-between relative z-10">
+              <div>
+                 <h4 class="text-[11px] font-bold text-white uppercase tracking-[0.2em]">Histórico de Conectividade</h4>
+                 <p class="text-[8px] text-white/30 uppercase font-black mt-1">Registros de depuração</p>
               </div>
-            </form>
-         </div>
+              <div class="w-8 h-8 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center text-white/40">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 11-8-8-8 8"/><path d="M12 21V3"/></svg>
+              </div>
+           </div>
+           
+           <div v-if="testLogs.length === 0" class="py-12 text-center opacity-20 relative z-10">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 opacity-50"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+              <p class="text-[9px] font-black uppercase tracking-[0.3em]">Ambiente Limpo</p>
+           </div>
 
+           <div v-else class="space-y-3 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar relative z-10">
+              <div v-for="log in testLogs" :key="log.id" class="group flex flex-col gap-2.5 p-4 bg-white/[0.02] border border-white/5 rounded-2xl transition-all duration-300 hover:bg-white/[0.04] hover:border-white/15">
+                 <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                       <div :class="[
+                          'w-1.5 h-1.5 rounded-full ring-4',
+                          log.status.includes('Sucesso') ? 'bg-emerald-500 ring-emerald-500/10' : 'bg-red-500 ring-red-500/10'
+                       ]"></div>
+                       <span class="text-[10px] font-bold text-white tracking-tight">{{ log.whatsapp }}</span>
+                    </div>
+                    <span class="text-[8px] font-bold text-white/20 uppercase tracking-widest group-hover:text-white/40 transition-colors">{{ formatDate(log.created_at) }}</span>
+                 </div>
+
+                 <div class="flex items-center justify-between bg-black/40 px-3 py-2 rounded-xl border border-white/5">
+                     <p class="text-[9px] font-semibold tracking-tight truncate max-w-[180px]" :class="log.status.includes('Sucesso') ? 'text-emerald-400/80' : 'text-red-400/80'">
+                        {{ log.status }}
+                     </p>
+                     <div :class="['text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md', log.status.includes('Sucesso') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500']">
+                        {{ log.status.includes('Sucesso') ? 'OK' : 'ERR' }}
+                     </div>
+                 </div>
+              </div>
+           </div>
+
+           <!-- Glow decorativo no fundo -->
+           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-kros-blue/5 rounded-full blur-[60px] pointer-events-none"></div>
+        </div>
       </div>
     </div>
+
+
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, reactive, watch } from 'vue'
-import { useCrm, type MessageTemplate } from '~/composables/useCrm'
+import { useCrm } from '~/composables/useCrm'
 
 const { 
   settings, 
-  templates, 
+  testLogs,
   loading, 
+  testing,
   fetchCrmData, 
   saveSettings, 
-  createTemplate, 
-  updateTemplate, 
-  deleteTemplate 
+  testApi
 } = useCrm()
 
 const configForm = reactive({
@@ -256,7 +233,7 @@ const configForm = reactive({
   break_delay_max: 10
 })
 
-const editingTemplate = ref<MessageTemplate | null>(null)
+const testPhone = ref('5581983717272')
 
 watch(settings, (newVal) => {
   if (newVal) {
@@ -279,48 +256,25 @@ const handleSaveSettings = async () => {
   }
 }
 
-const startNewTemplate = () => {
-  editingTemplate.value = {
-    name: '',
-    body: ''
+const handleTestApi = async () => {
+  if (!testPhone.value) {
+    alert('Insira um número de telefone para testar.')
+    return
+  }
+  const res = await testApi(testPhone.value)
+  if (res.success) {
+    alert('Teste concluído com sucesso! Verifique seu WhatsApp.')
+  } else {
+    alert('Falha no teste: ' + res.message)
   }
 }
 
-const editTemplate = (tmpl: MessageTemplate) => {
-  editingTemplate.value = { ...tmpl }
-}
-
-const insertVar = (v: string) => {
-  if (editingTemplate.value) {
-    editingTemplate.value.body += v
-  }
-}
-
-const handleSaveTemplate = async () => {
-  if (!editingTemplate.value) return
-  try {
-    if (editingTemplate.value.id) {
-      await updateTemplate(editingTemplate.value.id, editingTemplate.value)
-    } else {
-      await createTemplate(editingTemplate.value)
-    }
-    editingTemplate.value = null
-  } catch (err) {
-    alert('Erro ao salvar modelo.')
-  }
-}
-
-const handleDeleteTemplate = async (id: string) => {
-  if (confirm('Deseja excluir este modelo?')) {
-    try {
-      await deleteTemplate(id)
-      if (editingTemplate.value?.id === id) {
-        editingTemplate.value = null
-      }
-    } catch (err) {
-      alert('Erro ao deletar modelo.')
-    }
-  }
+const formatDate = (dateValue: string) => {
+   const d = new Date(dateValue)
+   return d.toLocaleString('pt-BR', { 
+     day: '2-digit', month: '2-digit', 
+     hour: '2-digit', minute: '2-digit'
+   }) + 'h'
 }
 
 onMounted(() => {

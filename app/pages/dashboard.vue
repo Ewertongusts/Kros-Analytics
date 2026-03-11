@@ -11,7 +11,7 @@
         
         <div class="space-y-8">
            <BlocksKDashboardMetrics :stats="stats" />
-           <BlocksKFinanceMetrics :stats="stats" />
+           <BlocksKFinanceCollectionSummary :payments="stats.paymentsList" />
         </div>
 
         <BlocksKDashboardOperationStats :stats="stats" />

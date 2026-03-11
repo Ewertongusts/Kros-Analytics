@@ -14,27 +14,72 @@
 
     <!-- Navigation -->
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-      <NuxtLink 
-        v-for="item in navItems" 
-        :key="item.path"
-        :to="item.path" 
-        class="group flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative"
-        :class="route.path === item.path ? 'btn-primary text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'"
-      >
-        <div class="flex-shrink-0">
-          <component :is="item.icon" class="w-5 h-5" />
-        </div>
-        <span v-if="isExpanded" class="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-all">
-          {{ item.name }}
-        </span>
+      <div v-for="item in navItems" :key="item.name">
+        <!-- Regular Link -->
+        <NuxtLink 
+          v-if="!item.subItems"
+          :to="item.path" 
+          class="group flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative"
+          :class="route.path === item.path ? 'btn-primary text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'"
+        >
+          <div class="flex-shrink-0">
+            <component :is="item.icon" class="w-5 h-5" />
+          </div>
+          <span v-if="isExpanded" class="text-[12px] font-bold uppercase tracking-widest whitespace-nowrap transition-all">
+            {{ item.name }}
+          </span>
 
-        <!-- Tooltip for collapsed mode -->
-        <div v-if="!isExpanded" class="absolute left-full ml-4 px-3 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10 z-[70] whitespace-nowrap">
-          {{ item.name }}
+          <!-- Tooltip for collapsed mode -->
+          <div v-if="!isExpanded" class="absolute left-full ml-4 px-3 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10 z-[70] whitespace-nowrap">
+            {{ item.name }}
+          </div>
+        </NuxtLink>
+
+        <!-- Collapsible Menu (Ferramentas) -->
+        <div v-else class="space-y-1">
+          <button 
+            @click="item.isOpen = !item.isOpen"
+            class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative text-white/50 hover:bg-white/5 hover:text-white"
+            :class="{ 'bg-white/[0.03] text-white border border-white/5': item.isOpen || item.subItems.some(s => route.path === s.path) }"
+          >
+            <div class="flex-shrink-0">
+               <component :is="item.icon" class="w-5 h-5" />
+            </div>
+            <span v-if="isExpanded" class="text-[12px] font-bold uppercase tracking-widest whitespace-nowrap transition-all flex-1 text-left">
+              {{ item.name }}
+            </span>
+            <svg 
+              v-if="isExpanded" 
+              xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" 
+              class="transition-transform duration-300"
+              :class="{ 'rotate-180': item.isOpen }"
+            >
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+
+            <!-- Tooltip for collapsed mode -->
+            <div v-if="!isExpanded" class="absolute left-full ml-4 px-3 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10 z-[70] whitespace-nowrap">
+              {{ item.name }}
+            </div>
+          </button>
+
+          <!-- Sub-items -->
+          <div v-if="isExpanded && item.isOpen" class="mt-1 px-4 space-y-0.5 overflow-hidden transition-all duration-300">
+            <NuxtLink 
+              v-for="sub in item.subItems" 
+              :key="sub.path"
+              :to="sub.path"
+              class="flex items-center gap-3 py-2 px-3 text-[10.5px] font-bold uppercase tracking-widest transition-all rounded-xl"
+              :class="route.path === sub.path ? 'bg-white/[0.04] text-white' : 'text-white/30 hover:text-white hover:bg-white/[0.02]'"
+            >
+              <component :is="sub.icon" class="w-4 h-4" :class="route.path === sub.path ? 'text-kros-blue' : 'text-white/20'" />
+              {{ sub.name }}
+            </NuxtLink>
+          </div>
         </div>
-      </NuxtLink>
+      </div>
     </nav>
-
+    
     <!-- User & Actions -->
     <div class="p-4 border-t border-kros-outline dark:border-[#1F1F21] space-y-4">
       <!-- User Profile -->
@@ -51,11 +96,18 @@
           <span class="text-xs font-bold text-white uppercase tracking-tight truncate">
             {{ user?.user_metadata?.full_name || 'Gestor Kros' }}
           </span>
-          <span class="text-[10px] font-semibold text-white/50 uppercase tracking-widest truncate">
-            Administrador
-          </span>
+          <div class="flex items-center gap-1.5 mt-0.5">
+             <div :class="[
+               'w-1.5 h-1.5 rounded-full',
+               crmSettings?.last_test_status === 'success' ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : (crmSettings?.last_test_status === 'error' ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 'bg-white/20')
+             ]"></div>
+             <span class="text-[8px] font-bold uppercase tracking-widest truncate" :class="crmSettings?.api_token ? 'text-white/60' : 'text-orange-400/60'">
+               {{ crmSettings?.api_token ? 'WhatsApp ON' : 'WhatsApp OFF' }}
+             </span>
+          </div>
         </div>
       </div>
+
 
       <!-- Logout Button -->
       <button 
@@ -99,36 +151,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useRoute } from 'vue-router'
-import { useWhiteLabel } from '~/composables/useWhiteLabel'
 import { 
   LayoutDashboard,
-  Building2, 
   Receipt,
   Settings,
   Hash,
   CreditCard,
-  Calendar
+  Calendar,
+  Wrench,
+  FileText
 } from 'lucide-vue-next'
 
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const route = useRoute()
-const { settings } = useWhiteLabel()
-
+const { settings: crmSettings, fetchCrmData: fetchCrmSettings } = useCrm()
 const { isExpanded, toggleSidebar } = useSidebar()
 const isAutoHidden = ref(false)
 let hideTimer: any = null
 
-const navItems = [
+const navItems = reactive([
   { name: 'Visão Geral', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Cobranças', path: '/cobrancas', icon: Receipt },
   { name: 'Despesas', path: '/despesas', icon: CreditCard },
   { name: 'Calendário', path: '/calendario', icon: Calendar },
-  { name: 'Tags', path: '/tags', icon: Hash },
+  { 
+    name: 'Ferramentas', 
+    icon: Wrench,
+    isOpen: false,
+    subItems: [
+      { name: 'Tags de Negócio', path: '/tags', icon: Hash },
+      { name: 'Modelos de Envios', path: '/ferramentas/templates', icon: FileText },
+    ]
+  },
   { name: 'Ajustes', path: '/ajustes', icon: Settings },
-]
+])
 
 const handleToggle = () => {
   toggleSidebar()
@@ -155,7 +214,8 @@ const handleLogout = async () => {
   await navigateTo('/')
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchCrmSettings()
   // Opcional: Iniciar recolhido em telas menores
   if (window.innerWidth < 1024) {
     isExpanded.value = false

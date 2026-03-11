@@ -472,14 +472,14 @@ const removeTag = (payment: any, tagName: string) => {
 }
 
 const filterOptions = [
-  { id: 'Todos', label: 'Todos' },
-  { id: 'Hoje', label: 'Hoje' },
-  { id: 'Crítico', label: 'Crítico (>7d)' },
-  { id: 'Sem-WA', label: 'Sem WA' },
-  { id: 'Pendente', label: 'Pendentes' },
-  { id: 'Atrasado', label: 'Atrasados' },
-  { id: 'Semana', label: 'Semana' },
-  { id: 'Pago', label: 'Pagos' }
+  { id: 'Todos', label: 'Todos', description: 'Mostra todas as cobranças sem nenhum filtro aplicado.' },
+  { id: 'Hoje', label: 'Hoje', description: 'Cobranças que vencem hoje (exclui as já pagas).' },
+  { id: 'Crítico', label: 'Crítico (>7d)', description: 'Cobranças atrasadas há mais de uma semana.' },
+  { id: 'Sem-WA', label: 'Sem WA', description: 'Empresas que não possuem WhatsApp cadastrado.' },
+  { id: 'Pendente', label: 'Pendentes', description: 'Cobranças agendadas que ainda não venceram.' },
+  { id: 'Atrasado', label: 'Atrasados', description: 'Todas as cobranças com vencimento ultrapassado.' },
+  { id: 'Semana', label: 'Semana', description: 'Todas as cobranças que vencem na semana corrente.' },
+  { id: 'Pago', label: 'Pagos', description: 'Histórico completo de cobranças já liquidadas.' }
 ]
 
 const toggleTag = (tagName: string) => {

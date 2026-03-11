@@ -9,6 +9,9 @@ export type CrmSettings = {
   break_after: number
   break_delay_min: number
   break_delay_max: number
+  last_test_status?: 'success' | 'error' | null
+  last_test_at?: string | null
+  last_test_response?: string | null
 }
 
 export type MessageTemplate = {
@@ -16,6 +19,15 @@ export type MessageTemplate = {
   name: string
   body: string
   is_default?: boolean
+}
+
+export type ApiTestLog = {
+  id: string
+  created_at: string
+  whatsapp: string
+  status: string
+  message_body: string
+  log_type: 'test' | 'billing'
 }
 
 export const useCrm = () => {
@@ -28,11 +40,16 @@ export const useCrm = () => {
     delay_max: 30,
     break_after: 10,
     break_delay_min: 300,
-    break_delay_max: 600
+    break_delay_max: 600,
+    last_test_status: null,
+    last_test_at: null,
+    last_test_response: null
   })
   const templates = ref<MessageTemplate[]>([])
+  const testLogs = ref<ApiTestLog[]>([])
   
   const loading = ref(false)
+  const testing = ref(false)
   const error = ref<string | null>(null)
 
   const fetchCrmData = async () => {
@@ -46,8 +63,6 @@ export const useCrm = () => {
         .limit(1)
         .single()
       
-      // Se não achar, não tem problema, usa o default 
-      // (na real, o SQL inicializa um registro).
       if (configData) {
         settings.value = configData
       }
@@ -61,6 +76,16 @@ export const useCrm = () => {
       if (tmplErr) throw tmplErr
       templates.value = tmplData || []
 
+      // Fetch Test Logs
+      const { data: logsData } = await supabase
+        .from('message_logs')
+        .select('*')
+        .eq('log_type', 'test')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      
+      testLogs.value = (logsData || []) as ApiTestLog[]
+
     } catch (err: any) {
       console.error('Erro ao buscar dados do CRM:', err)
       error.value = err.message
@@ -72,12 +97,11 @@ export const useCrm = () => {
   const saveSettings = async (updates: Partial<CrmSettings>) => {
     loading.value = true
     try {
-      // Verifica se existe id, se sim: update; se não: insert
       if (settings.value.id) {
         const { data, error: err } = await supabase
           .from('crm_settings')
           // @ts-ignore
-          .update(updates as any)
+          .update(updates)
           .eq('id', settings.value.id)
           .select()
           .single()
@@ -87,7 +111,7 @@ export const useCrm = () => {
         const { data, error: err } = await supabase
           .from('crm_settings')
           // @ts-ignore
-          .insert([updates as any])
+          .insert([updates])
           .select()
           .single()
         if (err) throw err
@@ -101,10 +125,31 @@ export const useCrm = () => {
     }
   }
 
+  const testApi = async (phoneNumber: string) => {
+    testing.value = true
+    try {
+      const response = await $fetch('/api/crm/test', {
+        method: 'POST',
+        body: { phoneNumber }
+      }) as any
+
+      if (response.success) {
+        return { success: true, message: response.message }
+      } else {
+        return { success: false, message: response.message }
+      }
+    } catch (err: any) {
+      const errorMsg = err.data?.message || err.message || 'Erro ao processar teste no servidor'
+      return { success: false, message: errorMsg }
+    } finally {
+      testing.value = false
+      await fetchCrmData() // Refresh logs and settings
+    }
+  }
+
   const createTemplate = async (tmpl: MessageTemplate) => {
     loading.value = true
     try {
-      // Se for default, desmarcar outros localmente antes (opcional, o DB deve lidar via triggers ou fazemos aqui)
       if (tmpl.is_default) {
          await (supabase as any).from('message_templates').update({ is_default: false }).neq('id', '00000000-0000-0000-0000-000000000000')
       }
@@ -112,7 +157,7 @@ export const useCrm = () => {
       const { data, error: err } = await supabase
         .from('message_templates')
         // @ts-ignore
-        .insert([{ name: tmpl.name, body: tmpl.body, is_default: tmpl.is_default || false } as any])
+        .insert([{ name: tmpl.name, body: tmpl.body, is_default: tmpl.is_default || false }])
         .select()
         .single()
       
@@ -133,7 +178,6 @@ export const useCrm = () => {
     loading.value = true
     try {
       if (tmpl.is_default) {
-         // Desmarca todos
          await (supabase as any).from('message_templates').update({ is_default: false }).neq('id', id)
          templates.value.forEach(t => t.is_default = false)
       }
@@ -141,7 +185,7 @@ export const useCrm = () => {
       const { data, error: err } = await supabase
         .from('message_templates')
         // @ts-ignore
-        .update(tmpl as any)
+        .update(tmpl)
         .eq('id', id)
         .select()
         .single()
@@ -177,12 +221,16 @@ export const useCrm = () => {
   return {
     settings,
     templates,
+    testLogs,
     loading,
+    testing,
     error,
     fetchCrmData,
     saveSettings,
+    testApi,
     createTemplate,
     updateTemplate,
     deleteTemplate
   }
 }
+
