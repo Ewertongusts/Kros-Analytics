@@ -25,12 +25,17 @@
               @config="navigateTo('/ajustes?tab=companies')"
             />
           </div>
-          <div v-else>
+          <div v-else-if="activeSubTab === 'history'">
             <BlocksKFinanceHistoryBoard 
               v-model:active-sub-tab="activeSubTab"
               :history="paymentHistory" 
               @sync="() => fetchStats()"
               @config="navigateTo('/ajustes?tab=companies')"
+            />
+          </div>
+          <div v-else-if="activeSubTab === 'logs'">
+            <BlocksKFinanceLogsBoard 
+              v-model:active-sub-tab="activeSubTab"
             />
           </div>
         </div>

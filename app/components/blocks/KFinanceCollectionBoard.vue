@@ -17,13 +17,24 @@
           <button 
             @click="$emit('update:activeSubTab', 'history')"
             :class="[
-              'px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all',
+              'px-4 py-2 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
               activeSubTab === 'history' 
                 ? 'bg-kros-blue text-white shadow-lg' 
                 : 'text-white/20 hover:text-white/60 hover:bg-white/5'
             ]"
           >
-            Histórico
+            Histórico de Pagamentos
+          </button>
+          <button 
+            @click="$emit('update:activeSubTab', 'logs')"
+            :class="[
+              'px-4 py-2 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+              activeSubTab === 'logs' 
+                ? 'bg-kros-blue text-white shadow-lg' 
+                : 'text-white/20 hover:text-white/60 hover:bg-white/5'
+            ]"
+          >
+            Cobranças
           </button>
       </div>
 
@@ -32,11 +43,16 @@
           <div class="relative group/tags shrink-0">
              <button 
                @click="isTagDropdownOpen = !isTagDropdownOpen"
-               class="flex items-center gap-2.5 px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all text-white/70 hover:text-white"
+               class="flex items-center gap-4 px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all text-white/70 hover:text-white"
              >
-               <span class="text-xs font-bold uppercase tracking-widest text-[9px] sm:text-xs">Tags</span>
-               <div v-if="selectedTags.length > 0" class="flex items-center justify-center min-w-[20px] h-[20px] bg-kros-blue text-white rounded-full text-[10px] font-bold">
-                 {{ selectedTags.length }}
+               <div class="flex flex-col items-start leading-none gap-1">
+                 <span class="text-[8px] font-black uppercase tracking-[0.2em] text-white/30">Categorias</span>
+                 <div class="flex items-center gap-2">
+                   <span class="text-[11px] font-bold uppercase tracking-widest">Tags</span>
+                   <div v-if="selectedTags.length > 0" class="flex items-center justify-center min-w-[16px] h-[16px] bg-kros-blue text-white rounded-full text-[9px] font-black">
+                     {{ selectedTags.length }}
+                   </div>
+                 </div>
                </div>
                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :class="['transition-transform', isTagDropdownOpen ? 'rotate-180' : '']"><path d="m6 9 6 6 6-6"/></svg>
              </button>
@@ -87,15 +103,38 @@
           </div>
 
           <div class="flex items-center gap-2">
-            <button 
-               @click="$emit('open-logs')"
-               title="Logs de Disparos e Cobrança"
-               class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-white transition-all border border-transparent hover:border-white/10 flex items-center justify-center shrink-0"
-            >
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16 20h.01"/><path d="M3 14h.01"/><path d="M8 14h.01"/><path d="M3 10h.01"/><path d="M8 10h.01"/><path d="M3 6h.01"/><path d="M8 6h.01"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
-            </button>
-            <div class="shrink-0 scale-90 sm:scale-100 origin-right">
-               <UiKFilterTabs v-model="activeFilter" :options="filterOptions" />
+            <!-- Filtro de Status Compacto (Dropdown) -->
+            <div class="relative group/filter shrink-0">
+               <button 
+                 @click="isFilterDropdownOpen = !isFilterDropdownOpen"
+                 class="flex items-center gap-4 px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all text-white/70 hover:text-white"
+               >
+                 <div class="flex flex-col items-start leading-none gap-1">
+                   <span class="text-[8px] font-black uppercase tracking-[0.2em] text-white/30">{{ activeFilter === 'Todos' ? 'Filtro' : 'Filtrando por' }}</span>
+                   <span class="text-[11px] font-bold uppercase tracking-widest text-white">{{ activeFilter }}</span>
+                 </div>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :class="['transition-transform', isFilterDropdownOpen ? 'rotate-180' : '']"><path d="m6 9 6 6 6-6"/></svg>
+               </button>
+
+               <div 
+                 v-if="isFilterDropdownOpen" 
+                 class="absolute top-full right-0 mt-3 w-64 bg-[#161618] border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.9)] z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200"
+               >
+                  <div class="max-h-[400px] overflow-y-auto custom-scrollbar space-y-0.5">
+                     <button 
+                       v-for="option in filterOptions" 
+                       :key="option.id"
+                       @click="activeFilter = option.id; isFilterDropdownOpen = false"
+                       :class="[
+                         'w-full flex flex-col px-3.5 py-2.5 rounded-xl transition-all text-left group/opt',
+                         activeFilter === option.id ? 'bg-kros-blue border border-kros-blue/20' : 'hover:bg-white/5 border border-transparent'
+                       ]"
+                     >
+                       <span :class="['text-[10px] font-bold uppercase tracking-widest transition-colors', activeFilter === option.id ? 'text-white' : 'text-white/70 group-hover/opt:text-white']">{{ option.label }}</span>
+                       <span v-if="option.description" :class="['text-[8px] font-bold uppercase tracking-tight mt-0.5 transition-colors', activeFilter === option.id ? 'text-white/60' : 'text-white/30 group-hover/opt:text-white/40']">{{ option.description }}</span>
+                     </button>
+                  </div>
+               </div>
             </div>
           </div>
           <!-- Botões Globais Integrados -->
@@ -261,6 +300,7 @@ const { tags: tagDefinitions, fetchTags } = useTags()
 
 const activeFilter = ref('Todos')
 const isTagDropdownOpen = ref(false)
+const isFilterDropdownOpen = ref(false)
 const selectedTags = ref<string[]>([])
 const selectedIds = ref<string[]>([])
 const activeTagPicker = ref<string | null>(null)
@@ -341,6 +381,8 @@ const filterOptions = [
   { id: 'Todos', label: 'Todos', description: 'Mostra todas as cobranças sem nenhum filtro aplicado.' },
   { id: 'Hoje', label: 'Hoje', description: 'Cobranças que vencem hoje (exclui as já pagas).' },
   { id: 'Crítico', label: 'Crítico (>7d)', description: 'Cobranças atrasadas há mais de uma semana.' },
+  { id: 'Cobrados', label: 'Cobrados', description: 'Empresas que já receberam pelo menos um alerta/cobrança.' },
+  { id: 'Nao-Cobrados', label: 'Não Cobrados', description: 'Empresas que ainda não receberam nenhum alerta.' },
   { id: 'Sem-WA', label: 'Sem WA', description: 'Empresas que não possuem WhatsApp cadastrado.' },
   { id: 'Pendente', label: 'Pendentes', description: 'Cobranças agendadas que ainda não venceram.' },
   { id: 'Atrasado', label: 'Atrasados', description: 'Todas as cobranças com vencimento ultrapassado.' },
@@ -397,6 +439,10 @@ const filteredPayments = computed(() => {
       }
     } else if (activeFilter.value === 'Sem-WA') {
       matchesStatus = !p.company_whatsapp || p.company_whatsapp.trim() === ''
+    } else if (activeFilter.value === 'Cobrados') {
+      matchesStatus = !!p.last_alert_at
+    } else if (activeFilter.value === 'Nao-Cobrados') {
+      matchesStatus = !p.last_alert_at
     } else if (activeFilter.value === 'Semana') {
       if (p.due_date) {
         const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
