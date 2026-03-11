@@ -29,12 +29,28 @@ export const useAnalytics = () => {
 
         try {
             // 1. EMPRESAS (fonte principal de dados)
-            // A tabela companies já tem plan_name e monthly_price integrados
+            // Agora buscando também os pagamentos para calcular o LTV individual
             const { data: companiesData } = await (supabase.from('companies') as any)
-                .select('id, is_active, created_at, monthly_price, whatsapp, name, email, representative_name, tags, plan_name, billing_cycle, billing_day')
+                .select(`
+                    id, is_active, created_at, monthly_price, whatsapp, name, email, 
+                    representative_name, tags, plan_name, billing_cycle, billing_day,
+                    payments (amount, status)
+                `)
+
+            const companiesMap = new Map()
 
             if (companiesData) {
-                const companies = companiesData as any[]
+                const companies = (companiesData as any[]).map(c => {
+                    // LTV Individual = soma de todos os pagamentos 'paid' desta empresa específica
+                    const companyLtv = (c.payments || [])
+                        .filter((p: any) => p.status === 'paid')
+                        .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)
+                    
+                    const enriched = { ...c, ltv: companyLtv }
+                    companiesMap.set(c.id, enriched)
+                    return enriched
+                })
+
                 const activeCompanies = companies.filter(c => c.is_active)
 
                 stats.value.totalClients = companies.length
@@ -43,14 +59,12 @@ export const useAnalytics = () => {
 
                 const now = new Date()
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-                // Clientes novos = só empresas ativas criadas este mês
                 stats.value.newClients = activeCompanies.filter(c => new Date(c.created_at) >= startOfMonth).length
 
-                // MRR = somente empresas ATIVAS
                 stats.value.mrr = activeCompanies
                     .reduce((acc, c) => acc + Number(c.monthly_price || 0), 0)
 
-                // LTV = receita media por cliente ativo
+                // LTV Médio Global
                 if (activeCompanies.length > 0) {
                     const totalIncome = activeCompanies.reduce((acc, c) => acc + Number(c.monthly_price || 0), 0)
                     stats.value.ltv = totalIncome / activeCompanies.length
@@ -60,13 +74,21 @@ export const useAnalytics = () => {
             }
 
             // 2. PAGAMENTOS - só de empresas ATIVAS
-            const { data: paymentsData } = await (supabase.from('payments') as any)
-                .select('id, company_id, amount, status, due_date, paid_at, plan_name, companies!inner(id, name, whatsapp, is_active, tags)')
+            const { data: paymentsData, error: paymentsError } = await (supabase.from('payments') as any)
+                .select('id, company_id, amount, status, due_date, paid_at, plan_name, auto_billing_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags)')
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 
             if (paymentsData) {
-                const payments = paymentsData as any[]
+                const payments = (paymentsData as any[]).map(p => {
+                    const companyInfo = companiesMap.get(p.company_id)
+                    return {
+                        ...p,
+                        company_ltv: companyInfo?.ltv || 0,
+                        company_created_at: companyInfo?.created_at || p.due_date,
+                        company_rep: companyInfo?.representative_name || ''
+                    }
+                })
                 const now = new Date()
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
                 const currentMonth = now.getMonth()

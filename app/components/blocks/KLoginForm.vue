@@ -51,14 +51,14 @@
 
     <div class="pt-2">
       <p v-if="error" class="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-3 text-center animate-bounce">{{ error }}</p>
-      <UiKButton type="submit" :disabled="loading" class="w-full !py-4 font-black uppercase tracking-[0.2em]">
+      <UiKButton type="submit" :disabled="loading" class="w-full !py-4 font-bold uppercase tracking-[0.2em]">
         {{ loading ? 'Sincronizando...' : 'Entrar na Plataforma' }}
       </UiKButton>
     </div>
     
     <div class="text-center mt-6">
-      <span class="text-xs text-white/40 uppercase tracking-widest font-medium">Ainda não tem conta? </span>
-      <NuxtLink to="/cadastro" class="text-xs text-white uppercase tracking-widest font-black hover:text-kros-blue transition-all border-b-2 border-transparent hover:border-kros-blue pb-1">
+      <span class="text-xs text-white/60 uppercase tracking-widest font-medium">Ainda não tem conta? </span>
+      <NuxtLink to="/cadastro" class="text-xs text-white uppercase tracking-widest font-bold hover:text-kros-blue transition-all border-b-2 border-transparent hover:border-kros-blue pb-1">
         Inscreva-se
       </NuxtLink>
     </div>

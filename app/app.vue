@@ -1,5 +1,5 @@
 <template>
-  <div class="font-inter bg-kros-main dark:bg-[#0A0A0B] min-h-screen">
+  <div class="bg-kros-main dark:bg-[#0A0A0B] min-h-screen">
     <!-- Sidebar Global (Show only if logged in) -->
     <template v-if="user">
        <BlocksKSidebar />
@@ -50,7 +50,7 @@ useHead({
       crossorigin: ''
     },
     {
-      href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap',
+      href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap',
       rel: 'stylesheet'
     }
   ]
@@ -65,17 +65,16 @@ onMounted(async () => {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --kros-gradient: linear-gradient(135deg, #004fcc, #007BFF, #4da6ff);
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.02em;
 }
 
 /* Botão com gradiente dinâmico da cor principal */

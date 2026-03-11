@@ -16,6 +16,7 @@ export interface Company {
   instalment_count?: number
   instalment_value?: number
   tags?: string[]
+  ltv?: number
 }
 
 export const useCompanies = () => {
@@ -28,20 +29,35 @@ export const useCompanies = () => {
     loading.value = true
     error.value = null
     try {
+      // Buscamos as empresas e seus pagamentos marcados como 'paid' para o LTV
       const { data, error: fetchError } = await (supabase.from('companies') as any)
-        .select(`*`)
+        .select(`
+          *,
+          payments (
+            amount,
+            status
+          )
+        `)
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
-      companies.value = (data as any[]).map(company => ({
-        ...company,
-        // Garantir valores padrão caso venham nulos
-        plan_name: company.plan_name || 'Individual',
-        monthly_price: Number(company.monthly_price || 0),
-        billing_cycle: company.billing_cycle || 'Mensal',
-        billing_day: company.billing_day || 1,
-        tags: company.tags || []
-      }))
+      
+      companies.value = (data as any[]).map(company => {
+        // Calcula o LTV: soma de todos os pagamentos com status 'paid'
+        const ltv = (company.payments || [])
+          .filter((p: any) => p.status === 'paid')
+          .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)
+
+        return {
+          ...company,
+          plan_name: company.plan_name || 'Individual',
+          monthly_price: Number(company.monthly_price || 0),
+          billing_cycle: company.billing_cycle || 'Mensal',
+          billing_day: company.billing_day || 1,
+          tags: company.tags || [],
+          ltv
+        }
+      })
     } catch (e: any) {
       console.error('Erro ao buscar empresas:', e.message)
       error.value = e.message

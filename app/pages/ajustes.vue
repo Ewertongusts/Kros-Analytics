@@ -2,24 +2,7 @@
   <div class="min-h-screen p-8 md:p-12 overflow-hidden">
     <div class="max-w-4xl mx-auto space-y-10">
       <!-- HEADER -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
-        <div class="space-y-2">
-          <div class="flex items-center gap-2 text-[10px] font-bold text-kros-blue uppercase tracking-[0.3em]">
-            <span>Configurações</span>
-            <span class="text-white/20">/</span>
-            <span class="text-white/60">Geral</span>
-          </div>
-          <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
-            Ajustes do <span class="text-kros-blue">Sistema</span>
-          </h1>
-          <p class="text-xs text-white/40 tracking-widest font-medium uppercase">Gerencie seu perfil, segurança e preferências</p>
-        </div>
-        
-        <div class="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
-          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span class="text-[10px] font-bold uppercase tracking-widest text-white/60">Sistema Online</span>
-        </div>
-      </div>
+      <BlocksKSettingsHeader :active-tab-name="activeTabName" />
 
       <!-- TABS -->
       <UiKTabs v-model="activeTab" :tabs="tabs" class="animate-in fade-in duration-1000 delay-200" />
@@ -61,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useWhiteLabel } from '~/composables/useWhiteLabel'
 
 definePageMeta({
@@ -80,6 +63,10 @@ const tabs = [
   { id: 'preferences', name: 'Preferências' },
   { id: 'white-label', name: 'White Label' }
 ]
+
+const activeTabName = computed(() => {
+  return tabs.find(t => t.id === activeTab.value)?.name || 'Geral'
+})
 
 const profileData = reactive({
   name: user.value?.user_metadata?.full_name || '',

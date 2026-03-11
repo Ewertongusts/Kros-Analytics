@@ -19,7 +19,7 @@
         :key="item.path"
         :to="item.path" 
         class="group flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative"
-        :class="route.path === item.path ? 'btn-primary text-white' : 'text-kros-text/60 dark:text-white/60 hover:bg-kros-text/5 dark:hover:bg-white/5 hover:text-kros-blue'"
+        :class="route.path === item.path ? 'btn-primary text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'"
       >
         <div class="flex-shrink-0">
           <component :is="item.icon" class="w-5 h-5" />
@@ -48,10 +48,10 @@
           {{ user?.user_metadata?.full_name?.charAt(0) || 'G' }}
         </div>
         <div v-if="isExpanded" class="flex flex-col min-w-0">
-          <span class="text-[10px] font-bold text-kros-text dark:text-kros-surface uppercase tracking-tight truncate">
+          <span class="text-xs font-bold text-white uppercase tracking-tight truncate">
             {{ user?.user_metadata?.full_name || 'Gestor Kros' }}
           </span>
-          <span class="text-[8px] font-bold text-kros-blue/60 uppercase tracking-tighter truncate">
+          <span class="text-[10px] font-semibold text-white/50 uppercase tracking-widest truncate">
             Administrador
           </span>
         </div>
@@ -64,7 +64,7 @@
           'w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group overflow-hidden',
           isExpanded ? 'justify-start' : 'justify-center'
         ]"
-        class="text-red-500/70 hover:bg-red-500/10 hover:text-red-500"
+        class="text-red-400 hover:bg-red-500/10 hover:text-red-500"
       >
         <div class="flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

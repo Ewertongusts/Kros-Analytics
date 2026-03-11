@@ -51,8 +51,8 @@
     </div>
     
     <div class="text-center mt-6">
-      <span class="text-sm text-kros-text/60 dark:text-kros-surface/60">Já tem uma conta? </span>
-      <NuxtLink to="/" class="text-sm text-kros-text dark:text-kros-surface font-semibold hover:text-kros-blue transition-colors">
+      <span class="text-sm text-white/60">Já tem uma conta? </span>
+      <NuxtLink to="/" class="text-sm text-white font-semibold hover:text-kros-blue transition-colors">
         Faça login
       </NuxtLink>
     </div>

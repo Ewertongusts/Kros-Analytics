@@ -4,7 +4,7 @@
     :class="[
       'p-2.5 rounded-xl transition-all relative flex items-center justify-center',
       isActive 
-        ? 'bg-kros-blue/10 text-kros-blue border border-kros-blue/20 shadow-[0_0_10px_rgba(0,123,255,0.2)]' 
+        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
         : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white border border-transparent'
     ]"
     title="Cobrança Automática (CRON/POST)"
@@ -18,7 +18,7 @@
       <path d="M15 13v2"/>
       <path d="M9 13v2"/>
     </svg>
-    <span v-if="isActive" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-kros-blue rounded-full ring-2 ring-[#111112]"></span>
+    <span v-if="isActive" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#111112]"></span>
   </button>
 </template>
 
