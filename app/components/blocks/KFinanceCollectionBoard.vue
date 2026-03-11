@@ -142,6 +142,34 @@
                    >
                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 10-7 7-7-7"/></svg>
                    </button>
+
+                   <!-- Bulk Tags -->
+                   <div class="relative">
+                      <button 
+                        @click="isBatchTagPickerOpen = !isBatchTagPickerOpen"
+                        class="p-2 hover:bg-kros-blue/20 text-kros-blue rounded-lg transition-all"
+                        title="Adicionar Tag em Massa"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+                      </button>
+
+                      <div v-if="isBatchTagPickerOpen" class="absolute bottom-full right-0 mb-3 w-48 bg-[#111112] border border-white/10 rounded-xl shadow-2xl z-[150] p-1 animate-in slide-in-from-bottom-2 duration-200">
+                        <div class="max-h-48 overflow-y-auto custom-scrollbar">
+                           <div class="px-3 py-2 border-b border-white/5 mb-1">
+                              <p class="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Adicionar Tag</p>
+                           </div>
+                           <button 
+                             v-for="tag in tagDefinitions" 
+                             :key="tag.id"
+                             @click="addTagToBatch(tag.name)"
+                             class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all text-left group/btag"
+                           >
+                             <div :style="{ backgroundColor: tag.color }" class="w-1.5 h-1.5 rounded-full shrink-0"></div>
+                             <span class="text-[9px] font-bold text-white/50 group-hover/btag:text-white uppercase tracking-widest truncate">{{ tag.name }}</span>
+                           </button>
+                        </div>
+                      </div>
+                   </div>
                 </div>
              </div>
              <button @click="selectedIds = []" class="text-[9px] font-bold text-white/30 hover:text-white uppercase tracking-widest">Cancelar</button>
@@ -366,6 +394,7 @@ const isTagDropdownOpen = ref(false)
 const selectedTags = ref<string[]>([])
 const selectedIds = ref<string[]>([])
 const activeTagPicker = ref<string | null>(null)
+const isBatchTagPickerOpen = ref(false)
 
 const isAllSelected = computed(() => {
   return filteredPayments.value.length > 0 && selectedIds.value.length === filteredPayments.value.length
@@ -399,10 +428,28 @@ const batchAction = async (type: string) => {
   } else if (type === 'auto-billing-off') {
     if (!confirm(`Deseja desativar a cobrança automática para as ${selectedIds.value.length} empresas selecionadas?`)) return
     for (const p of selectedPayments) {
-      emit('toggle-autobilling', p) // Se já estiver desativado, o toggle lida (ou o pai verifica)
+      emit('toggle-autobilling', p)
     }
     selectedIds.value = []
   }
+}
+
+const addTagToBatch = async (tagName: string) => {
+  const selectedPayments = props.payments.filter(p => selectedIds.value.includes(p.id))
+  if (selectedPayments.length === 0) return
+
+  if (!confirm(`Deseja adicionar a tag "${tagName}" para as ${selectedPayments.length} empresas selecionadas?`)) return
+
+  for (const p of selectedPayments) {
+    const currentTags = [...(p.tags || [])]
+    if (!currentTags.includes(tagName)) {
+      currentTags.push(tagName)
+      emit('update-company-tags', { companyId: p.company_id, tags: currentTags })
+    }
+  }
+
+  isBatchTagPickerOpen.value = false
+  selectedIds.value = []
 }
 
 const availableTagsForPayment = (payment: any) => {
@@ -426,9 +473,12 @@ const removeTag = (payment: any, tagName: string) => {
 
 const filterOptions = [
   { id: 'Todos', label: 'Todos' },
+  { id: 'Hoje', label: 'Hoje' },
+  { id: 'Crítico', label: 'Crítico (>7d)' },
+  { id: 'Sem-WA', label: 'Sem WA' },
   { id: 'Pendente', label: 'Pendentes' },
   { id: 'Atrasado', label: 'Atrasados' },
-  { id: 'Semana', label: 'Essa Semana' },
+  { id: 'Semana', label: 'Semana' },
   { id: 'Pago', label: 'Pagos' }
 ]
 
@@ -464,6 +514,22 @@ const filteredPayments = computed(() => {
     let matchesStatus = false
     if (activeFilter.value === 'Todos') {
       matchesStatus = true
+    } else if (activeFilter.value === 'Hoje') {
+      if (p.due_date) {
+        const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
+        const dueDate = new Date(dueDateString)
+        matchesStatus = dueDate.toDateString() === now.toDateString() && p.status !== 'Pago'
+      }
+    } else if (activeFilter.value === 'Crítico') {
+      if (p.due_date) {
+        const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
+        const dueDate = new Date(dueDateString)
+        const diffTime = now.getTime() - dueDate.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        matchesStatus = p.status === 'Atrasado' && diffDays > 7
+      }
+    } else if (activeFilter.value === 'Sem-WA') {
+      matchesStatus = !p.company_whatsapp || p.company_whatsapp.trim() === ''
     } else if (activeFilter.value === 'Semana') {
       if (p.due_date) {
         const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
