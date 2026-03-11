@@ -106,32 +106,59 @@ export const useCompanies = () => {
       if (company.is_active && company.monthly_price && Number(company.monthly_price) > 0) {
         const now = new Date()
         const billingDay = company.billing_day || 1
-        const dueDate = new Date(now.getFullYear(), now.getMonth(), billingDay)
-        const dueDateStr = dueDate.toISOString().split('T')[0]
+        
+        // Determina os limites do mês atual para evitar criar 2 cobranças no mesmo mês
+        const currentYear = now.getFullYear()
+        const currentMonth = now.getMonth()
+        
+        // Formatação direta de data local (YYYY-MM-DD) sem interferência do UTC
+        const mm = String(currentMonth + 1).padStart(2, '0')
+        const dd = String(billingDay).padStart(2, '0')
+        const dueDateStr = `${currentYear}-${mm}-${dd}`
+        
+        // Limites do mês para busca
+        const startOfMonthStr = `${currentYear}-${mm}-01`
+        
+        const nextY = currentMonth === 11 ? currentYear + 1 : currentYear
+        const nextM = String((currentMonth + 1) % 12 + 1).padStart(2, '0')
+        const nextMonthStr = `${nextY}-${nextM}-01`
 
+        // 1. Atualizar amount de TODOS os pendentes e data do(s) MÊS ATUAL
         const { data: pendingPayments } = await (supabase.from('payments') as any)
-          .select('id, status')
+          .select('id, status, due_date')
           .eq('company_id', companyData.id)
           .in('status', ['pending', 'overdue'])
 
         if (pendingPayments && pendingPayments.length > 0) {
           for (const pay of pendingPayments) {
+            const isCurrentMonth = pay.due_date >= startOfMonthStr && pay.due_date < nextMonthStr
+            
+            const updatePayload: any = { 
+              amount: company.monthly_price,
+              plan_name: company.plan_name || 'Individual'
+            }
+            
+            // Se for deste mês e o cliente trocou de dia, move a data do boleto
+            if (isCurrentMonth) {
+               updatePayload.due_date = dueDateStr
+            }
+
             await (supabase.from('payments') as any)
-              .update({ 
-                amount: company.monthly_price,
-                plan_name: company.plan_name || 'Individual'
-              })
+              .update(updatePayload)
               .eq('id', pay.id)
           }
         } 
         
+        // 2. Verifica se JÁ EXISTE QUALQUER pagamento gerado neste mês (mesmo que já pago)
         const { data: monthPayment } = await (supabase.from('payments') as any)
           .select('id')
           .eq('company_id', companyData.id)
-          .eq('due_date', dueDateStr)
-          .maybeSingle()
+          .gte('due_date', startOfMonthStr)
+          .lt('due_date', nextMonthStr)
+          .limit(1)
 
-        if (!monthPayment) {
+        // Só cria um novo pendente se o mês estiver complementamente limpo de pagamentos
+        if (!monthPayment || monthPayment.length === 0) {
           await (supabase.from('payments') as any).insert({
             company_id: companyData.id,
             amount: company.monthly_price,

@@ -26,14 +26,13 @@
               {{ company.name }}
             </h4>
             
-            <!-- Tags Badge Row -->
             <div v-if="company.tags && company.tags.length" class="flex flex-wrap gap-1.5 mt-2">
               <span 
                 v-for="tag in company.tags" 
                 :key="tag"
                 :style="getTagStyle(tag)"
                 :title="getTagDescription(tag)"
-                class="text-[8px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-tighter transition-all cursor-help"
+                class="text-[9px] font-bold px-2.5 py-1 rounded-lg border uppercase tracking-wider transition-all cursor-help"
               >
                 {{ tag }}
               </span>

@@ -31,9 +31,22 @@
                 <div class="w-8 h-8 rounded-full bg-kros-blue/10 flex items-center justify-center text-kros-blue font-bold text-[10px] border border-kros-blue/10">
                   {{ payment.company_name?.charAt(0) }}
                 </div>
-                <div>
+                <div class="flex flex-col">
                    <p class="font-bold text-xs text-white uppercase tracking-tight">{{ payment.company_name }}</p>
-                   <p class="text-[9px] text-white/40 font-bold uppercase tracking-tighter">{{ payment.plan_name }}</p>
+                   <p class="text-[9px] text-white/40 font-bold uppercase tracking-tighter mb-1.5">{{ payment.plan_name }}</p>
+                   
+                   <!-- Seção de Tags -->
+                   <div v-if="payment.tags && payment.tags.length" class="flex flex-wrap gap-1">
+                      <span 
+                        v-for="tag in payment.tags" 
+                        :key="tag"
+                        :style="getTagStyle(tag)"
+                        :title="getTagDescription(tag)"
+                        class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider"
+                      >
+                        {{ tag }}
+                      </span>
+                   </div>
                 </div>
               </div>
             </td>
@@ -53,9 +66,32 @@
             </td>
             <td class="px-4 py-5 last:rounded-r-2xl text-right">
                <div class="flex items-center justify-end gap-2 pr-1">
+                  <!-- Botão Toggle Status do Pagamento -->
+                  <button 
+                    @click="$emit('toggle-status', payment)"
+                    :title="payment.status === 'Pago' ? 'Desfazer Pagamento (Estornar)' : 'Marcar como Pago'"
+                    :class="[
+                      'p-2.5 rounded-xl transition-all',
+                      payment.status === 'Pago' 
+                        ? 'bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white' 
+                        : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white'
+                    ]"
+                  >
+                    <!-- Ícone de Marcar Pago -->
+                    <svg v-if="payment.status !== 'Pago'" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <!-- Ícone de Desfazer (Undo) -->
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                  </button>
+
+                  <!-- Botão de Automação de Cobrança (CRON/POST) -->
+                  <UiKAutoBillingBtn 
+                    :is-active="payment.auto_billing_enabled"
+                    @click="toggleAutoBilling(payment)"
+                  />
+                  <!-- Botão WhatsApp -->
                   <button 
                     @click="openMsgModal(payment)"
-                    title="Cobrar via Sistema/API"
+                    title="Cobrar via WhatsApp"
                     class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all group/wa"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-14h.8A8.38 8.38 0 0 1 21 11.5Z"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M8 12h.01"/></svg>
@@ -89,14 +125,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useTags } from '~/composables/useTags'
 
 const props = defineProps<{
   payments: any[]
 }>()
 
+const emit = defineEmits(['toggle-status'])
+
 const isMsgModalOpen = ref(false)
 const selectedPayment = ref<any>(null)
+const { tags: tagDefinitions, fetchTags } = useTags()
+
+onMounted(() => {
+  fetchTags()
+})
+
+const getTagStyle = (tagName: string) => {
+  const def = tagDefinitions.value.find(t => t.name === tagName)
+  if (def) {
+    return {
+      backgroundColor: `${def.color}15`,
+      color: def.color,
+      borderColor: `${def.color}30`
+    }
+  }
+  return {
+    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+    color: '#3B82F6',
+    borderColor: 'rgba(59, 130, 246, 0.1)'
+  }
+}
+
+const getTagDescription = (tagName: string) => {
+  const def = tagDefinitions.value.find(t => t.name === tagName)
+  return def?.description || ''
+}
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
@@ -104,7 +169,8 @@ const formatCurrency = (val: number) => {
 
 const formatDate = (date: string) => {
   if (!date) return '-'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(date))
+  const safeDate = date.includes('T') ? date : `${date}T12:00:00`
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(safeDate))
 }
 
 const getStatusColor = (status: string) => {
@@ -137,5 +203,12 @@ const openMsgModal = (payment: any) => {
 const handleMessageSent = () => {
   isMsgModalOpen.value = false
   alert('Mensagem enviada com sucesso!')
+}
+
+const toggleAutoBilling = (payment: any) => {
+  // Simulando a alternância do botão para a interface
+  // Futuramente, esta função será responsável por agendar/cancelar o CRON job e fazer o POST da API
+  payment.auto_billing_enabled = !payment.auto_billing_enabled
+  console.log('Automação de cobrança via CRON/POST alterada para:', payment.auto_billing_enabled)
 }
 </script>

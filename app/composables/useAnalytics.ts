@@ -61,7 +61,7 @@ export const useAnalytics = () => {
 
             // 2. PAGAMENTOS - só de empresas ATIVAS
             const { data: paymentsData } = await (supabase.from('payments') as any)
-                .select('id, company_id, amount, status, due_date, paid_at, plan_name, companies!inner(id, name, whatsapp, is_active)')
+                .select('id, company_id, amount, status, due_date, paid_at, plan_name, companies!inner(id, name, whatsapp, is_active, tags)')
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 
