@@ -14,7 +14,33 @@ export const useSaleCrud = () => {
         .order('created_at', { ascending: false })
       
       if (error) throw error
-      salesData.value = data || []
+      
+      // Buscar última data de envio de comprovante para cada venda
+      if (data && data.length > 0) {
+        const salesWithLastSent = await Promise.all(
+          data.map(async (sale) => {
+            const { data: logs } = await supabase
+              .from('message_logs')
+              .select('created_at')
+              .eq('payment_id', sale.id.toString())
+              .eq('log_type', 'sale_receipt')
+              .like('status', '%Sucesso%')
+              .order('created_at', { ascending: false })
+              .limit(1)
+            
+            const lastSent = logs && logs.length > 0 ? logs[0].created_at : null
+            console.log(`Venda ${sale.id} - Último envio:`, lastSent)
+            
+            return {
+              ...sale,
+              last_receipt_sent_at: lastSent
+            }
+          })
+        )
+        salesData.value = salesWithLastSent
+      } else {
+        salesData.value = data || []
+      }
     } catch (err) {
       console.error('Erro ao buscar vendas:', err)
     } finally {

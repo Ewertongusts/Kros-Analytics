@@ -26,7 +26,8 @@ export const useSaleActions = () => {
     const clientName = sale.representative_name || sale.name || 'N/A'
     const confirmed = await confirm(
       `Deseja enviar o comprovante de venda para ${clientName}?`,
-      'Confirmar envio via WhatsApp'
+      'Confirmar envio via WhatsApp',
+      'whatsapp'
     )
     
     if (!confirmed) return
@@ -88,7 +89,7 @@ export const useSaleActions = () => {
 
       // Registra o log da mensagem
       const supabase = useSupabaseClient()
-      await supabase.from('message_logs').insert({
+      const logResult = await supabase.from('message_logs').insert({
         company_name: clientName,
         whatsapp: phone,
         message_body: `${text}\n\n[Imagem do comprovante anexada]`,
@@ -98,6 +99,7 @@ export const useSaleActions = () => {
         payment_id: sale.id?.toString()
       } as any)
 
+      console.log('Log criado:', logResult)
       success('Comprovante enviado', 'Imagem e texto enviados via WhatsApp')
     } catch (err: any) {
       console.error('Erro ao enviar via WhatsApp:', err)

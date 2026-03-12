@@ -5,10 +5,6 @@
     <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700">
       <BlocksKPageHeader title="Vendas" subtitle="Produtos, Serviços e Projetos Especiais">
         <template #actions>
-          <UiKExportDropdown 
-            :disabled="filteredSales.length === 0"
-            @export="handleExport"
-          />
           <UiKButtonPrimary icon="plus" @click="openNewSaleModal">
             Nova Venda
           </UiKButtonPrimary>
@@ -21,20 +17,28 @@
 
       <SalesTableKSaleSummaryCards :summary="summary" />
 
-      <SalesFiltersKSaleFilters
-        v-model:search-query="searchQuery"
-        v-model:status="status"
-        v-model:start-date="startDate"
-        v-model:end-date="endDate"
-        v-model:min-value="minValue"
-        v-model:max-value="maxValue"
-        @clear="clearFilters"
-      />
+      <div class="flex items-start gap-4">
+        <div class="flex-1">
+          <SalesFiltersKSaleFilters
+            v-model:search-query="searchQuery"
+            v-model:status="status"
+            v-model:start-date="startDate"
+            v-model:end-date="endDate"
+            v-model:min-value="minValue"
+            v-model:max-value="maxValue"
+            @clear="clearFilters"
+          />
+        </div>
+        <UiKExportDropdown 
+          :disabled="filteredSales.length === 0"
+          @export="handleExport"
+        />
+      </div>
 
       <SalesTableKSaleTable
         :sales="filteredSales"
         @edit="editSale"
-        @whatsapp="shareViaWhatsApp"
+        @whatsapp="handleWhatsAppShare"
         @copy="copySaleInfo"
         @report="generateSaleReceipt"
         @delete="handleDelete"
@@ -81,6 +85,12 @@ const { exportSales } = useExport()
 const { exportAsImage, exportAsPDF } = useSaleReceipt()
 const { loading, salesData, fetchSales, saveSale, deleteSale, computeSummary } = useSaleCrud()
 
+// Wrapper para shareViaWhatsApp que recarrega os dados após envio
+const handleWhatsAppShare = async (sale: any) => {
+  await shareViaWhatsApp(sale)
+  await fetchSales() // Recarrega para pegar a data atualizada
+}
+
 const activeFilter = ref('todos')
 const isSelectTypeModalOpen = ref(false)
 const isSaleModalOpen = ref(false)
@@ -103,7 +113,7 @@ const {
 const filteredSales = computed(() => {
   return activeFilter.value === 'todos' 
     ? filteredByAdvancedFilters.value 
-    : filteredByAdvancedFilters.value.filter((s) => s.sale_type === activeFilter.value)
+    : filteredByAdvancedFilters.value.filter((sale: any) => sale.sale_type === activeFilter.value)
 })
 
 const summary = computed(() => computeSummary(salesData.value))
