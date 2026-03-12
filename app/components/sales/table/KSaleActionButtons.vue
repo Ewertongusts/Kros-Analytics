@@ -36,6 +36,18 @@
       </svg>
     </button>
     
+    <!-- Copiar -->
+    <button 
+      @click="$emit('copy')"
+      class="p-2.5 rounded-xl bg-gray-500/10 text-gray-400 hover:bg-gray-500 hover:text-white transition-all"
+      title="Copiar informações"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+      </svg>
+    </button>
+    
     <!-- Comprovante -->
     <button 
       @click="$emit('report')"
@@ -68,6 +80,7 @@ defineEmits<{
   edit: []
   history: []
   whatsapp: []
+  copy: []
   report: []
   delete: []
 }>()

@@ -1,5 +1,6 @@
 export const useSaleActions = () => {
   const { success, error: showError, confirm } = useToast()
+  const { addHistoryEntry } = useSaleHistory()
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -108,6 +109,14 @@ export const useSaleActions = () => {
       } else {
         console.log('Log criado com sucesso:', logResult)
       }
+
+      // Registrar no histórico
+      await addHistoryEntry(
+        sale.id,
+        'whatsapp_sent',
+        `Comprovante enviado via WhatsApp para ${clientName}`,
+        { phone, message_preview: text.substring(0, 100) }
+      )
 
       success('Comprovante enviado', 'Imagem e texto enviados via WhatsApp')
     } catch (err: any) {

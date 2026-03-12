@@ -20,7 +20,7 @@
           v-if="!item.subItems"
           :to="item.path" 
           class="group flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative"
-          :class="route.path === item.path ? 'btn-primary text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'"
+          :class="route.path === item.path ? 'bg-white/[0.08] text-white border border-white/10' : 'text-white/60 hover:bg-white/5 hover:text-white'"
         >
           <div class="flex-shrink-0">
             <component :is="item.icon" class="w-5 h-5" />

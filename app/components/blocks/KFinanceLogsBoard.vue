@@ -29,8 +29,12 @@
        <FinanceLogsKLogsCard
          v-for="log in paginatedLogs"
          :key="log.id"
-         :log="log"
-         :format-date="formatDate"
+         :company-name="log.company_name || 'Sem nome'"
+         :whatsapp="log.whatsapp || 'Sem telefone'"
+         :is-cron="!!log.is_cron"
+         :status="log.status || 'Desconhecido'"
+         :formatted-date="formatDate(log.created_at)"
+         :message-body="log.message_body || 'Sem mensagem'"
        />
 
        <FinanceLogsKLogsPagination

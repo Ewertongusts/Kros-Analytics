@@ -31,9 +31,13 @@ const monthlyPriceLocal = computed({
 })
 
 const isDisabled = computed(() => {
+  // Desabilita se:
+  // - Não for venda personalizada E
+  // - Não marcou "personalizar esta venda" E
+  // - Tem um plano selecionado (que não seja __PERSONALIZADO__)
   return props.saleType !== 'personalizado' && 
          !props.customizeSale && 
-         !props.planName && 
+         props.planName && 
          props.planName !== '__PERSONALIZADO__'
 })
 </script>

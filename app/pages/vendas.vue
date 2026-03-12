@@ -15,7 +15,7 @@
         <SalesTableKSaleFilterTabs v-model="activeFilter" />
       </div>
 
-      <SalesTableKSaleSummaryCards :summary="summary" />
+      <SalesTableKSaleSummaryCards v-if="!loading" :summary="summary" />
 
       <div class="flex items-start gap-4">
         <div class="flex-1">
@@ -36,6 +36,8 @@
       </div>
 
       <SalesTableKSaleTable
+        v-if="!loading && filteredSales"
+        :key="`sales-${filteredSales.length}`"
         :sales="filteredSales"
         @edit="editSale"
         @history="openHistory"
@@ -120,9 +122,10 @@ const {
 } = useSaleFilters(salesData)
 
 const filteredSales = computed(() => {
+  const sales = filteredByAdvancedFilters.value || []
   return activeFilter.value === 'todos' 
-    ? filteredByAdvancedFilters.value 
-    : filteredByAdvancedFilters.value.filter((sale: any) => sale.sale_type === activeFilter.value)
+    ? sales 
+    : sales.filter((sale: any) => sale.sale_type === activeFilter.value)
 })
 
 const summary = computed(() => computeSummary(salesData.value))

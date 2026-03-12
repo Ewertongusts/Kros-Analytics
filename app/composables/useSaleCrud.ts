@@ -1,6 +1,7 @@
 export const useSaleCrud = () => {
   const supabase = useSupabaseClient()
   const { success, error, confirm } = useToast()
+  const { addHistoryEntry } = useSaleHistory()
   const loading = ref(false)
   const salesData = ref<any[]>([])
 
@@ -80,6 +81,14 @@ export const useSaleCrud = () => {
         
         if (updateError) throw updateError
         
+        // Registrar no histórico
+        await addHistoryEntry(
+          editingSale.id,
+          'updated',
+          `Venda atualizada: ${saleData.representative_name || saleData.name}`,
+          { changes: updateData }
+        )
+        
         success('Venda atualizada', 'Alterações salvas com sucesso')
       } else {
         // INSERT
@@ -95,6 +104,16 @@ export const useSaleCrud = () => {
           .select()
         
         if (insertError) throw insertError
+        
+        // Registrar no histórico
+        if (data && data[0]) {
+          await addHistoryEntry(
+            data[0].id,
+            'created',
+            `Venda criada: ${saleData.representative_name || saleData.name}`,
+            { sale_type: selectedSaleType, value: saleData.monthly_price }
+          )
+        }
         
         success('Venda criada', 'Nova venda registrada com sucesso')
       }
@@ -117,6 +136,14 @@ export const useSaleCrud = () => {
     if (!confirmed) return false
     
     try {
+      // Registrar no histórico antes de deletar
+      await addHistoryEntry(
+        sale.id,
+        'deleted',
+        `Venda deletada: ${sale.representative_name || sale.name}`,
+        { sale_type: sale.sale_type, value: sale.monthly_price }
+      )
+      
       const { error: deleteError } = await supabase
         .from('companies')
         .delete()

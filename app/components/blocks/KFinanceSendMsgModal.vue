@@ -202,6 +202,11 @@ const handleSend = async () => {
 
     if (response.ok) {
       emit('sent')
+      
+      // Mostrar notificação de sucesso
+      const { success } = useToast()
+      success('Mensagem enviada', `Cobrança enviada para ${props.payment.company_name}`)
+      
       // Cria log
       await (useSupabaseClient() as any).from('message_logs').insert({
          company_name: props.payment.company_name,
@@ -212,6 +217,10 @@ const handleSend = async () => {
          payment_id: props.payment.id
       })
     } else {
+      // Mostrar notificação de erro
+      const { error } = useToast()
+      error('Erro ao enviar', `Não foi possível enviar para ${props.payment.company_name}`)
+      
       await (useSupabaseClient() as any).from('message_logs').insert({
          company_name: props.payment.company_name,
          whatsapp: rawNum,
@@ -223,6 +232,11 @@ const handleSend = async () => {
     }
   } catch (err: any) {
     console.error('Erro ao enviar mensagem:', err)
+    
+    // Mostrar notificação de erro
+    const { error } = useToast()
+    error('Erro ao enviar', err?.message || 'Erro de rede desconhecido')
+    
     apiResult.value = { ok: false, body: err?.message || 'Erro de rede desconhecido' }
     await (useSupabaseClient() as any).from('message_logs').insert({
        company_name: props.payment.company_name,

@@ -27,8 +27,18 @@
        <svg class="animate-spin text-kros-blue" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
     </div>
     
-    <div v-else-if="error" class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-xs font-medium text-center">
-      {{ error }}
+    <div v-else-if="error" class="bg-red-500/10 border border-red-500/20 text-red-400 p-6 rounded-xl text-center space-y-4">
+      <div class="flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p class="text-sm font-bold">Erro ao carregar planos</p>
+      </div>
+      <p class="text-xs font-medium opacity-80">{{ error }}</p>
+      <button 
+        @click="fetchPlans"
+        class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-bold uppercase tracking-widest transition-all"
+      >
+        Tentar Novamente
+      </button>
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -111,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 const { plans, loading, error, fetchPlans, createPlan, updatePlan, deletePlan } = usePlans()
 const { confirm } = useToast()
@@ -121,7 +131,11 @@ const selectedPlan = ref<any>(null)
 const isCategoriesModalOpen = ref(false)
 
 // Buscar planos quando o componente for montado
-fetchPlans()
+onMounted(async () => {
+  console.log('🎨 KFinancePlans montado, buscando planos...')
+  await fetchPlans()
+  console.log('📊 Planos após fetch:', plans.value)
+})
 
 const openNewModal = () => {
   selectedPlan.value = null

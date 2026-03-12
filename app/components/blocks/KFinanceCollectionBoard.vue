@@ -51,7 +51,7 @@
         <tbody>
           <BlocksKFinanceCollectionTableRow 
             v-for="payment in filteredPayments" 
-            :key="payment.id"
+            :key="`${payment.id}-${(payment.tags || []).join(',')}`"
             :payment="payment"
             :is-compact="isCompact"
             :is-selected="selectedIds.includes(payment.id)"
@@ -183,7 +183,7 @@ const batchAction = async (type: string) => {
   } else if (type === 'mark-pending') {
     openBatchPendingModal(selectedPayments)
   } else if (type === 'whatsapp-api') {
-    const validatedPayments = validateWhatsAppForBatch(selectedPayments)
+    const validatedPayments = await validateWhatsAppForBatch(selectedPayments)
     if (validatedPayments) {
       openBatchMsgModal(validatedPayments)
     }
@@ -233,6 +233,8 @@ const addTag = (payment: any, tagName: string) => {
   const currentTags = [...(payment.tags || [])]
   if (!currentTags.includes(tagName)) {
     currentTags.push(tagName)
+    // Atualizar localmente primeiro para feedback imediato
+    payment.tags = currentTags
     emit('update-company-tags', { companyId: payment.company_id, tags: currentTags })
   }
   activeTagPicker.value = null
@@ -242,6 +244,8 @@ const removeTag = async (payment: any, tagName: string) => {
   const confirmed = await confirm(`Deseja remover a tag "${tagName}"?`, 'Remover tag')
   if (!confirmed) return
   const currentTags = (payment.tags || []).filter((t: string) => t !== tagName)
+  // Atualizar localmente primeiro para feedback imediato
+  payment.tags = currentTags
   emit('update-company-tags', { companyId: payment.company_id, tags: currentTags })
 }
 

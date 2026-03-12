@@ -13,14 +13,23 @@ CREATE TABLE plans (
 -- Políticas RLS (Row Level Security)
 ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable read access for all users" ON plans
-  FOR SELECT USING (true);
+-- Permitir SELECT para usuários autenticados
+CREATE POLICY "Allow authenticated users to read plans" ON plans
+  FOR SELECT 
+  USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Enable insert for authenticated users only" ON plans
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Permitir INSERT para usuários autenticados
+CREATE POLICY "Allow authenticated users to insert plans" ON plans
+  FOR INSERT 
+  WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Enable update for authenticated users only" ON plans
-  FOR UPDATE USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+-- Permitir UPDATE para usuários autenticados
+CREATE POLICY "Allow authenticated users to update plans" ON plans
+  FOR UPDATE 
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Enable delete for authenticated users only" ON plans
-  FOR DELETE USING (auth.role() = 'authenticated');
+-- Permitir DELETE para usuários autenticados
+CREATE POLICY "Allow authenticated users to delete plans" ON plans
+  FOR DELETE 
+  USING (auth.uid() IS NOT NULL);

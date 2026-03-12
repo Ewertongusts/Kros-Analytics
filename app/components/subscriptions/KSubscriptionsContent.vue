@@ -1,35 +1,38 @@
 <template>
   <div class="space-y-4 animate-in fade-in duration-500">
-    <div v-if="activeTab === 'operational'">
-      <BlocksKFinanceCollectionBoard 
-        v-model:active-sub-tab="activeTabModel"
-        :payments="financialRecords" 
-        @toggle-status="$emit('toggle-status', $event)" 
-        @toggle-autobilling="$emit('toggle-autobilling', $event)" 
-        @batch-autobilling="$emit('batch-autobilling', $event)"
-        @batch-mark-paid="$emit('batch-mark-paid', $event)"
-        @batch-mark-pending="$emit('batch-mark-pending', $event)"
-        @open-logs="$emit('open-logs', $event)"
-        @update-company-tags="$emit('update-company-tags', $event)"
-        @open-history="$emit('open-history', $event)"
-        @sync="$emit('sync')"
-        @config="$emit('config')"
-        @export="$emit('export', $event)"
-      />
-    </div>
-    <div v-else-if="activeTab === 'history'">
-      <BlocksKFinanceHistoryBoard 
-        v-model:active-sub-tab="activeTabModel"
-        :history="paymentHistory" 
-        @sync="$emit('sync')"
-        @config="$emit('config')"
-      />
-    </div>
-    <div v-else-if="activeTab === 'logs'">
-      <BlocksKFinanceLogsBoard 
-        v-model:active-sub-tab="activeTabModel"
-      />
-    </div>
+    <BlocksKFinanceCollectionBoard 
+      v-if="activeTab === 'operational'"
+      :key="'operational'"
+      :active-sub-tab="activeTabModel"
+      @update:active-sub-tab="handleTabUpdate"
+      :payments="financialRecords" 
+      @toggle-status="$emit('toggle-status', $event)" 
+      @toggle-autobilling="$emit('toggle-autobilling', $event)" 
+      @batch-autobilling="$emit('batch-autobilling', $event)"
+      @batch-mark-paid="$emit('batch-mark-paid', $event)"
+      @batch-mark-pending="$emit('batch-mark-pending', $event)"
+      @open-logs="$emit('open-logs', $event)"
+      @update-company-tags="$emit('update-company-tags', $event)"
+      @open-history="$emit('open-history', $event)"
+      @sync="$emit('sync')"
+      @config="$emit('config')"
+      @export="$emit('export', $event)"
+    />
+    <BlocksKFinanceHistoryBoard 
+      v-else-if="activeTab === 'history'"
+      :key="'history'"
+      :active-sub-tab="activeTabModel"
+      @update:active-sub-tab="handleTabUpdate"
+      :history="paymentHistory" 
+      @sync="$emit('sync')"
+      @config="$emit('config')"
+    />
+    <BlocksKFinanceLogsBoard 
+      v-else-if="activeTab === 'logs'"
+      :key="'logs'"
+      :active-sub-tab="activeTabModel"
+      @update:active-sub-tab="handleTabUpdate"
+    />
   </div>
 </template>
 
@@ -59,4 +62,9 @@ const activeTabModel = computed({
   get: () => props.activeTab,
   set: (value) => emit('update:activeTab', value)
 })
+
+const handleTabUpdate = (newTab: string) => {
+  console.log('KSubscriptionsContent - Tab update received:', newTab)
+  emit('update:activeTab', newTab)
+}
 </script>

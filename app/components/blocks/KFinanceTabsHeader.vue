@@ -1,9 +1,9 @@
 <template>
   <div class="flex items-center gap-1 bg-black/20 p-1 rounded-xl shadow-inner self-start">
     <button 
-      @click="$emit('update:activeSubTab', 'operational')"
+      @click="handleTabClick('operational')"
       :class="[
-        'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+        'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer',
         activeSubTab === 'operational' 
           ? 'bg-kros-blue text-white shadow-lg' 
           : 'text-white/20 hover:text-white/60 hover:bg-white/5'
@@ -12,9 +12,9 @@
       Gestão
     </button>
     <button 
-      @click="$emit('update:activeSubTab', 'history')"
+      @click="handleTabClick('history')"
       :class="[
-        'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+        'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer',
         activeSubTab === 'history' 
           ? 'bg-kros-blue text-white shadow-lg' 
           : 'text-white/20 hover:text-white/60 hover:bg-white/5'
@@ -23,9 +23,9 @@
       Histórico de Pagamentos
     </button>
     <button 
-      @click="$emit('update:activeSubTab', 'logs')"
+      @click="handleTabClick('logs')"
       :class="[
-        'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+        'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer',
         activeSubTab === 'logs' 
           ? 'bg-kros-blue text-white shadow-lg' 
           : 'text-white/20 hover:text-white/60 hover:bg-white/5'
@@ -37,9 +37,15 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   activeSubTab: string
 }>()
 
-defineEmits(['update:activeSubTab'])
+const emit = defineEmits(['update:activeSubTab'])
+
+const handleTabClick = (tab: string) => {
+  if (tab !== props.activeSubTab) {
+    emit('update:activeSubTab', tab)
+  }
+}
 </script>

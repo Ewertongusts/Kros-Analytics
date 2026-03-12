@@ -21,18 +21,22 @@
       <div 
         v-for="tag in tags" 
         :key="tag"
-        class="group/tag relative"
+        class="relative"
       >
-        <div 
+        <button
+          @click.stop="toggleTagTooltip(tag)"
           :style="{ backgroundColor: getTagColor(tag) }"
-          class="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.3)] border border-white/10 transition-all duration-300 group-hover/tag:scale-125 cursor-help"
-        ></div>
+          class="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.3)] border border-white/10 transition-all duration-300 hover:scale-125 cursor-pointer"
+        ></button>
 
-        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex items-center gap-2 px-2 py-1.5 bg-black/95 border border-white/10 rounded-lg shadow-2xl opacity-0 group-hover/tag:opacity-100 transition-all pointer-events-none group-hover/tag:pointer-events-auto z-[200] whitespace-nowrap">
+        <div 
+          v-if="activeTooltip === tag"
+          class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex items-center gap-2 px-2 py-1.5 bg-black/95 border border-white/10 rounded-lg shadow-2xl z-[200] whitespace-nowrap animate-in fade-in zoom-in-95 duration-200"
+        >
           <div :style="{ backgroundColor: getTagColor(tag) }" class="w-2 h-2 rounded-full shrink-0"></div>
           <span class="text-[9px] font-black text-white/90 uppercase tracking-widest">{{ tag }}</span>
           <button 
-            @click.stop="$emit('remove-tag', tag)"
+            @click.stop="handleRemoveTag(tag)"
             class="ml-1 p-0.5 hover:bg-red-500/20 text-white/30 hover:text-red-500 rounded transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -69,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
   tags: string[]
@@ -78,7 +82,9 @@ const props = defineProps<{
   showPicker: boolean
 }>()
 
-defineEmits(['remove-tag', 'add-tag', 'toggle-picker'])
+const emit = defineEmits(['remove-tag', 'add-tag', 'toggle-picker'])
+
+const activeTooltip = ref<string | null>(null)
 
 const hasValidWhatsApp = computed(() => {
   const rawNum = props.whatsapp?.replace(/\D/g, '') || ''
@@ -93,6 +99,31 @@ const getTagColor = (tagName: string) => {
   const def = props.tagDefinitions.find(t => t.name === tagName)
   return def?.color || '#3B82F6'
 }
+
+const toggleTagTooltip = (tag: string) => {
+  activeTooltip.value = activeTooltip.value === tag ? null : tag
+}
+
+const handleRemoveTag = (tag: string) => {
+  activeTooltip.value = null
+  emit('remove-tag', tag)
+}
+
+// Fechar tooltip ao clicar fora
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.relative')) {
+    activeTooltip.value = null
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>

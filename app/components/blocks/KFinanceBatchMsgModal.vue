@@ -168,6 +168,8 @@ onMounted(async () => {
 })
 
 const handleSendBatch = async () => {
+  const { success, warning } = useToast()
+  
   const errors = await sendBatch({
     payments: props.payments,
     templates: templates.value,
@@ -182,9 +184,9 @@ const handleSendBatch = async () => {
   isMinimized.value = false
   
   if (errors && errors.length === 0) {
-    alert('Campanha finalizada com sucesso!')
+    success('Campanha finalizada', 'Todas as mensagens foram enviadas com sucesso!')
   } else if (errors) {
-    alert(`Campanha finalizada com ${errors.length} erros. Verifique os alertas.`)
+    warning('Campanha finalizada com erros', `${errors.length} mensagens falharam. Verifique os logs.`)
   }
   
   emit('sent')

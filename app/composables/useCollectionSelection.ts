@@ -39,21 +39,30 @@ export const useCollectionSelection = (payments: any[], filteredPayments: any[])
     return payments.filter(p => selectedIds.value.includes(p.id))
   }
 
-  const validateWhatsAppForBatch = (selectedPayments: any[]) => {
+  const validateWhatsAppForBatch = async (selectedPayments: any[]) => {
+    const { confirm, warning } = useToast()
+    
     const paymentsWithoutWhatsApp = selectedPayments.filter(p => !isValidWhatsApp(p.company_whatsapp))
     
     if (paymentsWithoutWhatsApp.length > 0) {
       const paymentsWithWhatsApp = selectedPayments.filter(p => isValidWhatsApp(p.company_whatsapp))
       
       const names = paymentsWithoutWhatsApp.map(p => p.company_name).join(', ')
-      const message = `⚠️ ${paymentsWithoutWhatsApp.length} empresa(s) sem WhatsApp válido:\n\n${names}\n\n${paymentsWithWhatsApp.length > 0 ? `Deseja prosseguir apenas com as ${paymentsWithWhatsApp.length} empresa(s) que possuem WhatsApp válido?` : 'Nenhuma empresa selecionada possui WhatsApp válido.'}`
       
       if (paymentsWithWhatsApp.length === 0) {
-        alert(message)
+        warning(
+          'Nenhuma empresa válida',
+          `${paymentsWithoutWhatsApp.length} empresa(s) sem WhatsApp válido: ${names}`
+        )
         return null
       }
       
-      if (confirm(message)) {
+      const confirmed = await confirm(
+        `Deseja prosseguir apenas com as ${paymentsWithWhatsApp.length} empresa(s) que possuem WhatsApp válido?`,
+        `${paymentsWithoutWhatsApp.length} empresa(s) sem WhatsApp válido`
+      )
+      
+      if (confirmed) {
         const idsToRemove = paymentsWithoutWhatsApp.map(p => p.id)
         selectedIds.value = selectedIds.value.filter(id => !idsToRemove.includes(id))
         return paymentsWithWhatsApp

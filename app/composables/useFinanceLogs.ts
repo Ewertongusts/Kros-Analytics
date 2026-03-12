@@ -12,17 +12,22 @@ export const useFinanceLogs = () => {
 
   const filteredLogs = computed(() => {
     return logs.value.filter(log => {
+      // Verificações de segurança para campos que podem ser undefined
+      const companyName = log.company_name || ''
+      const whatsapp = log.whatsapp || ''
+      const logStatus = log.status || ''
+      
       const matchesSearch = !searchQuery.value || 
-        log.company_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        log.whatsapp?.includes(searchQuery.value)
+        companyName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        whatsapp.includes(searchQuery.value)
       
       const matchesType = typeFilter.value === 'all' || 
         (typeFilter.value === 'cron' && log.is_cron) ||
         (typeFilter.value === 'manual' && !log.is_cron)
       
       const matchesStatus = statusFilter.value === 'all' ||
-        (statusFilter.value === 'success' && (log.status.includes('Sucesso') || log.status.includes('Enviado'))) ||
-        (statusFilter.value === 'error' && log.status.includes('Erro'))
+        (statusFilter.value === 'success' && (logStatus.includes('Sucesso') || logStatus.includes('Enviado'))) ||
+        (statusFilter.value === 'error' && logStatus.includes('Erro'))
       
       return matchesSearch && matchesType && matchesStatus
     })
@@ -68,10 +73,15 @@ export const useFinanceLogs = () => {
         .order('created_at', { ascending: false })
         .limit(200)
         
-      if (error) throw error
-      logs.value = data || []
+      if (error) {
+        console.error('Erro ao buscar logs:', error)
+        logs.value = []
+      } else {
+        logs.value = data || []
+      }
     } catch (err) {
       console.error('Erro ao buscar logs:', err)
+      logs.value = []
     } finally {
       loading.value = false
     }

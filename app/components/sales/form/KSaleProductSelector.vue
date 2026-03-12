@@ -4,7 +4,6 @@
       v-model="planNameLocal"
       :label="`Selecione o ${saleType === 'produto' ? 'Produto' : 'Serviço'}`"
       required
-      @update:model-value="onPlanSelect"
     >
       <option value="">Selecione...</option>
       <option value="__PERSONALIZADO__">✨ Venda Personalizada (valor livre)</option>
@@ -31,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick } from 'vue'
 
 const props = defineProps<{
   saleType: string
@@ -48,19 +47,24 @@ const emit = defineEmits<{
 
 const planNameLocal = computed({
   get: () => props.planName,
-  set: (value) => emit('update:planName', value)
+  set: (value) => {
+    emit('update:planName', value)
+    // Emitir o evento após atualizar o valor
+    nextTick(() => {
+      if (value === '__PERSONALIZADO__') {
+        emit('planSelected', null)
+      } else {
+        const selected = props.catalogItems.find(item => item.name === value)
+        if (selected) {
+          emit('planSelected', selected)
+        }
+      }
+    })
+  }
 })
 
 const onPlanSelect = () => {
-  if (props.planName === '__PERSONALIZADO__') {
-    emit('planSelected', null)
-    return
-  }
-  
-  const selected = props.catalogItems.find(item => item.name === props.planName)
-  if (selected) {
-    emit('planSelected', selected)
-  }
+  // Função removida, lógica movida para o setter acima
 }
 
 const formatCurrency = (val: number) => {

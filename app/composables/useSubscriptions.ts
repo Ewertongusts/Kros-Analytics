@@ -80,10 +80,13 @@ export const useSubscriptions = () => {
     })
 
     if (res.success) {
-      await fetchStats(true, true)
       success('Tags atualizadas', `Tags de ${payment.company_name} foram atualizadas`)
+      // Recarregar em background para sincronizar
+      setTimeout(() => fetchStats(true, true), 500)
     } else {
       error('Erro ao atualizar tags', res.error)
+      // Recarregar para reverter a mudança otimista
+      await fetchStats(true, false)
     }
   }
 
