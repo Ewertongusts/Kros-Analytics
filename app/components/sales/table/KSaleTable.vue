@@ -20,6 +20,7 @@
             :key="sale.id"
             :sale="sale"
             @edit="$emit('edit', $event)"
+            @history="$emit('history', $event)"
             @whatsapp="$emit('whatsapp', $event)"
             @copy="$emit('copy', $event)"
             @report="$emit('report', $event)"
@@ -49,6 +50,7 @@ defineProps<{
 
 defineEmits<{
   edit: [sale: any]
+  history: [sale: any]
   whatsapp: [sale: any]
   copy: [sale: any]
   report: [sale: any]

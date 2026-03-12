@@ -38,6 +38,7 @@
       <SalesTableKSaleTable
         :sales="filteredSales"
         @edit="editSale"
+        @history="openHistory"
         @whatsapp="handleWhatsAppShare"
         @copy="copySaleInfo"
         @report="generateSaleReceipt"
@@ -65,6 +66,12 @@
       :is-open="isReceiptModalOpen"
       @close="isReceiptModalOpen = false"
       @export="handleReceiptExport"
+    />
+
+    <SalesHistoryKSaleHistoryModal
+      :is-open="isHistoryModalOpen"
+      :sale="historySale"
+      @close="isHistoryModalOpen = false"
     />
   </LayoutsKPageLayout>
 </template>
@@ -95,9 +102,11 @@ const activeFilter = ref('todos')
 const isSelectTypeModalOpen = ref(false)
 const isSaleModalOpen = ref(false)
 const isReceiptModalOpen = ref(false)
+const isHistoryModalOpen = ref(false)
 const selectedSaleType = ref('')
 const editingSale = ref<any>(null)
 const receiptSale = ref<any>(null)
+const historySale = ref<any>(null)
 
 const {
   searchQuery,
@@ -171,6 +180,11 @@ const handleDelete = async (sale: any) => {
 const handleSaveSale = async (saleData: any) => {
   const saved = await saveSale(saleData, selectedSaleType.value, editingSale.value)
   if (saved) closeSaleModal()
+}
+
+const openHistory = (sale: any) => {
+  historySale.value = sale
+  isHistoryModalOpen.value = true
 }
 
 onMounted(async () => {
