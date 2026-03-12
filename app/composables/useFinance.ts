@@ -64,14 +64,10 @@ export const useFinance = () => {
         if (data.notes !== undefined) updatePayload.notes = data.notes
       }
 
-      console.log('💾 Salvando pagamento:', { paymentId, updatePayload })
-
       const { data: result, error } = await (supabase.from('payments') as any)
         .update(updatePayload)
         .eq('id', paymentId)
         .select()
-
-      console.log('💾 Resultado do update:', { result, error })
 
       if (error) throw error
       

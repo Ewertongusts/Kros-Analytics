@@ -80,10 +80,6 @@ export const useAnalytics = () => {
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 
-            console.log('📊 Pagamentos do banco:', paymentsData?.length || 0)
-            console.log('📊 Pagamentos com status=paid:', paymentsData?.filter((p: any) => p.status === 'paid').length || 0)
-            console.log('📊 Pagamentos com paid_at:', paymentsData?.filter((p: any) => p.paid_at).length || 0)
-
             if (paymentsData) {
                 // 2.1 Buscar últimos logs para identificar o último alerta
                 const { data: logsData } = await supabase

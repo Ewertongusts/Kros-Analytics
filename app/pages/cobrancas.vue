@@ -135,14 +135,6 @@ const financialRecords = computed(() => processRecords(stats.value.paymentsList)
 const paymentHistory = computed(() => {
   // Filtrar por status 'Pago' (já enriquecido) ao invés de 'paid' (do banco)
   const history = stats.value.paymentsList.filter(p => p.status === 'Pago')
-  console.log('📊 Payment History:', history.length, 'pagamentos')
-  console.log('📊 Pagamentos com paid_at:', history.filter(p => p.paid_at).length)
-  console.log('📊 Detalhes:', history.map(p => ({ 
-    name: p.companies?.name, 
-    status: p.status, 
-    paid_at: p.paid_at,
-    amount: p.amount 
-  })))
   return history
 })
 
@@ -263,33 +255,21 @@ const handleConfirmBatchAutoBilling = async (customMessage: string) => {
 const handleBatchMarkPaid = async (payments: any[]) => {
   if (!payments.length) return
   
-  console.log('🔵 Iniciando pagamento em massa:', payments.length, 'pagamentos')
-  
   let errors = 0
   let successes = 0
   
   for (const payment of payments) {
-    console.log('🔵 Processando:', payment.company_name, 'Status atual:', payment.status, 'ID:', payment.id)
-    
-    // Passa o status atual do payment (que pode ser Pendente, Atrasado, etc)
-    // A função confirmPayment vai inverter: se não for 'Pago', marca como 'paid'
     const res = await confirmPayment(payment.id, payment.status, {
-      amount: payment.amount, // Valor total
+      amount: payment.amount,
       notes: 'Pagamento em massa'
     })
     
-    console.log('🔵 Resultado:', res)
-    
     if (!res.success) {
-      console.error('❌ Erro ao processar:', payment.company_name, res.error)
       errors++
     } else {
-      console.log('✅ Sucesso:', payment.company_name)
       successes++
     }
   }
-
-  console.log('🔵 Finalizado. Sucessos:', successes, 'Erros:', errors)
 
   if (errors > 0) {
     alert(`${successes} pagamentos marcados com sucesso. ${errors} erros.`)
@@ -297,10 +277,7 @@ const handleBatchMarkPaid = async (payments: any[]) => {
     alert(`${payments.length} pagamentos marcados como pago com sucesso!`)
   }
   
-  console.log('🔵 Atualizando stats...')
-  // Force refresh sem loading para atualizar a lista
   await fetchStats(true, false)
-  console.log('🔵 Stats atualizados!')
 }
 
 const handleBatchMarkPending = async (payments: any[]) => {
