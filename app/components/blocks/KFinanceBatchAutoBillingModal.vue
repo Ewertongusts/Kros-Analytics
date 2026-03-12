@@ -4,11 +4,11 @@
     
       <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-lg p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
         <div class="mb-6 text-center relative z-10">
-          <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 mx-auto mb-4 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+          <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 mx-auto mb-4 border border-emerald-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
           </div>
-          <h3 class="text-lg font-bold italic uppercase tracking-tighter text-white">
-            CONFIGURAR <span class="text-emerald-500 text-glow-emerald">AUTOMAÇÃO EM MASSA</span>
+          <h3 class="text-lg font-bold uppercase tracking-tight text-white">
+            CONFIGURAR <span class="text-emerald-500">AUTOMAÇÃO EM MASSA</span>
           </h3>
           <p class="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-2">{{ payments.length }} empresas selecionadas para CRON</p>
         </div>
@@ -63,8 +63,6 @@
         </div>
       </form>
 
-      <!-- Glow -->
-      <div class="absolute -top-20 -left-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
     </div>
   </div>
 </template>
@@ -107,7 +105,4 @@ const handleConfirmBatch = () => {
 </script>
 
 <style scoped>
-.text-glow-emerald {
-  text-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-}
 </style>

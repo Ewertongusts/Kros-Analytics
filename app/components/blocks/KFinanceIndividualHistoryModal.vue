@@ -5,9 +5,9 @@
     <div class="bg-[#0D0D0E] border border-white/10 w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 relative">
       
       <!-- Header -->
-      <div class="px-8 py-6 border-b border-white/5 bg-gradient-to-r from-kros-blue/5 to-transparent flex items-center justify-between">
+      <div class="px-8 py-6 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
         <div>
-          <h3 class="text-xl font-bold text-white tracking-tighter uppercase italic">
+          <h3 class="text-xl font-bold text-white tracking-tight uppercase">
             HISTÓRICO <span class="text-kros-blue">INDIVIDUAL</span>
           </h3>
           <p class="text-[9px] text-white/40 font-bold uppercase tracking-[0.2em] mt-1">

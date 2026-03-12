@@ -4,10 +4,10 @@
     
       <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[440px] p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
         <div class="mb-8 text-center">
-          <h3 class="text-lg font-bold italic uppercase tracking-tighter text-white">
-            REGISTRAR <span class="text-kros-blue text-glow-blue">GASTO</span>
+          <h3 class="text-lg font-bold uppercase tracking-tight text-white">
+            REGISTRAR <span class="text-kros-blue">GASTO</span>
           </h3>
-          <div class="h-1 w-8 bg-kros-blue mx-auto mt-3 rounded-full opacity-50"></div>
+          <div class="h-1 w-8 bg-kros-blue mx-auto mt-3 rounded-full"></div>
         </div>
 
       <form @submit.prevent="handleSave" class="space-y-6">
@@ -83,7 +83,7 @@
           <button 
             type="submit"
             :disabled="submitting"
-            class="flex-1 bg-red-500/90 text-white py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest shadow-[0_10px_30px_rgba(239,68,68,0.2)] hover:bg-red-500 transition-all disabled:opacity-50"
+            class="flex-1 bg-red-500 text-white py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest hover:bg-red-600 transition-all disabled:opacity-50"
           >
             {{ submitting ? 'GRAVANDO...' : 'REGISTRAR CUSTO' }}
           </button>
@@ -130,7 +130,4 @@ const handleSave = () => {
 </script>
 
 <style scoped>
-.text-glow-blue {
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-}
 </style>

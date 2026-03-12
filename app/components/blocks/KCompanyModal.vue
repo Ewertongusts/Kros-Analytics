@@ -4,12 +4,12 @@
     <div @click="close" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"></div>
 
     <!-- Modal Content -->
-    <div class="relative bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] rounded-3xl w-full max-w-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300 transform scale-100 max-h-[90vh] flex flex-col">
+    <div class="relative bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] rounded-3xl w-full max-w-2xl overflow-hidden transition-all duration-300 transform scale-100 max-h-[90vh] flex flex-col">
       
       <!-- Header -->
       <div class="px-8 py-6 border-b border-kros-outline dark:border-[#1F1F21] flex items-center justify-between bg-white/[0.02] flex-shrink-0">
         <div>
-          <h3 class="text-xl font-bold text-kros-text dark:text-kros-surface tracking-tighter uppercase">
+          <h3 class="text-xl font-bold text-kros-text dark:text-kros-surface tracking-tight uppercase">
             {{ isEditing ? 'Editar' : 'Nova' }} <span class="text-kros-blue">Empresa</span>
           </h3>
           <p class="text-[10px] font-medium opacity-60 uppercase tracking-widest mt-1">Gestão de parceiro e faturamento</p>

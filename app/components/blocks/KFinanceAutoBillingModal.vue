@@ -7,8 +7,8 @@
           <div class="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 mx-auto mb-3 border border-emerald-500/20">
              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
           </div>
-          <h3 class="text-lg font-bold italic uppercase tracking-tighter text-white">
-            ATIVAR <span class="text-emerald-500 text-glow-emerald">AUTOMAÇÃO (CRON)</span>
+          <h3 class="text-lg font-bold uppercase tracking-tight text-white">
+            ATIVAR <span class="text-emerald-500">AUTOMAÇÃO (CRON)</span>
           </h3>
           <p class="text-[9px] text-white/50 uppercase tracking-widest mt-1 max-w-sm mx-auto">
             Defina uma mensagem específica que o CRON enviará diariamente ou use o modelo global.
@@ -75,8 +75,6 @@
         </div>
       </form>
 
-      <!-- Glow -->
-      <div class="absolute -top-20 -left-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
     </div>
   </div>
 </template>
@@ -123,9 +121,3 @@ const handleConfirm = () => {
   emit('confirm', customMessageText.value)
 }
 </script>
-
-<style scoped>
-.text-glow-emerald {
-  text-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-}
-</style>

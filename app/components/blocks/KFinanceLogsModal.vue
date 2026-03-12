@@ -10,7 +10,7 @@
              </div>
               <div>
                  <h3 class="text-xl font-bold uppercase tracking-tight text-white">
-                   Logs das <span class="text-kros-blue text-glow-blue">Cobranças</span>
+                   Logs das <span class="text-kros-blue">Cobranças</span>
                  </h3>
                  <p class="text-xs text-white/60 font-medium uppercase tracking-[0.1em] mt-1">
                    Histórico de envios (manuais e automáticos)
@@ -75,8 +75,6 @@
 
       </div>
 
-      <!-- Glow bg minimalista -->
-      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-kros-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
     </div>
   </div>
 </template>
@@ -133,9 +131,6 @@ const formatDate = (dateValue: string) => {
 </script>
 
 <style scoped>
-.text-glow-blue {
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-}
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }

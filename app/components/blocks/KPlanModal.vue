@@ -4,10 +4,10 @@
     
       <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[440px] p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
         <div class="mb-8 text-center">
-          <h3 class="text-lg font-bold italic uppercase tracking-tighter text-white">
-            {{ isEditing ? 'EDITAR' : 'NOVO' }} <span class="text-kros-blue text-glow-blue">PLANO</span>
+          <h3 class="text-lg font-bold uppercase tracking-tight text-white">
+            {{ isEditing ? 'EDITAR' : 'NOVO' }} <span class="text-kros-blue">PLANO</span>
           </h3>
-          <div class="h-1 w-8 bg-kros-blue mx-auto mt-3 rounded-full opacity-50"></div>
+          <div class="h-1 w-8 bg-kros-blue mx-auto mt-3 rounded-full"></div>
         </div>
 
       <form @submit.prevent="handleSave" class="space-y-6">
@@ -114,7 +114,4 @@ const handleSave = () => {
 </script>
 
 <style scoped>
-.text-glow-blue {
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-}
 </style>

@@ -3,12 +3,12 @@
     <div class="bg-[#0D0D0E] border border-white/10 w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
       
       <!-- Header -->
-      <div class="px-6 py-5 border-b border-white/5 bg-gradient-to-r from-kros-blue/5 to-transparent">
-        <h3 class="text-xl font-bold text-white tracking-tighter uppercase italic flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-kros-blue"><path d="M12 2v20"/><path d="m17 5-5-3-5 3"/><path d="m17 19-5 3-5-3"/><path d="M2 12h20"/><path d="m5 7 3 5-3 5"/><path d="m19 7-3 5 3 5"/></svg>
+      <div class="px-6 py-5 border-b border-white/5 bg-white/[0.02]">
+        <h3 class="text-xl font-bold text-white tracking-tight uppercase flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-kros-blue"><path d="M12 2v20"/><path d="m17 5-5-3-5 3"/><path d="m17 19-5 3-5-3"/><path d="M2 12h20"/><path d="m5 7 3 5-3 5"/><path d="m19 7-3 5 3 5"/></svg>
           RECEBER <span class="text-kros-blue">PAGAMENTO</span>
         </h3>
-        <p class="text-[9px] text-white/40 font-bold uppercase tracking-[0.2em] mt-1">
+        <p class="text-[9px] text-white/40 font-bold uppercase tracking-wider mt-1">
           Empresa: {{ payment.company_name }}
         </p>
       </div>
@@ -86,7 +86,7 @@
         <button 
           @click="handleConfirm"
           :disabled="loading || (paymentType === 'partial' && !partialAmount)"
-          class="flex-2 px-6 py-3 bg-kros-blue hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-kros-blue/10"
+          class="flex-2 px-6 py-3 bg-kros-blue hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all"
         >
           <span v-if="!loading">Baixar Cobrança</span>
           <span v-else class="flex items-center gap-2">

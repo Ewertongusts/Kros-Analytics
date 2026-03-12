@@ -13,7 +13,7 @@
     ></div>
     
       <div :class="[
-        'relative bg-[#0D0D0E] border border-white/10 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.9)] transition-all duration-500 pointer-events-auto flex flex-col',
+        'relative bg-[#0D0D0E] border border-white/10 overflow-hidden transition-all duration-500 pointer-events-auto flex flex-col',
         isMinimized ? 'rounded-3xl p-5 w-full shadow-2xl h-auto' : 'rounded-[2rem] w-full max-w-xl max-h-[85vh]'
       ]">
         
@@ -61,7 +61,7 @@
                   <span class="text-[10px] font-black text-white tabular-nums">{{ countdown }}s</span>
                </div>
                <div v-else class="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div class="h-full bg-kros-blue transition-all duration-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" :style="{ width: (progress / payments.length) * 100 + '%' }"></div>
+                  <div class="h-full bg-kros-blue transition-all duration-500" :style="{ width: (progress / payments.length) * 100 + '%' }"></div>
                </div>
             </Transition>
          </div>
@@ -82,7 +82,7 @@
                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
              </div>
              <div class="text-left leading-tight">
-                <h3 class="text-lg font-black italic uppercase tracking-tighter text-white">
+                <h3 class="text-lg font-black uppercase tracking-tight text-white">
                   ENVIAR EM <span class="text-kros-blue">MASSA</span>
                 </h3>
                 <p class="text-[10px] text-white/40 font-bold uppercase tracking-widest">{{ payments.length }} destinatários</p>
@@ -165,7 +165,7 @@
                           >
                              {{ tmpl.name }}
                           </button>
-                          <div v-if="templates.filter(t => !selectedTemplateIds.includes(t.id!)).length === 0" class="p-3 text-center opacity-30 text-[9px] font-bold uppercase italic">
+                          <div v-if="templates.filter(t => !selectedTemplateIds.includes(t.id!)).length === 0" class="p-3 text-center opacity-30 text-[9px] font-bold uppercase">
                              Todos selecionados
                           </div>
                        </div>
@@ -537,10 +537,6 @@ const handleSendBatch = async () => {
 </script>
 
 <style scoped>
-.text-glow-blue {
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-}
-
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
