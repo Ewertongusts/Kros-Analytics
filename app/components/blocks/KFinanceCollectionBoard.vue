@@ -88,7 +88,7 @@
       </div>
     </div>
 
-    <div class="overflow-x-auto no-scrollbar">
+    <div class="overflow-x-auto overflow-y-visible no-scrollbar">
       <table class="w-full min-w-[1000px] text-left border-separate" :class="isCompact ? 'border-spacing-y-1' : 'border-spacing-y-3'">
         <thead>
           <tr :class="['uppercase tracking-[0.15em] text-white/50', isCompact ? 'text-[9px] font-bold' : 'text-[10px] font-bold']">
@@ -134,7 +134,7 @@
             </th>
             <th :class="['text-center w-12', isCompact ? 'px-3 py-2' : 'px-4 py-3']">Status</th>
             <th :class="isCompact ? 'px-3 py-2' : 'px-4 py-3'">Último Alerta</th>
-            <th :class="['text-right sticky right-0 bg-[#111112] text-white/50 z-20', isCompact ? 'px-3 py-2' : 'px-4 py-3']">Ações</th>
+            <th :class="['text-right sticky right-0 bg-[#111112] text-white/50 z-10', isCompact ? 'px-3 py-2' : 'px-4 py-3']">Ações</th>
           </tr>
         </thead>
         <tbody>
