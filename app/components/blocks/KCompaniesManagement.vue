@@ -64,7 +64,8 @@ const handleSave = async (formData: any) => {
 }
 
 const handleDelete = async (id: string) => {
-  if (confirm('Tem certeza que deseja excluir esta empresa? Todos os dados vinculados serão perdidos.')) {
+  const confirmed = await confirm('Tem certeza que deseja excluir esta empresa? Todos os dados vinculados serão perdidos.', 'Excluir empresa')
+  if (confirmed) {
     const result = await deleteCompany(id)
     if (!result.success) {
       alert('Erro ao excluir empresa: ' + result.error)

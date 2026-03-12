@@ -141,6 +141,7 @@ import { useRoute } from 'vue-router'
 import { 
   LayoutDashboard,
   Receipt,
+  Package,
   Settings,
   Hash,
   CreditCard,
@@ -160,7 +161,8 @@ let hideTimer: any = null
 
 const navItems = reactive([
   { name: 'Visão Geral', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Cobranças', path: '/cobrancas', icon: Receipt },
+  { name: 'Assinaturas', path: '/assinaturas', icon: Receipt },
+  { name: 'Vendas', path: '/vendas', icon: Package },
   { name: 'Despesas', path: '/despesas', icon: CreditCard },
   { name: 'Tarefas', path: '/tarefas', icon: KanbanSquare },
   { name: 'Calendário', path: '/calendario', icon: Calendar },

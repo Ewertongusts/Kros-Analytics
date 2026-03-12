@@ -21,6 +21,12 @@
 
     <!-- Toast Global -->
     <UiKToast ref="toastRef" />
+    
+    <!-- Toast Container -->
+    <UiKToastContainer ref="toastContainerRef" />
+    
+    <!-- Confirm Dialog -->
+    <UiKConfirmDialog ref="confirmDialogRef" />
   </div>
 </template>
 
@@ -32,8 +38,10 @@ import { useToast } from '~/composables/useToast'
 const user = useSupabaseUser()
 const { isExpanded } = useSidebar()
 const { settings, fetchSettings, applyColors } = useWhiteLabel()
-const { setToastInstance } = useToast()
+const { setToastInstance, setConfirmInstance } = useToast()
 const toastRef = ref()
+const toastContainerRef = ref()
+const confirmDialogRef = ref()
 
 useHead({
   titleTemplate: (title) => title ? `${title} | ${settings.value.system_name}` : settings.value.system_name,
@@ -71,6 +79,16 @@ onMounted(async () => {
   // Registrar instância do Toast
   if (toastRef.value) {
     setToastInstance(toastRef.value)
+  }
+  
+  // Registrar instância do Toast Container
+  if (toastContainerRef.value) {
+    setToastInstance(toastContainerRef.value)
+  }
+  
+  // Registrar instância do Confirm Dialog
+  if (confirmDialogRef.value) {
+    setConfirmInstance(confirmDialogRef.value)
   }
 })
 </script>

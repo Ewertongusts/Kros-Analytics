@@ -7,10 +7,15 @@ interface Toast {
 }
 
 const toastInstance = ref<any>(null)
+const confirmInstance = ref<any>(null)
 
 export const useToast = () => {
   const setToastInstance = (instance: any) => {
     toastInstance.value = instance
+  }
+
+  const setConfirmInstance = (instance: any) => {
+    confirmInstance.value = instance
   }
 
   const showToast = (toast: Toast) => {
@@ -35,12 +40,25 @@ export const useToast = () => {
     showToast({ type: 'info', message, description })
   }
 
+  const confirm = (message: string, title?: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (confirmInstance.value) {
+        confirmInstance.value.show(message, title, resolve)
+      } else {
+        // Fallback para confirm nativo se o componente não estiver montado
+        resolve(window.confirm(message))
+      }
+    })
+  }
+
   return {
     setToastInstance,
+    setConfirmInstance,
     showToast,
     success,
     error,
     warning,
-    info
+    info,
+    confirm
   }
 }

@@ -6,126 +6,29 @@
       <span class="text-[11px] font-black text-white uppercase tracking-widest">{{ totalCount }}</span>
     </div>
 
-    <!-- Campo de Busca -->
-    <div class="relative flex-1 lg:flex-initial lg:min-w-[280px]">
-      <input 
-        :value="searchQuery"
-        @input="handleSearchInput"
-        type="text"
-        placeholder="Buscar empresa ou valor..."
-        class="w-full px-4 py-3 pl-10 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:border-kros-blue focus:outline-none transition-all"
-      />
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-      <button 
-        v-if="searchQuery"
-        @click="$emit('update:searchQuery', '')"
-        class="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
+    <FinanceCollectionKCollectionSearchBar
+      :search-query="searchQuery"
+      @update:search-query="$emit('update:searchQuery', $event)"
+    />
 
-    <!-- Filtro de Tags -->
-    <div class="relative group/tags shrink-0">
-      <button 
-        @click="isTagDropdownOpen = !isTagDropdownOpen"
-        class="flex items-center gap-4 px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all text-white/70 hover:text-white"
-      >
-        <div class="flex flex-col items-start leading-none gap-1">
-          <span class="text-[8px] font-black uppercase tracking-[0.2em] text-white/30">Categorias</span>
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-widest">Tags</span>
-            <div v-if="selectedTags.length > 0" class="flex items-center justify-center min-w-[16px] h-[16px] bg-kros-blue text-white rounded-full text-[9px] font-black">
-              {{ selectedTags.length }}
-            </div>
-          </div>
-        </div>
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :class="['transition-transform', isTagDropdownOpen ? 'rotate-180' : '']"><path d="m6 9 6 6 6-6"/></svg>
-      </button>
+    <FinanceCollectionKCollectionTagFilter
+      :selected-tags="selectedTags"
+      :tag-definitions="tagDefinitions"
+      @toggle-tag="$emit('toggle-tag', $event)"
+      @toggle-all="$emit('toggle-all-tags')"
+      @clear="$emit('clear-tags')"
+    />
 
-      <div 
-        v-if="isTagDropdownOpen" 
-        class="absolute top-full right-0 mt-3 w-60 sm:w-64 bg-[#111112] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] z-[100] p-2 overflow-hidden"
-      >
-        <div class="max-h-64 overflow-y-auto custom-scrollbar p-2 space-y-1">
-          <button 
-            @click="$emit('toggle-all-tags')"
-            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition-all text-left"
-          >
-            <span class="text-[10px] font-bold text-white/70 uppercase tracking-widest">Todas as Tags</span>
-            <div :class="['w-4 h-4 rounded border flex items-center justify-center transition-all', selectedTags.length === tagDefinitions.length ? 'bg-kros-blue border-kros-blue' : 'border-white/20']">
-              <svg v-if="selectedTags.length === tagDefinitions.length" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
-          </button>
-          
-          <div class="h-px bg-white/5 my-1"></div>
-
-          <button 
-            v-for="tag in tagDefinitions" 
-            :key="tag.id"
-            @click="$emit('toggle-tag', tag.name)"
-            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition-all text-left group/item"
-          >
-            <div class="flex items-center gap-3">
-              <div :style="{ backgroundColor: tag.color }" class="w-2.5 h-2.5 rounded-sm shadow-[0_0_8px_rgba(0,0,0,0.5)]"></div>
-              <span class="text-[10px] font-bold text-white/50 group-hover/item:text-white uppercase tracking-widest transition-colors">{{ tag.name }}</span>
-            </div>
-            <div :class="['w-4 h-4 rounded border flex items-center justify-center transition-all', selectedTags.includes(tag.name) ? 'bg-kros-blue border-kros-blue' : 'border-white/20']">
-              <svg v-if="selectedTags.includes(tag.name)" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
-          </button>
-        </div>
-
-        <div v-if="selectedTags.length > 0" class="p-2 border-t border-white/5">
-          <button 
-            @click="$emit('clear-tags')"
-            class="w-full py-2.5 text-[10px] font-bold text-center text-red-500/40 hover:text-red-500 uppercase tracking-widest transition-all"
-          >
-            Limpar Filtros
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filtro de Status -->
     <div class="flex items-center gap-2">
-      <div class="relative group/filter shrink-0">
-        <button 
-          @click="isFilterDropdownOpen = !isFilterDropdownOpen"
-          class="flex items-center gap-4 px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all text-white/70 hover:text-white"
-        >
-          <div class="flex flex-col items-start leading-none gap-1">
-            <span class="text-[8px] font-black uppercase tracking-[0.2em] text-white/30">{{ activeFilter === 'Todos' ? 'Filtro' : 'Filtrando por' }}</span>
-            <span class="text-[11px] font-bold uppercase tracking-widest text-white">{{ activeFilter }}</span>
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :class="['transition-transform', isFilterDropdownOpen ? 'rotate-180' : '']"><path d="m6 9 6 6 6-6"/></svg>
-        </button>
-
-        <div 
-          v-if="isFilterDropdownOpen" 
-          class="absolute top-full right-0 mt-3 w-64 bg-[#161618] border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.9)] z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200"
-        >
-          <div class="max-h-[400px] overflow-y-auto custom-scrollbar space-y-0.5">
-            <button 
-              v-for="option in filterOptions" 
-              :key="option.id"
-              @click="$emit('update:activeFilter', option.id); isFilterDropdownOpen = false"
-              :class="[
-                'w-full flex flex-col px-3.5 py-2.5 rounded-xl transition-all text-left group/opt',
-                activeFilter === option.id ? 'bg-kros-blue border border-kros-blue/20' : 'hover:bg-white/5 border border-transparent'
-              ]"
-            >
-              <span :class="['text-[10px] font-bold uppercase tracking-widest transition-colors', activeFilter === option.id ? 'text-white' : 'text-white/70 group-hover/opt:text-white']">{{ option.label }}</span>
-              <span v-if="option.description" :class="['text-[8px] font-bold uppercase tracking-tight mt-0.5 transition-colors', activeFilter === option.id ? 'text-white/60' : 'text-white/30 group-hover/opt:text-white/40']">{{ option.description }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      <FinanceCollectionKCollectionStatusFilter
+        :active-filter="activeFilter"
+        :filter-options="filterOptions"
+        @update:active-filter="$emit('update:activeFilter', $event)"
+      />
     </div>
 
     <!-- Botões de Ação -->
     <div class="flex items-center gap-2 ml-2 pl-4 border-l border-white/5">
-      <!-- Toggle de Densidade -->
       <button 
         @click="$emit('toggle-compact')"
         class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-white/10"
@@ -139,65 +42,7 @@
         </svg>
       </button>
       
-      <!-- Dropdown de Exportação -->
-      <div class="relative">
-        <button 
-          @click="isExportDropdownOpen = !isExportDropdownOpen"
-          class="p-2.5 bg-white/5 hover:bg-white/10 text-white/30 hover:text-white rounded-xl transition-all border border-transparent hover:border-white/10"
-          title="Exportar Dados"
-          aria-label="Exportar dados filtrados"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>
-
-        <div 
-          v-if="isExportDropdownOpen" 
-          class="absolute top-full right-0 mt-2 w-48 bg-[#111112] border border-white/10 rounded-xl shadow-2xl z-[100] p-1 animate-in slide-in-from-top-2 duration-200"
-        >
-          <div class="px-3 py-2 border-b border-white/5 mb-1">
-            <p class="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Exportar como</p>
-          </div>
-          
-          <button 
-            @click="handleExport('xlsx')"
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-all text-left group"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>
-            </svg>
-            <div class="flex-1">
-              <p class="text-[10px] font-bold text-white group-hover:text-emerald-500 uppercase tracking-wider">Excel (XLSX)</p>
-              <p class="text-[8px] text-white/30 mt-0.5">Planilha formatada</p>
-            </div>
-          </button>
-          
-          <button 
-            @click="handleExport('csv')"
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-all text-left group"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>
-            </svg>
-            <div class="flex-1">
-              <p class="text-[10px] font-bold text-white group-hover:text-blue-500 uppercase tracking-wider">CSV</p>
-              <p class="text-[8px] text-white/30 mt-0.5">Dados separados por vírgula</p>
-            </div>
-          </button>
-          
-          <button 
-            @click="handleExport('pdf')"
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-all text-left group"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12h4"/><path d="M10 16h4"/>
-            </svg>
-            <div class="flex-1">
-              <p class="text-[10px] font-bold text-white group-hover:text-red-500 uppercase tracking-wider">PDF</p>
-              <p class="text-[8px] text-white/30 mt-0.5">Documento portátil</p>
-            </div>
-          </button>
-        </div>
-      </div>
+      <FinanceCollectionKCollectionExportDropdown @export="$emit('export', $event)" />
       
       <button 
         @click="$emit('config')"
@@ -218,8 +63,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-
 defineProps<{
   totalCount: number
   searchQuery: string
@@ -230,7 +73,7 @@ defineProps<{
   isCompact: boolean
 }>()
 
-const emit = defineEmits([
+defineEmits([
   'update:searchQuery',
   'toggle-tag',
   'toggle-all-tags',
@@ -241,66 +84,8 @@ const emit = defineEmits([
   'sync',
   'export'
 ])
-
-const isTagDropdownOpen = ref(false)
-const isFilterDropdownOpen = ref(false)
-const isExportDropdownOpen = ref(false)
-
-let searchTimeout: any = null
-
-const handleSearchInput = (event: Event) => {
-  const value = (event.target as HTMLInputElement).value
-  
-  // Debounce: aguarda 300ms após o usuário parar de digitar
-  if (searchTimeout) clearTimeout(searchTimeout)
-  
-  searchTimeout = setTimeout(() => {
-    emit('update:searchQuery', value)
-  }, 300)
-}
-
-const handleExport = (format: 'xlsx' | 'csv' | 'pdf') => {
-  emit('export', format)
-  isExportDropdownOpen.value = false
-}
-
-// Fechar dropdowns ao clicar fora
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.group\\/tags')) {
-    isTagDropdownOpen.value = false
-  }
-  if (!target.closest('.group\\/filter')) {
-    isFilterDropdownOpen.value = false
-  }
-  if (!target.closest('.relative')) {
-    isExportDropdownOpen.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-  if (searchTimeout) clearTimeout(searchTimeout)
-})
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+/* Estilos movidos para componentes filhos */
 </style>

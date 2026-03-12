@@ -202,7 +202,8 @@ const handleSaveTemplate = async () => {
 }
 
 const handleDeleteTemplate = async (id: string) => {
-  if (confirm('Deseja excluir este modelo?')) {
+  const confirmed = await confirm('Deseja excluir este modelo?', 'Excluir modelo')
+  if (confirmed) {
     try {
       await deleteTemplate(id)
       if (editingTemplate.value?.id === id) {

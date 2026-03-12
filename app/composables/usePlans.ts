@@ -5,6 +5,7 @@ export type PlanDefinition = {
   name: string
   type?: string
   category?: string
+  description?: string
   price: number
   billing_cycle: string
   created_at?: string
@@ -44,6 +45,7 @@ export const usePlans = () => {
           name: plan.name,
           type: plan.type || 'Plano Recorrente',
           category: plan.category || null,
+          description: plan.description || null,
           price: plan.price,
           billing_cycle: plan.billing_cycle
         }] as any)

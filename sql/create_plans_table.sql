@@ -2,6 +2,9 @@
 CREATE TABLE plans (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
+  type text DEFAULT 'Plano Recorrente' CHECK (type IN ('Plano Recorrente', 'Serviço Único', 'Produto')),
+  category text,
+  description text,
   price numeric NOT NULL DEFAULT 0,
   billing_cycle text NOT NULL DEFAULT 'Mensal',
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL

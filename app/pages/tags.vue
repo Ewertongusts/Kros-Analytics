@@ -1,33 +1,30 @@
 <template>
-  <div class="min-h-screen p-8 md:p-12">
-    <div class="max-w-7xl mx-auto space-y-8">
-      <UiKLoader 
-        v-if="loading && tags.length === 0" 
-        message="Indexando Tags e Segmentos..." 
-      />
+  <LayoutsKPageLayout>
+    <UiKLoader 
+      v-if="loading && tags.length === 0" 
+      message="Indexando Tags e Segmentos..." 
+    />
+    
+    <div v-else class="space-y-8">
+      <BlocksKPageHeader title="Tags e Segmentos" subtitle="Organização e Categorização de Clientes">
+        <template #actions>
+          <UiKButtonPrimary 
+            icon="plus"
+            @click="openModal()"
+          >
+            Nova Tag
+          </UiKButtonPrimary>
+        </template>
+      </BlocksKPageHeader>
       
-      <div v-else class="space-y-8">
-        <BlocksKPageHeader title="Tags e Segmentos" subtitle="Organização e Categorização de Clientes">
-          <template #actions>
-            <button 
-              @click="openModal()"
-              class="px-6 py-3 bg-kros-blue hover:bg-kros-blue/80 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7v14"/></svg>
-              Nova Tag
-            </button>
-          </template>
-        </BlocksKPageHeader>
-        
-        <BlocksKTagsGrid 
-          :tags="tags" 
-          :loading="loading" 
-          @edit="openModal" 
-          @delete="handleDelete" 
-        />
+      <BlocksKTagsGrid 
+        :tags="tags" 
+        :loading="loading" 
+        @edit="openModal" 
+        @delete="handleDelete" 
+      />
 
-        <BlocksKGlobalFooter />
-      </div>
+      <BlocksKGlobalFooter />
     </div>
 
     <BlocksKTagModal 
@@ -37,7 +34,7 @@
       @close="closeModal" 
       @save="handleSave" 
     />
-  </div>
+  </LayoutsKPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -73,7 +70,8 @@ const handleSave = async (form: TagDefinition) => {
 }
 
 const handleDelete = async (id: string) => {
-  if (confirm('Deseja realmente excluir esta tag?')) {
+  const confirmed = await confirm('Deseja realmente excluir esta tag?', 'Excluir tag')
+  if (confirmed) {
     await deleteTag(id)
   }
 }

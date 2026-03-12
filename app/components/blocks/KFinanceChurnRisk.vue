@@ -45,7 +45,7 @@
           <span class="text-[9px] font-black text-white/40 uppercase tracking-widest">Prejuízo Potencial</span>
           <span class="text-lg font-black text-red-500 tracking-tighter">{{ formatCurrency(potentialLoss) }}</span>
        </div>
-       <button @click="navigateTo('/cobrancas')" class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-red-500/20">
+       <button @click="navigateTo('/assinaturas')" class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-red-500/20">
           Agir Agora
        </button>
     </div>

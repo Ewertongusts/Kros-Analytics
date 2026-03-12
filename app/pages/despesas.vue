@@ -1,64 +1,61 @@
 <template>
-  <div class="min-h-screen p-8 md:p-12">
-    <div class="max-w-7xl mx-auto space-y-8">
-      <UiKLoader 
-        v-if="loadingAnalytics || loadingFinance" 
-        message="Processando Despesas e Custos..." 
-      />
+  <LayoutsKPageLayout>
+    <UiKLoader 
+      v-if="loadingAnalytics || loadingFinance" 
+      message="Processando Despesas e Custos..." 
+    />
 
-      <div v-else class="space-y-8 animate-in fade-in duration-700">
-        <BlocksKPageHeader title="Despesas" subtitle="Controle de Custos e Saídas">
-          <template #actions>
-            <div class="flex items-center gap-3">
-              <button 
-                @click="isModalOpen = true"
-                class="px-6 py-3 bg-kros-blue hover:bg-kros-blue/80 text-white rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-kros-blue/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                Nova Despesa
-              </button>
-              <button 
-                @click="() => fetchStats()"
-                class="p-3 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-xl transition-all border border-transparent hover:border-white/10"
-                title="Sincronizar Dados"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/><path d="M22 3v5h-5"/></svg>
-              </button>
-            </div>
-          </template>
-        </BlocksKPageHeader>
+    <div v-else class="space-y-8 animate-in fade-in duration-700">
+      <BlocksKPageHeader title="Despesas" subtitle="Controle de Custos e Saídas">
+        <template #actions>
+          <div class="flex items-center gap-3">
+            <UiKButtonPrimary 
+              icon="plus"
+              @click="isModalOpen = true"
+            >
+              Nova Despesa
+            </UiKButtonPrimary>
+            <button 
+              @click="() => fetchStats()"
+              class="p-3 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-xl transition-all border border-transparent hover:border-white/10"
+              title="Sincronizar Dados"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/><path d="M22 3v5h-5"/></svg>
+            </button>
+          </div>
+        </template>
+      </BlocksKPageHeader>
         
         <div class="space-y-12 animate-in fade-in duration-500">
           <BlocksKFinanceExpenses :expenses="stats.transactionsList" />
         </div>
-        
-        <BlocksKGlobalFooter />
-      </div>
-
-      <BlocksKExpenseModal 
-        v-if="isModalOpen" 
-        :is-open="isModalOpen" 
-        :submitting="loadingFinance"
-        @close="isModalOpen = false" 
-        @save="handleSaveExpense" 
-      />
-
-      <BlocksKFinanceAutoBillingModal 
-        v-if="isAutoBillingModalOpen"
-        :is-open="isAutoBillingModalOpen"
-        :payment="autoBillingTargetPayment"
-        @close="isAutoBillingModalOpen = false"
-        @confirm="handleConfirmAutoBilling"
-      />
-
-      <BlocksKFinanceLogsModal 
-        v-if="isLogsModalOpen"
-        :is-open="isLogsModalOpen"
-        :payment-id="logsTargetPaymentId"
-        @close="isLogsModalOpen = false"
-      />
+      
+      <BlocksKGlobalFooter />
     </div>
-  </div>
+
+    <BlocksKExpenseModal 
+      v-if="isModalOpen" 
+      :is-open="isModalOpen" 
+      :submitting="loadingFinance"
+      @close="isModalOpen = false" 
+      @save="handleSaveExpense" 
+    />
+
+    <BlocksKFinanceAutoBillingModal 
+      v-if="isAutoBillingModalOpen"
+      :is-open="isAutoBillingModalOpen"
+      :payment="autoBillingTargetPayment"
+      @close="isAutoBillingModalOpen = false"
+      @confirm="handleConfirmAutoBilling"
+    />
+
+    <BlocksKFinanceLogsModal 
+      v-if="isLogsModalOpen"
+      :is-open="isLogsModalOpen"
+      :payment-id="logsTargetPaymentId"
+      @close="isLogsModalOpen = false"
+    />
+  </LayoutsKPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -95,7 +92,8 @@ const handleTogglePaymentStatus = async (payment: any) => {
   const isPaid = payment.status === 'Pago'
   const action = isPaid ? 'estornar para PENDENTE' : 'confirmar RECEBIMENTO'
   
-  if (!confirm(`Deseja ${action} o pagamento de ${payment.company_name}?`)) return
+  const confirmed = await confirm(`Deseja ${action} o pagamento de ${payment.company_name}?`, 'Confirmar ação')
+  if (!confirmed) return
   
   const res = await confirmPayment(payment.id, payment.status)
   if (res.success) {

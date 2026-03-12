@@ -15,8 +15,8 @@
         :selected-tags="selectedTags"
         :tag-definitions="tagDefinitions"
         @toggle-tag="toggleTag"
-        @toggle-all-tags="toggleAllTags"
-        @clear-tags="selectedTags = []"
+        @toggle-all-tags="toggleAllTags(tagDefinitions.map(t => t.name))"
+        @clear-tags="clearTags"
         :active-filter="activeFilter"
         @update:active-filter="activeFilter = $event"
         :filter-options="filterOptions"
@@ -35,58 +35,19 @@
       :tag-definitions="tagDefinitions"
       @batch-action="batchAction"
       @add-tag-batch="addTagToBatch"
-      @clear-selection="selectedIds = []"
+      @clear-selection="clearSelection"
     />
 
     <div class="overflow-x-auto overflow-y-visible no-scrollbar">
       <table class="w-full min-w-[1000px] text-left border-separate" :class="isCompact ? 'border-spacing-y-1' : 'border-spacing-y-3'">
-        <thead>
-          <tr :class="['uppercase tracking-[0.15em] text-white/50', isCompact ? 'text-[9px] font-bold' : 'text-[10px] font-bold']">
-            <th :class="['w-10', isCompact ? 'px-3 py-2' : 'px-4 py-3']">
-              <div @click="toggleSelectAll" class="w-5 h-5 rounded-md border border-white/10 flex items-center justify-center cursor-pointer hover:border-kros-blue transition-all" :class="isAllSelected ? 'bg-kros-blue border-kros-blue' : ''">
-                <svg v-if="isAllSelected" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </div>
-            </th>
-            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('company_name')">
-              <div class="flex items-center gap-2">
-                Cliente / Parceiro
-                <svg v-if="sortColumn === 'company_name'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-              </div>
-            </th>
-            <th :class="['text-center cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('company_created_at')">
-              <div class="flex items-center justify-center gap-2">
-                Cadastro
-                <svg v-if="sortColumn === 'company_created_at'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-              </div>
-            </th>
-            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('due_date')">
-              <div class="flex items-center gap-2">
-                Vencimento
-                <svg v-if="sortColumn === 'due_date'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-              </div>
-            </th>
-            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('amount')">
-              <div class="flex items-center gap-2">
-                Valor
-                <svg v-if="sortColumn === 'amount'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-              </div>
-            </th>
-            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('company_ltv')">
-              <div class="flex items-center gap-2">
-                LTV Pago
-                <svg v-if="sortColumn === 'company_ltv'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-              </div>
-            </th>
-            <th :class="['text-center w-12', isCompact ? 'px-3 py-2' : 'px-4 py-3']">Status</th>
-            <th :class="isCompact ? 'px-3 py-2' : 'px-4 py-3'">Último Alerta</th>
-            <th :class="['text-right sticky right-0 bg-[#111112] text-white/50 z-10', isCompact ? 'px-3 py-2' : 'px-4 py-3']">Ações</th>
-          </tr>
-        </thead>
+        <FinanceCollectionKCollectionTableHeader
+          :is-compact="isCompact"
+          :is-all-selected="isAllSelected"
+          :sort-column="sortColumn"
+          :sort-direction="sortDirection"
+          @toggle-select-all="toggleSelectAll"
+          @sort="handleSort"
+        />
         <tbody>
           <BlocksKFinanceCollectionTableRow 
             v-for="payment in filteredPayments" 
@@ -151,9 +112,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useTags } from '~/composables/useTags'
-import { isValidWhatsApp, formatCurrency } from '~/utils/validators'
+import { useCollectionFilters } from '~/composables/useCollectionFilters'
+import { useCollectionSelection } from '~/composables/useCollectionSelection'
+import { useCollectionBatchActions } from '~/composables/useCollectionBatchActions'
+import { isValidWhatsApp } from '~/utils/validators'
+
+const { confirm } = useToast()
 
 const props = defineProps<{
   payments: any[],
@@ -167,108 +133,90 @@ const handleExportDebug = (format: any) => {
 }
 
 const isMsgModalOpen = ref(false)
-const isBatchMsgModalOpen = ref(false)
-const isBatchPaidModalOpen = ref(false)
-const isBatchPendingModalOpen = ref(false)
 const selectedPayment = ref<any>(null)
-const selectedPaymentsForBatch = ref<any[]>([])
 const { tags: tagDefinitions, fetchTags } = useTags()
-
-const activeFilter = ref('Todos')
-const selectedTags = ref<string[]>([])
-const selectedIds = ref<string[]>([])
-const activeTagPicker = ref<string | null>(null)
-const searchQuery = ref('')
-const sortColumn = ref<string | null>(null)
-const sortDirection = ref<'asc' | 'desc'>('asc')
 const isCompact = ref(true)
 
-const isAllSelected = computed(() => {
-  return filteredPayments.value.length > 0 && selectedIds.value.length === filteredPayments.value.length
-})
+// Composables
+const {
+  activeFilter,
+  selectedTags,
+  searchQuery,
+  sortColumn,
+  sortDirection,
+  filterOptions,
+  filteredPayments,
+  toggleTag,
+  toggleAllTags,
+  clearTags,
+  handleSort
+} = useCollectionFilters(props.payments)
 
-const toggleSelectAll = () => {
-  if (isAllSelected.value) {
-    selectedIds.value = []
-  } else {
-    selectedIds.value = filteredPayments.value.map(p => p.id)
-  }
-}
+const {
+  selectedIds,
+  activeTagPicker,
+  isAllSelected,
+  selectedTotal,
+  toggleSelectAll,
+  toggleSelect,
+  clearSelection,
+  getSelectedPayments,
+  validateWhatsAppForBatch
+} = useCollectionSelection(props.payments, filteredPayments.value)
 
-const toggleSelect = (id: string) => {
-  const index = selectedIds.value.indexOf(id)
-  if (index === -1) {
-    selectedIds.value.push(id)
-  } else {
-    selectedIds.value.splice(index, 1)
-  }
-}
+const {
+  isBatchMsgModalOpen,
+  isBatchPaidModalOpen,
+  isBatchPendingModalOpen,
+  selectedPaymentsForBatch,
+  openBatchMsgModal,
+  openBatchPaidModal,
+  openBatchPendingModal,
+  closeBatchModals
+} = useCollectionBatchActions()
 
 const batchAction = async (type: string) => {
-  const selectedPayments = props.payments.filter(p => selectedIds.value.includes(p.id))
+  const selectedPayments = getSelectedPayments()
   
   if (type === 'mark-paid') {
-    selectedPaymentsForBatch.value = selectedPayments
-    isBatchPaidModalOpen.value = true
+    openBatchPaidModal(selectedPayments)
   } else if (type === 'mark-pending') {
-    selectedPaymentsForBatch.value = selectedPayments
-    isBatchPendingModalOpen.value = true
+    openBatchPendingModal(selectedPayments)
   } else if (type === 'whatsapp-api') {
-    // Validar usando helper
-    const paymentsWithoutWhatsApp = selectedPayments.filter(p => !isValidWhatsApp(p.company_whatsapp))
-    
-    if (paymentsWithoutWhatsApp.length > 0) {
-      const paymentsWithWhatsApp = selectedPayments.filter(p => isValidWhatsApp(p.company_whatsapp))
-      
-      const names = paymentsWithoutWhatsApp.map(p => p.company_name).join(', ')
-      const message = `⚠️ ${paymentsWithoutWhatsApp.length} empresa(s) sem WhatsApp válido:\n\n${names}\n\n${paymentsWithWhatsApp.length > 0 ? `Deseja prosseguir apenas com as ${paymentsWithWhatsApp.length} empresa(s) que possuem WhatsApp válido?` : 'Nenhuma empresa selecionada possui WhatsApp válido.'}`
-      
-      if (paymentsWithWhatsApp.length === 0) {
-        alert(message)
-        return
-      }
-      
-      if (confirm(message)) {
-        const idsToRemove = paymentsWithoutWhatsApp.map(p => p.id)
-        selectedIds.value = selectedIds.value.filter(id => !idsToRemove.includes(id))
-        selectedPaymentsForBatch.value = paymentsWithWhatsApp
-        isBatchMsgModalOpen.value = true
-      }
-      return
+    const validatedPayments = validateWhatsAppForBatch(selectedPayments)
+    if (validatedPayments) {
+      openBatchMsgModal(validatedPayments)
     }
-    
-    selectedPaymentsForBatch.value = selectedPayments
-    isBatchMsgModalOpen.value = true
   } else if (type === 'auto-billing-on') {
     emit('batch-autobilling', selectedPayments)
   } else if (type === 'auto-billing-off') {
-    if (!confirm(`Deseja desativar a cobrança automática para as ${selectedIds.value.length} empresas selecionadas?`)) return
+    const confirmed = await confirm(`Deseja desativar a cobrança automática para as ${selectedIds.value.length} empresas selecionadas?`, 'Desativar cobrança automática')
+    if (!confirmed) return
     for (const p of selectedPayments) {
       emit('toggle-autobilling', p)
     }
-    selectedIds.value = []
+    clearSelection()
   }
 }
 
 const confirmBatchPaid = () => {
   emit('batch-mark-paid', selectedPaymentsForBatch.value)
-  isBatchPaidModalOpen.value = false
-  selectedIds.value = []
-  selectedPaymentsForBatch.value = []
+  closeBatchModals()
+  clearSelection()
 }
 
 const confirmBatchPending = () => {
   emit('batch-mark-pending', selectedPaymentsForBatch.value)
-  isBatchPendingModalOpen.value = false
-  selectedIds.value = []
-  selectedPaymentsForBatch.value = []
+  closeBatchModals()
+  clearSelection()
 }
 
 const addTagToBatch = async (tagName: string) => {
-  const selectedPayments = props.payments.filter(p => selectedIds.value.includes(p.id))
+  const selectedPayments = getSelectedPayments()
   if (selectedPayments.length === 0) return
 
-  if (!confirm(`Deseja adicionar a tag "${tagName}" para as ${selectedPayments.length} empresas selecionadas?`)) return
+  const confirmed = await confirm(`Deseja adicionar a tag "${tagName}" para as ${selectedPayments.length} empresas selecionadas?`, 'Adicionar tag')
+  if (!confirmed) return
 
   for (const p of selectedPayments) {
     const currentTags = [...(p.tags || [])]
@@ -278,7 +226,7 @@ const addTagToBatch = async (tagName: string) => {
     }
   }
 
-  selectedIds.value = []
+  clearSelection()
 }
 
 const addTag = (payment: any, tagName: string) => {
@@ -290,155 +238,12 @@ const addTag = (payment: any, tagName: string) => {
   activeTagPicker.value = null
 }
 
-const removeTag = (payment: any, tagName: string) => {
-  if (!confirm(`Deseja remover a tag "${tagName}"?`)) return
+const removeTag = async (payment: any, tagName: string) => {
+  const confirmed = await confirm(`Deseja remover a tag "${tagName}"?`, 'Remover tag')
+  if (!confirmed) return
   const currentTags = (payment.tags || []).filter((t: string) => t !== tagName)
   emit('update-company-tags', { companyId: payment.company_id, tags: currentTags })
 }
-
-const filterOptions = [
-  { id: 'Todos', label: 'Todos', description: 'Mostra todas as cobranças sem nenhum filtro aplicado.' },
-  { id: 'Hoje', label: 'Hoje', description: 'Cobranças que vencem hoje (exclui as já pagas).' },
-  { id: 'Crítico', label: 'Crítico (>7d)', description: 'Cobranças atrasadas há mais de uma semana.' },
-  { id: 'Cobrados', label: 'Cobrados', description: 'Empresas que já receberam pelo menos um alerta/cobrança.' },
-  { id: 'Nao-Cobrados', label: 'Não Cobrados', description: 'Empresas que ainda não receberam nenhum alerta.' },
-  { id: 'Sem-WA', label: 'Sem WA', description: 'Empresas que não possuem WhatsApp cadastrado.' },
-  { id: 'Pendente', label: 'Pendentes', description: 'Cobranças agendadas que ainda não venceram.' },
-  { id: 'Atrasado', label: 'Atrasados', description: 'Todas as cobranças com vencimento ultrapassado.' },
-  { id: 'Semana', label: 'Semana', description: 'Todas as cobranças que vencem na semana corrente.' },
-  { id: 'Pago', label: 'Pagos', description: 'Histórico completo de cobranças já liquidadas.' },
-  { id: 'Churn', label: 'Churn', description: 'Clientes com mais de 30 dias de atraso (Perdidos).' }
-]
-
-const toggleTag = (tagName: string) => {
-  const index = selectedTags.value.indexOf(tagName)
-  if (index === -1) {
-    selectedTags.value.push(tagName)
-  } else {
-    selectedTags.value.splice(index, 1)
-  }
-}
-
-const toggleAllTags = () => {
-  if (selectedTags.value.length === tagDefinitions.value.length) {
-    selectedTags.value = []
-  } else {
-    selectedTags.value = tagDefinitions.value.map(t => t.name)
-  }
-}
-
-const hasActiveFilters = computed(() => {
-  return activeFilter.value !== 'Todos' || selectedTags.value.length > 0 || searchQuery.value !== ''
-})
-
-const filteredPayments = computed(() => {
-  const now = new Date()
-  const startOfWeek = new Date(now)
-  startOfWeek.setDate(now.getDate() - now.getDay())
-  startOfWeek.setHours(0, 0, 0, 0)
-
-  const endOfWeek = new Date(now)
-  endOfWeek.setDate(now.getDate() + (6 - now.getDay()))
-  endOfWeek.setHours(23, 59, 59, 999)
-
-  let filtered = props.payments.filter(p => {
-    // Filtro por Status
-    let matchesStatus = false
-    if (activeFilter.value === 'Todos') {
-      matchesStatus = true
-    } else if (activeFilter.value === 'Hoje') {
-      if (p.due_date) {
-        const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
-        const dueDate = new Date(dueDateString)
-        matchesStatus = dueDate.toDateString() === now.toDateString() && p.status !== 'Pago'
-      }
-    } else if (activeFilter.value === 'Crítico') {
-      if (p.due_date) {
-        const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
-        const dueDate = new Date(dueDateString)
-        const diffTime = now.getTime() - dueDate.getTime()
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        matchesStatus = p.status === 'Atrasado' && diffDays > 7
-      }
-    } else if (activeFilter.value === 'Sem-WA') {
-      matchesStatus = !p.company_whatsapp || p.company_whatsapp.trim() === ''
-    } else if (activeFilter.value === 'Cobrados') {
-      matchesStatus = !!p.last_alert_at
-    } else if (activeFilter.value === 'Nao-Cobrados') {
-      matchesStatus = !p.last_alert_at
-    } else if (activeFilter.value === 'Semana') {
-      if (p.due_date) {
-        const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
-        const dueDate = new Date(dueDateString)
-        matchesStatus = dueDate >= startOfWeek && dueDate <= endOfWeek
-      }
-    } else {
-      matchesStatus = p.status === activeFilter.value
-    }
-    
-    // Filtro por Multi-Tags
-    const matchesTag = selectedTags.value.length === 0 || 
-                       (p.tags && p.tags.some((t: string) => selectedTags.value.includes(t)))
-    
-    // Filtro por Busca
-    const matchesSearch = !searchQuery.value || 
-                         p.company_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         p.amount?.toString().includes(searchQuery.value)
-    
-    return matchesStatus && matchesTag && matchesSearch
-  })
-
-  // Ordenação
-  if (sortColumn.value) {
-    filtered = [...filtered].sort((a, b) => {
-      let aVal = a[sortColumn.value!]
-      let bVal = b[sortColumn.value!]
-
-      // Tratamento especial para datas
-      if (sortColumn.value === 'due_date' || sortColumn.value === 'company_created_at') {
-        aVal = aVal ? new Date(aVal).getTime() : 0
-        bVal = bVal ? new Date(bVal).getTime() : 0
-      }
-
-      // Tratamento para números
-      if (sortColumn.value === 'amount' || sortColumn.value === 'company_ltv') {
-        aVal = Number(aVal) || 0
-        bVal = Number(bVal) || 0
-      }
-
-      // Tratamento para strings
-      if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase()
-        bVal = bVal?.toLowerCase() || ''
-      }
-
-      if (aVal < bVal) return sortDirection.value === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortDirection.value === 'asc' ? 1 : -1
-      return 0
-    })
-  }
-
-  // Limitar a 10 registros se não houver filtros ativos
-  if (!hasActiveFilters.value) {
-    return filtered.slice(0, 10)
-  }
-
-  return filtered
-})
-
-const handleSort = (column: string) => {
-  if (sortColumn.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortColumn.value = column
-    sortDirection.value = 'asc'
-  }
-}
-
-const selectedTotal = computed(() => {
-  const selected = props.payments.filter(p => selectedIds.value.includes(p.id))
-  return selected.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
-})
 
 onMounted(() => {
   fetchTags()
@@ -459,8 +264,8 @@ const handleMessageSent = () => {
 }
 
 const handleBatchSent = () => {
-  isBatchMsgModalOpen.value = false
-  selectedIds.value = []
+  closeBatchModals()
+  clearSelection()
   emit('sync')
 }
 

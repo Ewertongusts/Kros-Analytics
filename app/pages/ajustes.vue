@@ -88,10 +88,52 @@ onMounted(async () => {
   await fetchAnalyticsStats()
 })
 
-const handleSaveProfile = (data: any) => {
-  Object.assign(profileData, data)
-  // Aqui você pode adicionar a lógica de salvar no Supabase se desejar
-  alert('Perfil atualizado localmente!')
+const handleSaveProfile = async (data: any) => {
+  try {
+    const supabase = useSupabaseClient()
+    
+    // Buscar usuário de forma mais robusta
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !authUser) {
+      console.error('Erro ao buscar usuário:', authError)
+      alert('Erro: Não foi possível identificar o usuário logado. Faça login novamente.')
+      return
+    }
+
+    const userId = authUser.id
+    console.log('Salvando perfil para usuário:', userId, data)
+
+    // Tentar atualizar em user_profiles
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .upsert({
+        id: userId,
+        full_name: data.name,
+        name: data.name,
+        role: data.role,
+        phone: data.phone,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
+      })
+
+    if (profileError) {
+      console.error('Erro ao salvar em user_profiles:', profileError)
+      alert('Erro ao salvar perfil: ' + profileError.message)
+      return
+    }
+
+    Object.assign(profileData, data)
+    alert('Perfil atualizado com sucesso!')
+    
+    // Limpar cache do composable para forçar reload
+    const { clearCurrentUser } = useCurrentUser()
+    clearCurrentUser()
+  } catch (err: any) {
+    console.error('Erro ao salvar perfil:', err)
+    alert('Erro ao salvar perfil: ' + err.message)
+  }
 }
 
 const handleSaveWhiteLabel = async (data: any) => {

@@ -1,16 +1,8 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
-    <div @click="$emit('close')" class="absolute inset-0 bg-black/90 backdrop-blur-xl"></div>
-    
-      <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[440px] p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
-        <div class="mb-8 text-center">
-          <h3 class="text-lg font-bold uppercase tracking-tight text-white">
-            {{ initialData?.id ? 'EDITAR' : 'NOVA' }} <span class="text-kros-blue">TAG</span>
-          </h3>
-          <div class="h-1 w-8 bg-kros-blue mx-auto mt-3 rounded-full"></div>
-        </div>
+  <UiKModal :is-open="isOpen" size="md" @close="$emit('close')">
+    <UiKModalHeader :title="`${initialData?.id ? 'EDITAR' : 'NOVA'} TAG`" />
 
-      <form @submit.prevent="handleSave" class="space-y-6">
+    <form @submit.prevent="handleSave" class="space-y-6">
         <div class="space-y-2">
           <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Nome da Tag</label>
           <input 
@@ -59,25 +51,15 @@
           ></textarea>
         </div>
 
-        <div class="flex gap-3 pt-2">
-          <button 
-            type="button"
-            @click="$emit('close')"
-            class="flex-1 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-          >
-            Cancelar
-          </button>
-          <button 
-            type="submit"
-            :disabled="submitting"
-            class="flex-1 btn-primary py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
-          >
-            {{ submitting ? 'SINC...' : 'CONFIRMAR' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+      <UiKModalActions
+        cancel-text="Cancelar"
+        confirm-text="CONFIRMAR"
+        :loading="submitting"
+        submit-type="submit"
+        @cancel="$emit('close')"
+      />
+    </form>
+  </UiKModal>
 </template>
 
 <script setup lang="ts">
