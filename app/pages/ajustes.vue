@@ -1,9 +1,8 @@
 <template>
   <div class="min-h-screen p-8 md:p-12 overflow-hidden">
     <div class="max-w-4xl mx-auto space-y-10">
-      <!-- HEADER -->
-      <BlocksKSettingsHeader :active-tab-name="activeTabName" />
-
+      <BlocksKPageHeader title="Configurações" subtitle="Ajustes do Sistema e Preferências" />
+      
       <!-- TABS -->
       <UiKTabs v-model="activeTab" :tabs="tabs" class="animate-in fade-in duration-1000 delay-200" />
 
@@ -77,10 +76,6 @@ const tabs = [
   { id: 'settings', name: 'Config. API' },
   { id: 'companies', name: 'Empresas' }
 ]
-
-const activeTabName = computed(() => {
-  return tabs.find(t => t.id === activeTab.value)?.name || 'Geral'
-})
 
 const profileData = reactive({
   name: user.value?.user_metadata?.full_name || '',

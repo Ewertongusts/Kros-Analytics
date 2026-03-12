@@ -7,9 +7,9 @@
       />
 
       <div v-else class="space-y-8 animate-in fade-in duration-700">
-        <div class="flex justify-end">
-          
-          <div class="flex items-center gap-3">
+        <BlocksKPageHeader title="Despesas" subtitle="Controle de Custos e Saídas">
+          <template #actions>
+            <div class="flex items-center gap-3">
               <button 
                 @click="isModalOpen = true"
                 class="px-6 py-3 bg-kros-blue hover:bg-kros-blue/80 text-white rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-kros-blue/10"
@@ -24,8 +24,9 @@
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/><path d="M22 3v5h-5"/></svg>
               </button>
-          </div>
-        </div>
+            </div>
+          </template>
+        </BlocksKPageHeader>
         
         <div class="space-y-12 animate-in fade-in duration-500">
           <BlocksKFinanceExpenses :expenses="stats.transactionsList" />

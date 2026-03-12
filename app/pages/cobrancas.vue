@@ -5,9 +5,9 @@
       <UiKSkeleton v-if="loadingAnalytics || loadingFinance" type="table" :rows="5" />
 
       <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700">
-        <!-- Botão para mostrar/ocultar (sempre visível no topo) -->
-        <div class="flex justify-end">
-          <button 
+        <BlocksKPageHeader title="Cobranças" subtitle="Gestão de Recebimentos e Automação">
+          <template #actions>
+            <button 
             @click="showCharts = !showCharts"
             class="px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center gap-2 text-white/70 hover:text-white"
           >
@@ -21,7 +21,8 @@
               <path d="m6 9 6 6 6-6"/>
             </svg>
           </button>
-        </div>
+          </template>
+        </BlocksKPageHeader>
 
         <!-- SUMMARY CARDS E GRÁFICOS (Ocultos por padrão) -->
         <div v-if="showCharts" class="space-y-6 animate-in fade-in duration-500">

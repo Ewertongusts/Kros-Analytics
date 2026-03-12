@@ -6,13 +6,16 @@
         message="Sincronizando Agenda Global..." 
       />
 
-      <div v-else class="space-y-12 animate-in fade-in duration-500 min-h-[60vh] flex flex-col items-center justify-center">
-        <div class="flex flex-col items-center justify-center py-20 opacity-40">
-           <div class="p-8 bg-white/5 rounded-3xl mb-6">
-              <div class="w-16 h-16 border-4 border-dashed border-kros-blue/40 rounded-2xl animate-[spin_4s_linear_infinite]"></div>
-           </div>
-           <h3 class="text-2xl font-bold uppercase tracking-[0.3em] text-white">Calendário</h3>
-           <p class="text-[10px] font-bold uppercase tracking-widest text-white/30 mt-4 px-6 py-2 bg-white/5 rounded-full">Integrando com Motor de Agendamentos</p>
+      <div v-else class="space-y-8 animate-in fade-in duration-500">
+        <BlocksKPageHeader title="Calendário" subtitle="Agendamentos e Compromissos" />
+        
+        <div class="min-h-[60vh] flex flex-col items-center justify-center">
+          <div class="flex flex-col items-center justify-center py-20 opacity-40">
+             <div class="p-8 bg-white/5 rounded-3xl mb-6">
+                <div class="w-16 h-16 border-4 border-dashed border-kros-blue/40 rounded-2xl animate-[spin_4s_linear_infinite]"></div>
+             </div>
+             <p class="text-[10px] font-bold uppercase tracking-widest text-white/30 mt-4 px-6 py-2 bg-white/5 rounded-full">Integrando com Motor de Agendamentos</p>
+          </div>
         </div>
         
         <BlocksKGlobalFooter />

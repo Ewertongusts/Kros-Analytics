@@ -1,6 +1,12 @@
 <template>
-  <div class="p-8">
-    <KFinanceMessageTemplates />
+  <div class="min-h-screen p-8 md:p-12">
+    <div class="max-w-7xl mx-auto space-y-8">
+      <BlocksKPageHeader title="Modelos de Mensagem" subtitle="Gestão de Templates Automatizados" />
+      
+      <KFinanceMessageTemplates />
+      
+      <BlocksKGlobalFooter />
+    </div>
   </div>
 </template>
 
