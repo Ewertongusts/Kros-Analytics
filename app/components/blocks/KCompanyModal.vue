@@ -28,25 +28,24 @@
           </h4>
           
           <UiKInput 
-            v-model="form.name" 
+            v-model="form.representative_name" 
             label="Nome do Cliente" 
-            placeholder="Razão Social ou Nome Fantasia" 
+            placeholder="Ex: João Silva" 
             required 
           />
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UiKInput 
-              v-model="form.representative_name" 
-              label="Nome do Representante" 
-              placeholder="Ex: João Silva" 
-            />
-            <UiKInput 
-              v-model="form.email" 
-              type="email"
-              label="E-mail de Contato" 
-              placeholder="exemplo@empresa.com" 
-            />
-          </div>
+          <UiKInput 
+            v-model="form.name" 
+            label="Nome da Empresa (Opcional)" 
+            placeholder="Razão Social ou Nome Fantasia" 
+          />
+
+          <UiKInput 
+            v-model="form.email" 
+            type="email"
+            label="E-mail de Contato" 
+            placeholder="exemplo@empresa.com" 
+          />
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
