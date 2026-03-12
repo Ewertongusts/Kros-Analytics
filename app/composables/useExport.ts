@@ -139,10 +139,49 @@ export const useExport = () => {
     }
   }
 
+  const exportSales = (sales: any[], format: 'xlsx' | 'csv' | 'pdf') => {
+    console.log('📦 useExport: exportSales chamado com', sales.length, 'vendas e formato', format)
+    
+    const data = sales.map(s => ({
+      'Cliente': s.representative_name || s.name || 'N/A',
+      'WhatsApp': s.whatsapp || 'N/A',
+      'Tipo': s.sale_type === 'produto' ? 'Produto' : s.sale_type === 'servico' ? 'Serviço' : 'Personalizado',
+      'Item': s.sale_type === 'personalizado' ? s.custom_name : s.product_name || s.service_name || 'N/A',
+      'Valor Original': `R$ ${(s.monthly_price || 0).toFixed(2)}`,
+      'Desconto': s.discount_value ? `R$ ${s.discount_value.toFixed(2)}` : 'Sem desconto',
+      'Valor Final': `R$ ${(s.final_value || s.monthly_price || 0).toFixed(2)}`,
+      'Parcelas': s.installments || 1,
+      'Entrada': s.down_payment ? `R$ ${s.down_payment.toFixed(2)}` : 'Sem entrada',
+      'Status Pagamento': s.payment_status === 'paid' ? 'Pago' : s.payment_status === 'pending' ? 'Pendente' : s.payment_status === 'scheduled' ? 'Agendado' : 'Atrasado',
+      'Data Pagamento': s.payment_date ? new Date(s.payment_date).toLocaleDateString('pt-BR') : 'N/A',
+      'Criado em': new Date(s.created_at).toLocaleDateString('pt-BR'),
+      'Criado por': s.created_by_name || 'N/A',
+      'Observações': s.notes || 'Sem observações'
+    }))
+    
+    const date = new Date().toISOString().split('T')[0]
+    const filename = `vendas_${date}`
+    
+    console.log('📦 useExport: Exportando', data.length, 'registros como', format)
+    
+    switch (format) {
+      case 'xlsx':
+        exportToXLSX(data, filename, 'Vendas')
+        break
+      case 'csv':
+        exportToCSV(data, filename)
+        break
+      case 'pdf':
+        exportToPDF(data, filename, 'Relatório de Vendas')
+        break
+    }
+  }
+
   return {
     exportToCSV,
     exportToXLSX,
     exportToPDF,
-    exportPayments
+    exportPayments,
+    exportSales
   }
 }

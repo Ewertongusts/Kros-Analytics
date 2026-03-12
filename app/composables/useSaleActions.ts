@@ -1,4 +1,6 @@
 export const useSaleActions = () => {
+  const { success, error: showError } = useToast()
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -11,64 +13,112 @@ export const useSaleActions = () => {
     return new Date(date).toLocaleDateString('pt-BR')
   }
 
-  const shareViaWhatsApp = (sale: any) => {
-    let text = `🛍️ *RESUMO DA VENDA*\n\n`
-    text += `👤 *Cliente:* ${sale.representative_name || sale.name || '—'}\n`
-    if (sale.name && sale.representative_name) text += `🏢 *Empresa:* ${sale.name}\n`
-    if (sale.plan_name) text += `📦 *Item:* ${sale.plan_name}\n`
-    if (sale.custom_name) text += `✨ *Nome:* ${sale.custom_name}\n`
+  const shareViaWhatsApp = async (sale: any) => {
+    const rawPhone = sale.whatsapp || ''
+    const phone = rawPhone.replace(/\D/g, '')
     
-    text += `\n💰 *VALORES*\n`
-    text += `Valor: ${formatCurrency(sale.monthly_price)}\n`
-    
-    if (sale.discount_value > 0) {
-      text += `Desconto: -${formatCurrency(sale.discount_value)}\n`
-      text += `*Valor Final: ${formatCurrency(sale.final_value)}*\n`
+    if (!phone) {
+      showError('WhatsApp não cadastrado', 'Este cliente não possui WhatsApp cadastrado')
+      return
     }
-    
-    if (sale.down_payment > 0) {
-      text += `Entrada: ${formatCurrency(sale.down_payment)}\n`
-    }
-    
-    if (sale.interest_rate > 0) {
-      text += `Juros: ${sale.interest_type}\n`
-    }
-    
-    text += `\n💳 *PAGAMENTO*\n`
-    text += `Forma: ${sale.payment_type || '—'}\n`
-    
-    if (sale.installments > 1) {
-      text += `Parcelas: ${sale.installments}x\n`
-      if (sale.installments_payment_type) {
-        text += `Parcelas em: ${sale.installments_payment_type}\n`
+
+    try {
+      // Gera o comprovante como imagem em base64
+      const { generateReceiptBlob } = useSaleReceipt()
+      const blob = await generateReceiptBlob(sale)
+      
+      // Converte blob para base64
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+      
+      // Gera texto do comprovante
+      const saleType = sale.sale_type === 'produto' ? 'PRODUTO' : sale.sale_type === 'servico' ? 'SERVIÇO' : 'PERSONALIZADO'
+      const itemName = sale.plan_name || sale.custom_name || 'N/A'
+      const clientName = sale.representative_name || sale.name || 'N/A'
+      
+      let text = `🧾 *COMPROVANTE DE VENDA #${sale.id}*\n\n`
+      text += `📋 Tipo: ${saleType}\n`
+      text += `👤 Cliente: ${clientName}\n`
+      text += `📦 Item: ${itemName}\n\n`
+      text += `💰 Valor: ${formatCurrency(sale.final_value || sale.monthly_price)}\n`
+      
+      if (sale.discount_value > 0) {
+        text += `🎁 Desconto: ${formatCurrency(sale.discount_value)}\n`
       }
-    }
-    
-    if (sale.payment_status) {
-      const status = sale.payment_status === 'paid' ? '✅ Pago' : 
-                     sale.payment_status === 'pending' ? '⏳ Pendente' : 
-                     '📅 Agendado'
-      text += `Status: ${status}\n`
-    }
-    
-    if (sale.payment_date) {
-      text += `Data: ${formatDate(sale.payment_date)}\n`
-    }
-    
-    if (sale.created_by_name) {
-      text += `\n👤 *Criado por:* ${sale.created_by_name}\n`
-    }
-    
-    if (sale.notes) {
-      text += `\n📝 *Observações:*\n${sale.notes}\n`
-    }
-    
-    const phone = sale.whatsapp?.replace(/\D/g, '') || ''
-    if (phone) {
-      const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
-      window.open(url, '_blank')
-    } else {
-      alert('WhatsApp não cadastrado para este cliente')
+      
+      text += `💳 Pagamento: ${sale.payment_type || '—'}\n`
+      text += `📊 Parcelas: ${sale.installments || 1}x\n\n`
+      
+      if (sale.payment_status) {
+        const statusEmoji = sale.payment_status === 'paid' ? '✅' : 
+                           sale.payment_status === 'pending' ? '⏳' : '📅'
+        const statusText = sale.payment_status === 'paid' ? 'PAGO' : 
+                          sale.payment_status === 'pending' ? 'PENDENTE' : 'AGENDADO'
+        text += `${statusEmoji} Status: ${statusText}\n\n`
+      }
+      
+      text += `_Comprovante detalhado na imagem acima_`
+      
+      // Envia através da API do sistema com imagem em base64
+      const response = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          number: phone,
+          body: text,
+          url: base64
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(await response.text() || 'Erro ao enviar mensagem')
+      }
+
+      // Registra o log da mensagem
+      const supabase = useSupabaseClient()
+      await supabase.from('message_logs').insert({
+        company_name: clientName,
+        whatsapp: phone,
+        message_body: `${text}\n\n[Imagem do comprovante anexada]`,
+        status: `✅ Sucesso - Comprovante de Venda #${sale.id}`,
+        is_cron: false,
+        log_type: 'sale_receipt',
+        payment_id: sale.id?.toString()
+      } as any)
+
+      success('Comprovante enviado', 'Imagem e texto enviados via WhatsApp')
+    } catch (err: any) {
+      console.error('Erro ao enviar via WhatsApp:', err)
+      
+      // Determina a mensagem de erro apropriada
+      let errorMessage = 'Não foi possível enviar o comprovante'
+      
+      if (err.message?.includes('Bad Request') || err.message?.includes('400') || err.message?.includes('500')) {
+        errorMessage = 'Número inválido ou WhatsApp não cadastrado'
+      } else if (err.message?.includes('Network') || err.message?.includes('fetch')) {
+        errorMessage = 'Erro de conexão com a API'
+      }
+      
+      // Registra o erro no log
+      try {
+        const supabase = useSupabaseClient()
+        await supabase.from('message_logs').insert({
+          company_name: sale.representative_name || sale.name || 'N/A',
+          whatsapp: phone,
+          message_body: 'Erro ao gerar comprovante',
+          status: `❌ Erro - ${errorMessage}`,
+          is_cron: false,
+          log_type: 'sale_receipt',
+          payment_id: sale.id?.toString()
+        } as any)
+      } catch (logErr) {
+        console.error('Erro ao registrar log:', logErr)
+      }
+      
+      showError('Erro ao enviar', errorMessage)
     }
   }
 

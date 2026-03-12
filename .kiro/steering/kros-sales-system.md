@@ -300,7 +300,8 @@ app/pages/
 12. **useFinanceLogs** - Lógica completa de logs (filtros, paginação, fetch)
 13. **useFinanceHistory** - Lógica completa de histórico (filtros, período, totais)
 14. **useBatchSending** - Lógica completa de envio em massa (142 linhas)
-15. **useSubscriptions** - Lógica completa de assinaturas (205 linhas) 🆕
+15. **useSubscriptions** - Lógica completa de assinaturas (205 linhas)
+16. **useSaleFilters** - Filtros de vendas (busca, data, valor, status - 88 linhas) 🆕
 
 ### Componentes de Layout
 - **KPageLayout** - Wrapper reutilizável para todas as páginas (8 páginas)
@@ -430,17 +431,32 @@ Todos os modais agora usam componentes base:
    - Mensagens de feedback melhoradas
    - Adicionado import `useToast` em 4 componentes blocks
    
-2. **Adicionar Filtros e Busca** (15 min)
-   - Busca por nome do cliente
-   - Filtro por data (período)
-   - Filtro por valor (range)
-   - Filtro por status de pagamento
+2. **Adicionar Filtros e Busca** ✅ CONCLUÍDO
+   - Busca por nome do cliente (com debounce 300ms)
+   - Filtro por data (período com range)
+   - Filtro por valor (range min/max)
+   - Filtro por status de pagamento (todos/pago/pendente/agendado/atrasado)
+   - Criado `useSaleFilters` composable (88 linhas)
+   - Criado 5 componentes de filtro (KSaleFilters, KSaleSearchBar, KSaleDateFilter, KSaleValueFilter, KSaleStatusFilter)
+   - Contador de filtros ativos
+   - Botão "Limpar Filtros"
+   - Seção colapsável
    
-3. **Adicionar Exportação** (20 min)
+3. **Adicionar Exportação** ✅ CONCLUÍDO
    - Exportar para Excel (XLSX)
    - Exportar para CSV
    - Exportar para PDF
-   - Reutilizar `useExport` existente
+   - Reutilizado `useExport` existente
+   - Criado `KExportDropdown` componente UI genérico (reutilizável)
+   - Adicionada função `exportSales` no composable
+   - Botão de exportação no header (desabilitado se sem dados)
+   - Toast de confirmação após exportação
+   - **Comprovante Individual:** Botão roxo nas ações da tabela
+   - Modal de escolha (Imagem PNG ou PDF)
+   - Criado `useSaleReceipt` composable (formato nota fiscal)
+   - Criado `KSaleReceiptModal` componente
+   - Comprovante com aparência de nota de venda profissional
+   - ⚠️ **Requer instalação:** `npm install html2canvas`
    
 4. **Melhorar Loading States** (10 min)
    - Loading no botão de deletar
@@ -454,8 +470,8 @@ Todos os modais agora usam componentes base:
    - Exportar selecionadas
    - Alterar status em lote
 
-**Progresso:** 1/5 tarefas concluídas (20%)
-**Tempo estimado restante:** 60 minutos
+**Progresso:** 3/5 tarefas concluídas (60%)
+**Tempo estimado restante:** 25 minutos
 
 **🎯 Meta Final Atingida:** 0 arquivos >250 linhas | 100% componentizado ✅
 

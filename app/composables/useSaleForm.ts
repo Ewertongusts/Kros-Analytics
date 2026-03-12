@@ -44,6 +44,44 @@ export const useSaleForm = (
     calculateInstallmentValue()
   }
 
+  const setPayment6xComJuros = () => {
+    hasInstallments.value = true
+    hasDownPayment.value = false
+    hasInterest.value = true
+    customInstallments.value = false
+    form.installments = 6
+    form.down_payment = 0
+    form.interest_rate = 2
+    form.interest_type = 'percentage_total'
+    form.installments_payment_type = ''
+    calculateInstallmentValue()
+  }
+
+  const setPayment12xComJuros = () => {
+    hasInstallments.value = true
+    hasDownPayment.value = false
+    hasInterest.value = true
+    customInstallments.value = false
+    form.installments = 12
+    form.down_payment = 0
+    form.interest_rate = 3
+    form.interest_type = 'percentage_total'
+    form.installments_payment_type = ''
+    calculateInstallmentValue()
+  }
+
+  const setDesconto10 = () => {
+    hasDiscount.value = true
+    form.discount_type = 'percentage'
+    form.discount_value = 10
+  }
+
+  const setDesconto20 = () => {
+    hasDiscount.value = true
+    form.discount_type = 'percentage'
+    form.discount_value = 20
+  }
+
   const generateSaleText = () => {
     let text = `🛍️ *RESUMO DA VENDA*\n\n`
     text += `👤 *Cliente:* ${form.representative_name || '—'}\n`
@@ -215,6 +253,10 @@ export const useSaleForm = (
   return {
     setPaymentAVista,
     setPayment3xSemJuros,
+    setPayment6xComJuros,
+    setPayment12xComJuros,
+    setDesconto10,
+    setDesconto20,
     generateSaleText,
     shareViaWhatsApp,
     exportAsImage,

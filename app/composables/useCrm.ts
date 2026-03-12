@@ -27,7 +27,7 @@ export type ApiTestLog = {
   whatsapp: string
   status: string
   message_body: string
-  log_type: 'test' | 'billing'
+  log_type: 'test' | 'test_image' | 'test_file' | 'billing'
 }
 
 export const useCrm = () => {
@@ -80,7 +80,7 @@ export const useCrm = () => {
       const { data: logsData } = await supabase
         .from('message_logs')
         .select('*')
-        .eq('log_type', 'test')
+        .in('log_type', ['test', 'test_image', 'test_file'])
         .order('created_at', { ascending: false })
         .limit(20)
       

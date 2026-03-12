@@ -23,6 +23,16 @@
       :received-by="receivedBy"
     />
 
+    <!-- Atalhos Rápidos -->
+    <SalesSummaryKSaleQuickActions
+      @payment-a-vista="$emit('paymentAVista')"
+      @payment3x-sem-juros="$emit('payment3xSemJuros')"
+      @payment6x-com-juros="$emit('payment6xComJuros')"
+      @payment12x-com-juros="$emit('payment12xComJuros')"
+      @desconto10="$emit('desconto10')"
+      @desconto20="$emit('desconto20')"
+    />
+
     <!-- Preview das Parcelas -->
     <SalesSummaryKSaleInstallmentPreview
       :has-installments="hasInstallments"
@@ -35,20 +45,6 @@
       :custom-installments="customInstallments"
       :installments-list="installmentsList"
       :total-installments-amount="totalInstallmentsAmount"
-    />
-
-    <!-- Atalhos Rápidos -->
-    <SalesSummaryKSaleQuickActions
-      @payment-a-vista="$emit('paymentAVista')"
-      @payment3x-sem-juros="$emit('payment3xSemJuros')"
-    />
-
-    <!-- Compartilhar -->
-    <SalesSummaryKSaleShareButtons
-      :is-valid="isValid"
-      @share-whats-app="$emit('shareWhatsApp')"
-      @export-image="$emit('exportImage')"
-      @export-p-d-f="$emit('exportPDF')"
     />
   </div>
 </template>
@@ -85,9 +81,10 @@ defineProps<{
 defineEmits<{
   'paymentAVista': []
   'payment3xSemJuros': []
-  'shareWhatsApp': []
-  'exportImage': []
-  'exportPDF': []
+  'payment6xComJuros': []
+  'payment12xComJuros': []
+  'desconto10': []
+  'desconto20': []
 }>()
 </script>
 

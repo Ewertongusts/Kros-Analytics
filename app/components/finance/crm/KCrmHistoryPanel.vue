@@ -24,6 +24,19 @@
               log.status.includes('Sucesso') ? 'bg-emerald-500 ring-emerald-500/10' : 'bg-red-500 ring-red-500/10'
             ]"></div>
             <span class="text-[10px] font-bold text-white tracking-tight">{{ log.whatsapp }}</span>
+            
+            <!-- Badge do tipo de teste -->
+            <span :class="[
+              'text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-widest',
+              getTestType(log) === 'text' ? 'bg-blue-500/10 text-blue-400' :
+              getTestType(log) === 'image' ? 'bg-purple-500/10 text-purple-400' :
+              getTestType(log) === 'file' ? 'bg-amber-500/10 text-amber-400' :
+              'bg-white/5 text-white/40'
+            ]">
+              {{ getTestType(log) === 'text' ? '📝 TEXTO' : 
+                 getTestType(log) === 'image' ? '🔗 URL' : 
+                 getTestType(log) === 'file' ? '📎 ARQUIVO' : 'TESTE' }}
+            </span>
           </div>
           <span class="text-[8px] font-bold text-white/20 uppercase tracking-widest group-hover:text-white/40 transition-colors">{{ formatDate(log.created_at) }}</span>
         </div>
@@ -48,6 +61,20 @@
 defineProps<{
   logs: any[]
 }>()
+
+const getTestType = (log: any) => {
+  // Verifica pelo log_type primeiro
+  if (log.log_type === 'test') return 'text'
+  if (log.log_type === 'test_image') return 'image'
+  if (log.log_type === 'test_file') return 'file'
+  
+  // Fallback: detecta pelo status
+  if (log.status?.includes('Teste Imagem')) return 'image'
+  if (log.status?.includes('Teste Arquivo')) return 'file'
+  if (log.status?.includes('Teste OK') || log.status?.includes('Teste de Conexão')) return 'text'
+  
+  return 'text' // padrão
+}
 
 const formatDate = (dateValue: string) => {
   const d = new Date(dateValue)

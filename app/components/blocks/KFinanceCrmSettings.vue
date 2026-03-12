@@ -36,6 +36,8 @@
           :last-test-status="settings?.last_test_status"
           :last-test-response="settings?.last_test_response"
           @test="handleTestApi"
+          @test-image="handleTestImage"
+          @test-image-file="handleTestImageFile"
         />
 
         <!-- Connectivity History Section -->
@@ -102,6 +104,74 @@ const handleTestApi = async () => {
     alert('Teste concluído com sucesso! Verifique seu WhatsApp.')
   } else {
     alert('Falha no teste: ' + res.message)
+  }
+}
+
+const handleTestImage = async (imageUrl: string) => {
+  if (!testPhone.value) {
+    alert('Insira um número de telefone para testar.')
+    return
+  }
+  
+  testing.value = true
+  
+  try {
+    const response = await fetch('/api/crm/test-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phoneNumber: testPhone.value,
+        imageUrl: imageUrl
+      })
+    })
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      alert('Teste de imagem concluído com sucesso! Verifique seu WhatsApp.')
+    } else {
+      alert('Falha no teste: ' + result.message)
+    }
+    
+    await fetchCrmData()
+  } catch (err: any) {
+    alert('Erro ao testar: ' + err.message)
+  } finally {
+    testing.value = false
+  }
+}
+
+const handleTestImageFile = async (file: File) => {
+  if (!testPhone.value) {
+    alert('Insira um número de telefone para testar.')
+    return
+  }
+  
+  testing.value = true
+  
+  try {
+    const formData = new FormData()
+    formData.append('phoneNumber', testPhone.value)
+    formData.append('image', file)
+    
+    const response = await fetch('/api/crm/test-image-file', {
+      method: 'POST',
+      body: formData
+    })
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      alert('Teste de arquivo concluído com sucesso! Verifique seu WhatsApp.')
+    } else {
+      alert('Falha no teste: ' + result.message)
+    }
+    
+    await fetchCrmData()
+  } catch (err: any) {
+    alert('Erro ao testar: ' + err.message)
+  } finally {
+    testing.value = false
   }
 }
 

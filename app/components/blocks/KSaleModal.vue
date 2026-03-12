@@ -129,9 +129,10 @@
         :is-valid="isFormValid"
         @payment-a-vista="setPaymentAVista"
         @payment3x-sem-juros="setPayment3xSemJuros"
-        @share-whats-app="shareViaWhatsApp"
-        @export-image="exportAsImage"
-        @export-p-d-f="exportAsPDF"
+        @payment6x-com-juros="setPayment6xComJuros"
+        @payment12x-com-juros="setPayment12xComJuros"
+        @desconto10="setDesconto10"
+        @desconto20="setDesconto20"
       />
     </div>
     </div>
@@ -215,6 +216,10 @@ const { calculateInstallmentValue } = useSaleInstallments(
 const {
   setPaymentAVista,
   setPayment3xSemJuros,
+  setPayment6xComJuros,
+  setPayment12xComJuros,
+  setDesconto10,
+  setDesconto20,
   shareViaWhatsApp,
   exportAsImage,
   exportAsPDF,

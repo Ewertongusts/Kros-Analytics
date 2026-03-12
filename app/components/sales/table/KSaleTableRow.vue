@@ -71,6 +71,7 @@
         @edit="$emit('edit', sale)"
         @whatsapp="$emit('whatsapp', sale)"
         @copy="$emit('copy', sale)"
+        @report="$emit('report', sale)"
         @delete="$emit('delete', sale)"
       />
     </td>
@@ -86,6 +87,7 @@ const emit = defineEmits<{
   edit: [sale: any]
   whatsapp: [sale: any]
   copy: [sale: any]
+  report: [sale: any]
   delete: [sale: any]
 }>()
 
