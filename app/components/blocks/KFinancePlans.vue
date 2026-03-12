@@ -114,6 +114,7 @@
 import { ref } from 'vue'
 
 const { plans, loading, error, createPlan, updatePlan, deletePlan } = usePlans()
+const { confirm } = useToast()
 
 const isModalOpen = ref(false)
 const selectedPlan = ref<any>(null)

@@ -416,8 +416,46 @@ Todos os modais agora usam componentes base:
 ### Próximos Passos
 - [x] Fase 12: Página Assinaturas ✅ CONCLUÍDO
 - [x] Sistema de toasts customizados ✅ CONCLUÍDO
+- [ ] Fase 13: Melhorias Página Vendas 🔄 EM ANDAMENTO
 - [ ] Testes unitários (Vitest)
 - [ ] Otimização de performance
+
+### Fase 13: Melhorias Página Vendas (Em Andamento)
+
+**Objetivo:** Melhorar UX, feedback e funcionalidades da página de vendas
+
+**Tarefas:**
+1. **Substituir Alerts por Toasts** ✅ CONCLUÍDO
+   - Substituídos 3 `alert()` por `success()` e `error()`
+   - Mensagens de feedback melhoradas
+   - Adicionado import `useToast` em 4 componentes blocks
+   
+2. **Adicionar Filtros e Busca** (15 min)
+   - Busca por nome do cliente
+   - Filtro por data (período)
+   - Filtro por valor (range)
+   - Filtro por status de pagamento
+   
+3. **Adicionar Exportação** (20 min)
+   - Exportar para Excel (XLSX)
+   - Exportar para CSV
+   - Exportar para PDF
+   - Reutilizar `useExport` existente
+   
+4. **Melhorar Loading States** (10 min)
+   - Loading no botão de deletar
+   - Loading no botão de salvar
+   - Skeleton mais específico
+   - Animações de transição
+   
+5. **Ações em Lote** (15 min)
+   - Seleção múltipla de vendas
+   - Deletar em lote
+   - Exportar selecionadas
+   - Alterar status em lote
+
+**Progresso:** 1/5 tarefas concluídas (20%)
+**Tempo estimado restante:** 60 minutos
 
 **🎯 Meta Final Atingida:** 0 arquivos >250 linhas | 100% componentizado ✅
 

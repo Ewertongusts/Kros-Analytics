@@ -64,8 +64,11 @@ interface Sale {
 
 const supabase = useSupabaseClient()
 const { shareViaWhatsApp, copySaleInfo } = useSaleActions()
+const { success, error, confirm } = useToast()
 const loading = ref(false)
 const activeFilter = ref('todos')
+const searchQuery = ref('')
+const statusFilter = ref('todos')
 const salesData = ref<Sale[]>([])
 const isSelectTypeModalOpen = ref(false)
 const isSaleModalOpen = ref(false)
@@ -110,10 +113,10 @@ const deleteSale = async (sale: any) => {
     if (error) throw error
     
     await fetchSales()
-    alert('Venda deletada com sucesso!')
+    success('Venda deletada', 'Operação concluída com sucesso')
   } catch (err) {
     console.error('Erro ao deletar venda:', err)
-    alert('Erro ao deletar venda')
+    error('Erro ao deletar', 'Não foi possível deletar a venda')
   }
 }
 
@@ -142,6 +145,7 @@ const handleSaveSale = async (saleData: any) => {
       }
       
       console.log('Venda atualizada com sucesso:', data)
+      success('Venda atualizada', 'Alterações salvas com sucesso')
     } else {
       // INSERT - Criar nova venda
       const insertData = {
@@ -161,13 +165,14 @@ const handleSaveSale = async (saleData: any) => {
       }
       
       console.log('Venda salva com sucesso:', data)
+      success('Venda criada', 'Nova venda registrada com sucesso')
     }
     
     await fetchSales()
     closeSaleModal()
   } catch (err: any) {
     console.error('Erro ao salvar venda:', err)
-    alert('Erro ao salvar venda: ' + (err.message || 'Erro desconhecido'))
+    error('Erro ao salvar', err.message || 'Não foi possível salvar a venda')
   }
 }
 

@@ -157,6 +157,8 @@
 import { ref, onMounted } from 'vue'
 import { useCrm, type MessageTemplate } from '~/composables/useCrm'
 
+const { confirm } = useToast()
+
 const { 
   templates, 
   loading, 

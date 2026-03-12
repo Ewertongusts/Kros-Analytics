@@ -35,6 +35,7 @@
 import { ref, onMounted } from 'vue'
 
 const { companies, loading, fetchCompanies, upsertCompany, deleteCompany } = useCompanies()
+const { confirm } = useToast()
 
 const isModalOpen = ref(false)
 const selectedCompany = ref<any>(null)

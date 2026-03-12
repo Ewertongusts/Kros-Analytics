@@ -62,6 +62,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
+const { confirm } = useToast()
+
 defineProps<{
   isOpen: boolean
 }>()
