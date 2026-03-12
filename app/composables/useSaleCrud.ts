@@ -15,21 +15,36 @@ export const useSaleCrud = () => {
       
       if (error) throw error
       
+      console.log('Vendas carregadas:', data?.length)
+      
       // Buscar última data de envio de comprovante para cada venda
       if (data && data.length > 0) {
         const salesWithLastSent = await Promise.all(
           data.map(async (sale) => {
-            const { data: logs } = await supabase
+            const clientName = sale.representative_name || sale.name
+            const phone = sale.whatsapp?.replace(/\D/g, '')
+            
+            if (!clientName || !phone) {
+              return { ...sale, last_receipt_sent_at: null }
+            }
+            
+            // Busca por company_name e whatsapp
+            const { data: logs, error: logError } = await supabase
               .from('message_logs')
               .select('created_at')
-              .eq('payment_id', sale.id.toString())
+              .eq('company_name', clientName)
+              .eq('whatsapp', phone)
               .eq('log_type', 'sale_receipt')
               .like('status', '%Sucesso%')
               .order('created_at', { ascending: false })
               .limit(1)
             
+            if (logError) {
+              console.error(`Erro ao buscar logs da venda ${sale.id}:`, logError)
+            }
+            
             const lastSent = logs && logs.length > 0 ? logs[0].created_at : null
-            console.log(`Venda ${sale.id} - Último envio:`, lastSent)
+            console.log(`Venda ${sale.id} (${clientName}) - Último envio:`, lastSent, '- Logs encontrados:', logs?.length || 0)
             
             return {
               ...sale,

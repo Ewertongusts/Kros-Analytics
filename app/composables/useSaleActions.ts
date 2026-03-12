@@ -89,17 +89,26 @@ export const useSaleActions = () => {
 
       // Registra o log da mensagem
       const supabase = useSupabaseClient()
-      const logResult = await supabase.from('message_logs').insert({
+      const logData = {
         company_name: clientName,
         whatsapp: phone,
         message_body: `${text}\n\n[Imagem do comprovante anexada]`,
         status: `✅ Sucesso - Comprovante de Venda #${sale.id}`,
         is_cron: false,
         log_type: 'sale_receipt',
-        payment_id: sale.id?.toString()
-      } as any)
+        // Não usar payment_id, usar company_name para identificar
+        // Adicionar o ID da venda no status para buscar depois
+      }
+      
+      console.log('Criando log com dados:', logData)
+      const logResult = await supabase.from('message_logs').insert(logData)
+      
+      if (logResult.error) {
+        console.error('ERRO ao criar log:', logResult.error)
+      } else {
+        console.log('Log criado com sucesso:', logResult)
+      }
 
-      console.log('Log criado:', logResult)
       success('Comprovante enviado', 'Imagem e texto enviados via WhatsApp')
     } catch (err: any) {
       console.error('Erro ao enviar via WhatsApp:', err)
