@@ -29,7 +29,7 @@
           
           <UiKInput 
             v-model="form.name" 
-            label="Nome da Empresa" 
+            label="Nome do Cliente" 
             placeholder="Razão Social ou Nome Fantasia" 
             required 
           />
