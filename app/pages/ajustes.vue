@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen p-8 md:p-12 overflow-hidden">
-    <div class="max-w-4xl mx-auto space-y-10">
+    <div class="max-w-6xl mx-auto space-y-10">
       <BlocksKPageHeader title="Configurações" subtitle="Ajustes do Sistema e Preferências" />
       
       <!-- TABS -->
@@ -72,7 +72,7 @@ const tabs = [
   { id: 'security', name: 'Segurança' },
   { id: 'preferences', name: 'Preferências' },
   { id: 'white-label', name: 'White Label' },
-  { id: 'plans', name: 'Planos' },
+  { id: 'plans', name: 'Catálogo' },
   { id: 'settings', name: 'Config. API' },
   { id: 'companies', name: 'Empresas' }
 ]

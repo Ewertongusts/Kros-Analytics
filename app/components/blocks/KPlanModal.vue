@@ -1,8 +1,8 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
-    <div @click="$emit('close')" class="absolute inset-0 bg-black/90 backdrop-blur-xl"></div>
+  <div v-if="isOpen" class="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-y-auto py-8">
+    <div @click="$emit('close')" class="fixed inset-0 bg-black/90 backdrop-blur-xl"></div>
     
-      <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[440px] p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+      <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[500px] p-8 overflow-visible shadow-[0_0_100px_rgba(0,0,0,0.8)] my-auto">
         <div class="mb-8 text-center">
           <h3 class="text-lg font-bold uppercase tracking-tight text-white">
             {{ isEditing ? 'EDITAR' : 'NOVO' }} <span class="text-kros-blue">ITEM</span>

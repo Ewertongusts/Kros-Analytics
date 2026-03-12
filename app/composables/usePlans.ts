@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 export type PlanDefinition = {
   id?: string
   name: string
+  type?: string
+  category?: string
   price: number
   billing_cycle: string
   created_at?: string
@@ -40,6 +42,8 @@ export const usePlans = () => {
         .from('plans')
         .insert([{
           name: plan.name,
+          type: plan.type || 'Plano Recorrente',
+          category: plan.category || null,
           price: plan.price,
           billing_cycle: plan.billing_cycle
         }] as any)
