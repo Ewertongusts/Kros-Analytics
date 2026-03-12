@@ -111,14 +111,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
-const { plans, loading, error, createPlan, updatePlan, deletePlan } = usePlans()
+const { plans, loading, error, fetchPlans, createPlan, updatePlan, deletePlan } = usePlans()
 const { confirm } = useToast()
 
 const isModalOpen = ref(false)
 const selectedPlan = ref<any>(null)
 const isCategoriesModalOpen = ref(false)
+
+// Buscar planos quando o componente for montado
+fetchPlans()
 
 const openNewModal = () => {
   selectedPlan.value = null

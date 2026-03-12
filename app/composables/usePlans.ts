@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 
 export type PlanDefinition = {
   id?: string
@@ -105,10 +105,6 @@ export const usePlans = () => {
       loading.value = false
     }
   }
-
-  onMounted(() => {
-    fetchPlans()
-  })
 
   return {
     plans,
