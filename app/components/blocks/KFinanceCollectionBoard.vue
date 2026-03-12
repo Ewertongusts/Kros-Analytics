@@ -291,8 +291,28 @@ const batchAction = async (type: string) => {
     })
     
     if (paymentsWithoutWhatsApp.length > 0) {
+      const paymentsWithWhatsApp = selectedPayments.filter(p => {
+        const rawNum = p.company_whatsapp?.replace(/\D/g, '') || ''
+        return rawNum && rawNum.length >= 10
+      })
+      
       const names = paymentsWithoutWhatsApp.map(p => p.company_name).join(', ')
-      alert(`⚠️ As seguintes empresas não possuem WhatsApp válido cadastrado:\n\n${names}\n\nPor favor, cadastre os números antes de enviar mensagens.`)
+      const message = `⚠️ ${paymentsWithoutWhatsApp.length} empresa(s) sem WhatsApp válido:\n\n${names}\n\n${paymentsWithWhatsApp.length > 0 ? `Deseja prosseguir apenas com as ${paymentsWithWhatsApp.length} empresa(s) que possuem WhatsApp válido?` : 'Nenhuma empresa selecionada possui WhatsApp válido.'}`
+      
+      if (paymentsWithWhatsApp.length === 0) {
+        alert(message)
+        return
+      }
+      
+      if (confirm(message)) {
+        // Desmarcar as empresas sem WhatsApp
+        const idsToRemove = paymentsWithoutWhatsApp.map(p => p.id)
+        selectedIds.value = selectedIds.value.filter(id => !idsToRemove.includes(id))
+        
+        // Prosseguir apenas com as que têm WhatsApp
+        selectedPaymentsForBatch.value = paymentsWithWhatsApp
+        isBatchMsgModalOpen.value = true
+      }
       return
     }
     

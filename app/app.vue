@@ -18,16 +18,22 @@
     <template v-else>
       <NuxtPage />
     </template>
+
+    <!-- Toast Global -->
+    <UiKToast ref="toastRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useWhiteLabel } from '~/composables/useWhiteLabel'
+import { useToast } from '~/composables/useToast'
 
 const user = useSupabaseUser()
 const { isExpanded } = useSidebar()
 const { settings, fetchSettings, applyColors } = useWhiteLabel()
+const { setToastInstance } = useToast()
+const toastRef = ref()
 
 useHead({
   titleTemplate: (title) => title ? `${title} | ${settings.value.system_name}` : settings.value.system_name,
@@ -60,6 +66,11 @@ onMounted(async () => {
   await fetchSettings()
   if (settings.value.primary_color) {
     applyColors(settings.value.primary_color)
+  }
+  
+  // Registrar instância do Toast
+  if (toastRef.value) {
+    setToastInstance(toastRef.value)
   }
 })
 </script>

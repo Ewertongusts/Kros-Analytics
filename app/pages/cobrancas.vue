@@ -1,10 +1,8 @@
 <template>
   <div class="min-h-screen p-8 md:p-12">
     <div class="max-w-7xl mx-auto space-y-8">
-      <UiKLoader 
-        v-if="loadingAnalytics || loadingFinance" 
-        message="Processando Fluxo Financeiro..." 
-      />
+      <!-- Skeleton Loading -->
+      <UiKSkeleton v-if="loadingAnalytics || loadingFinance" type="table" :rows="5" />
 
       <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700">
         <!-- Botão para mostrar/ocultar (sempre visível no topo) -->
@@ -123,6 +121,7 @@ definePageMeta({
 const { stats, loading: loadingAnalytics, fetchStats } = useAnalytics()
 const { loading: loadingFinance, confirmPayment, toggleAutoBilling, processRecords } = useFinance()
 const { upsertCompany } = useCompanies()
+const { success, error, warning } = useToast()
 
 const activeSubTab = ref('operational')
 const isIndividualHistoryModalOpen = ref(false)
@@ -150,7 +149,11 @@ const handleTogglePaymentStatus = async (payment: any) => {
   if (isPaid) {
     if (!confirm(`Deseja estornar o pagamento de ${payment.company_name} para PENDENTE?`)) return
     const res = await confirmPayment(payment.id, 'Pago')
-    if (!res.success) alert('Erro ao processar: ' + res.error)
+    if (!res.success) {
+      error('Erro ao processar', res.error)
+    } else {
+      success('Pagamento estornado', `${payment.company_name} marcado como pendente`)
+    }
   } else {
     // Abrir modal de confirmação para pagamento total/parcial
     paymentToConfirm.value = payment
@@ -169,9 +172,10 @@ const handleConfirmPayment = async (data: any) => {
   if (res.success) {
     isPaymentModalOpen.value = false
     paymentToConfirm.value = null
-    await fetchStats(true, true) // force=true, silent=true
+    success('Pagamento confirmado', `${paymentToConfirm.value?.company_name || 'Empresa'} marcado como pago`)
+    await fetchStats(true, true)
   } else {
-    alert('Erro ao confirmar pagamento: ' + res.error)
+    error('Erro ao confirmar pagamento', res.error)
   }
 }
 
@@ -187,10 +191,10 @@ const handleUpdateCompanyTags = async ({ companyId, tags }: { companyId: string,
   })
 
   if (res.success) {
-    // Atualização silenciosa: sem tela de loading
-    await fetchStats(true, true) 
+    await fetchStats(true, true)
+    success('Tags atualizadas', `Tags de ${payment.company_name} foram atualizadas`)
   } else {
-    alert('Erro ao atualizar tags: ' + res.error)
+    error('Erro ao atualizar tags', res.error)
   }
 }
 
@@ -209,7 +213,11 @@ const handleOpenLogs = (paymentId?: string) => {
 const handleToggleAutoBilling = async (payment: any) => {
   if (payment.auto_billing_enabled) {
     const res = await toggleAutoBilling(payment.id, false)
-    if (!res.success) alert('Erro ao desativar: ' + res.error)
+    if (!res.success) {
+      error('Erro ao desativar', res.error)
+    } else {
+      success('Automação desativada', `Cobrança automática de ${payment.company_name} foi desativada`)
+    }
   } else {
     autoBillingTargetPayment.value = payment
     isAutoBillingModalOpen.value = true
@@ -222,7 +230,11 @@ const handleConfirmAutoBilling = async (customMessage: string) => {
 
   isAutoBillingModalOpen.value = false
   const res = await toggleAutoBilling(payment.id, true, customMessage)
-  if (!res.success) alert('Erro ao ativar: ' + res.error)
+  if (!res.success) {
+    error('Erro ao ativar', res.error)
+  } else {
+    success('Automação ativada', `Cobrança automática de ${payment.company_name} foi ativada`)
+  }
 }
 
 const handleBatchAutoBilling = (payments: any[]) => {
@@ -236,7 +248,6 @@ const handleConfirmBatchAutoBilling = async (customMessage: string) => {
 
   isBatchAutoBillingModalOpen.value = false
   
-  // Processar em massa
   let errors = 0
   for (const p of payments) {
     const res = await toggleAutoBilling(p.id, true, customMessage)
@@ -244,9 +255,9 @@ const handleConfirmBatchAutoBilling = async (customMessage: string) => {
   }
 
   if (errors > 0) {
-    alert(`Automação ativada com ${errors} erros em algumas empresas.`)
+    warning('Automação parcial', `Ativada para ${payments.length - errors} empresas. ${errors} erros.`)
   } else {
-    alert(`Automação ativada com sucesso para ${payments.length} empresas!`)
+    success('Automação ativada', `Cobrança automática ativada para ${payments.length} empresas`)
   }
   
   await fetchStats(true, true)
@@ -272,9 +283,9 @@ const handleBatchMarkPaid = async (payments: any[]) => {
   }
 
   if (errors > 0) {
-    alert(`${successes} pagamentos marcados com sucesso. ${errors} erros.`)
+    warning('Pagamento parcial', `${successes} pagamentos marcados. ${errors} erros.`)
   } else {
-    alert(`${payments.length} pagamentos marcados como pago com sucesso!`)
+    success('Pagamentos confirmados', `${payments.length} pagamentos marcados como pago`)
   }
   
   await fetchStats(true, false)
@@ -287,7 +298,6 @@ const handleBatchMarkPending = async (payments: any[]) => {
   let successes = 0
   
   for (const payment of payments) {
-    // Passa 'Pago' como status atual para que confirmPayment inverta para 'pending'
     const res = await confirmPayment(payment.id, 'Pago')
     
     if (!res.success) {
@@ -298,9 +308,9 @@ const handleBatchMarkPending = async (payments: any[]) => {
   }
 
   if (errors > 0) {
-    alert(`${successes} pagamentos estornados com sucesso. ${errors} erros.`)
+    warning('Estorno parcial', `${successes} pagamentos estornados. ${errors} erros.`)
   } else {
-    alert(`${payments.length} pagamentos estornados com sucesso!`)
+    success('Pagamentos estornados', `${payments.length} pagamentos marcados como pendente`)
   }
   
   await fetchStats(true, false)

@@ -10,7 +10,7 @@
     <div class="relative flex-1 lg:flex-initial lg:min-w-[280px]">
       <input 
         :value="searchQuery"
-        @input="$emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
+        @input="handleSearchInput"
         type="text"
         placeholder="Buscar empresa ou valor..."
         class="w-full px-4 py-3 pl-10 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:border-kros-blue focus:outline-none transition-all"
@@ -169,7 +169,7 @@ defineProps<{
   isCompact: boolean
 }>()
 
-defineEmits([
+const emit = defineEmits([
   'update:searchQuery',
   'toggle-tag',
   'toggle-all-tags',
@@ -182,6 +182,19 @@ defineEmits([
 
 const isTagDropdownOpen = ref(false)
 const isFilterDropdownOpen = ref(false)
+
+let searchTimeout: any = null
+
+const handleSearchInput = (event: Event) => {
+  const value = (event.target as HTMLInputElement).value
+  
+  // Debounce: aguarda 300ms após o usuário parar de digitar
+  if (searchTimeout) clearTimeout(searchTimeout)
+  
+  searchTimeout = setTimeout(() => {
+    emit('update:searchQuery', value)
+  }, 300)
+}
 </script>
 
 <style scoped>

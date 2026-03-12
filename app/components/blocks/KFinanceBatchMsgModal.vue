@@ -208,7 +208,7 @@
                               v-model.number="skipRecentDays"
                               type="number"
                               min="1"
-                              class="w-5 bg-transparent text-xs font-black text-amber-400 outline-none text-center"
+                              class="w-8 bg-transparent text-xs font-black text-amber-400 outline-none text-center"
                            >
                            <span class="text-[9px] font-bold text-amber-500/50 uppercase">dias</span>
                         </div>
