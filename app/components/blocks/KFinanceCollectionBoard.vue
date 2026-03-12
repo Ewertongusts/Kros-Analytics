@@ -24,6 +24,7 @@
         @toggle-compact="isCompact = !isCompact"
         @config="$emit('config')"
         @sync="$emit('sync')"
+        @export="handleExportDebug"
       />
     </div>
 
@@ -132,109 +133,38 @@
     />
 
     <!-- Modal de Confirmação de Pagamento em Massa -->
-    <div v-if="isBatchPaidModalOpen" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
-      <div @click="isBatchPaidModalOpen = false" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-      <div class="relative bg-[#111112] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 fade-in duration-200">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-          <div>
-            <h3 class="text-sm font-black text-white uppercase tracking-tight">Marcar como Pago</h3>
-            <p class="text-[10px] text-white/40 font-bold uppercase tracking-wider mt-0.5">{{ selectedIds.length }} pagamentos selecionados</p>
-          </div>
-        </div>
-
-        <div class="mb-4 p-3 bg-white/[0.02] rounded-xl border border-white/5">
-          <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">Empresas:</p>
-          <div class="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
-            <div v-for="payment in selectedPaymentsForBatch" :key="payment.id" class="flex items-center justify-between text-[10px] py-1">
-              <span class="text-white/70 font-medium">{{ payment.company_name }}</span>
-              <span class="text-white font-bold">{{ formatCurrency(payment.amount) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 mb-4">
-          <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Total</span>
-          <span class="text-sm font-black text-emerald-500">{{ formatCurrency(selectedTotal) }}</span>
-        </div>
-
-        <div class="flex gap-3">
-          <button 
-            @click="isBatchPaidModalOpen = false"
-            class="flex-1 py-3 text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 rounded-xl transition-all"
-          >
-            Cancelar
-          </button>
-          <button 
-            @click="confirmBatchPaid"
-            class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
-          >
-            Confirmar
-          </button>
-        </div>
-      </div>
-    </div>
+    <BlocksKFinanceBatchPaidModal 
+      :is-open="isBatchPaidModalOpen"
+      :payments="selectedPaymentsForBatch"
+      @close="isBatchPaidModalOpen = false"
+      @confirm="confirmBatchPaid"
+    />
 
     <!-- Modal de Confirmação de Estorno em Massa -->
-    <div v-if="isBatchPendingModalOpen" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
-      <div @click="isBatchPendingModalOpen = false" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-      <div class="relative bg-[#111112] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 fade-in duration-200">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          </div>
-          <div>
-            <h3 class="text-sm font-black text-white uppercase tracking-tight">Estornar Pagamentos</h3>
-            <p class="text-[10px] text-white/40 font-bold uppercase tracking-wider mt-0.5">{{ selectedIds.length }} pagamentos selecionados</p>
-          </div>
-        </div>
-
-        <div class="mb-4 p-3 bg-white/[0.02] rounded-xl border border-white/5">
-          <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">Empresas:</p>
-          <div class="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
-            <div v-for="payment in selectedPaymentsForBatch" :key="payment.id" class="flex items-center justify-between text-[10px] py-1">
-              <span class="text-white/70 font-medium">{{ payment.company_name }}</span>
-              <span class="text-white font-bold">{{ formatCurrency(payment.amount) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between p-3 bg-orange-500/10 rounded-xl border border-orange-500/20 mb-4">
-          <span class="text-[10px] font-black text-orange-500 uppercase tracking-widest">Total</span>
-          <span class="text-sm font-black text-orange-500">{{ formatCurrency(selectedTotal) }}</span>
-        </div>
-
-        <div class="flex gap-3">
-          <button 
-            @click="isBatchPendingModalOpen = false"
-            class="flex-1 py-3 text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 rounded-xl transition-all"
-          >
-            Cancelar
-          </button>
-          <button 
-            @click="confirmBatchPending"
-            class="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
-          >
-            Confirmar Estorno
-          </button>
-        </div>
-      </div>
-    </div>
+    <BlocksKFinanceBatchPendingModal 
+      :is-open="isBatchPendingModalOpen"
+      :payments="selectedPaymentsForBatch"
+      @close="isBatchPendingModalOpen = false"
+      @confirm="confirmBatchPending"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useTags } from '~/composables/useTags'
+import { isValidWhatsApp, formatCurrency } from '~/utils/validators'
 
 const props = defineProps<{
   payments: any[],
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export'])
+
+const handleExportDebug = (format: any) => {
+  emit('export', format)
+}
 
 const isMsgModalOpen = ref(false)
 const isBatchMsgModalOpen = ref(false)
@@ -284,17 +214,11 @@ const batchAction = async (type: string) => {
     selectedPaymentsForBatch.value = selectedPayments
     isBatchPendingModalOpen.value = true
   } else if (type === 'whatsapp-api') {
-    // Validar se todos têm WhatsApp válido
-    const paymentsWithoutWhatsApp = selectedPayments.filter(p => {
-      const rawNum = p.company_whatsapp?.replace(/\D/g, '') || ''
-      return !rawNum || rawNum.length < 10
-    })
+    // Validar usando helper
+    const paymentsWithoutWhatsApp = selectedPayments.filter(p => !isValidWhatsApp(p.company_whatsapp))
     
     if (paymentsWithoutWhatsApp.length > 0) {
-      const paymentsWithWhatsApp = selectedPayments.filter(p => {
-        const rawNum = p.company_whatsapp?.replace(/\D/g, '') || ''
-        return rawNum && rawNum.length >= 10
-      })
+      const paymentsWithWhatsApp = selectedPayments.filter(p => isValidWhatsApp(p.company_whatsapp))
       
       const names = paymentsWithoutWhatsApp.map(p => p.company_name).join(', ')
       const message = `⚠️ ${paymentsWithoutWhatsApp.length} empresa(s) sem WhatsApp válido:\n\n${names}\n\n${paymentsWithWhatsApp.length > 0 ? `Deseja prosseguir apenas com as ${paymentsWithWhatsApp.length} empresa(s) que possuem WhatsApp válido?` : 'Nenhuma empresa selecionada possui WhatsApp válido.'}`
@@ -305,11 +229,8 @@ const batchAction = async (type: string) => {
       }
       
       if (confirm(message)) {
-        // Desmarcar as empresas sem WhatsApp
         const idsToRemove = paymentsWithoutWhatsApp.map(p => p.id)
         selectedIds.value = selectedIds.value.filter(id => !idsToRemove.includes(id))
-        
-        // Prosseguir apenas com as que têm WhatsApp
         selectedPaymentsForBatch.value = paymentsWithWhatsApp
         isBatchMsgModalOpen.value = true
       }
@@ -357,7 +278,6 @@ const addTagToBatch = async (tagName: string) => {
     }
   }
 
-  isBatchTagPickerOpen.value = false
   selectedIds.value = []
 }
 
@@ -520,21 +440,13 @@ const selectedTotal = computed(() => {
   return selected.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
 })
 
-const filteredTotal = computed(() => {
-  return filteredPayments.value.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
-})
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
-}
-
 onMounted(() => {
   fetchTags()
 })
 
 const openMsgModal = (payment: any) => {
-  if (!payment.company_whatsapp) {
-    alert('Empresa sem WhatsApp cadastrado. Não será possível enviar mensagem.')
+  if (!isValidWhatsApp(payment.company_whatsapp)) {
+    alert('Empresa sem WhatsApp válido cadastrado. Não será possível enviar mensagem.')
     return
   }
   selectedPayment.value = payment

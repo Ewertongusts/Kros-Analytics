@@ -48,6 +48,7 @@
               @open-history="handleOpenIndividualHistory"
               @sync="() => fetchStats()"
               @config="navigateTo('/ajustes?tab=companies')"
+              @export="(format) => { exportPayments(financialRecords, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
             />
           </div>
           <div v-else-if="activeSubTab === 'history'">
@@ -122,6 +123,7 @@ const { stats, loading: loadingAnalytics, fetchStats } = useAnalytics()
 const { loading: loadingFinance, confirmPayment, toggleAutoBilling, processRecords } = useFinance()
 const { upsertCompany } = useCompanies()
 const { success, error, warning } = useToast()
+const { exportPayments } = useExport()
 
 const activeSubTab = ref('operational')
 const isIndividualHistoryModalOpen = ref(false)
@@ -132,9 +134,7 @@ const showCharts = ref(false)
 
 const financialRecords = computed(() => processRecords(stats.value.paymentsList))
 const paymentHistory = computed(() => {
-  // Filtrar por status 'Pago' (já enriquecido) ao invés de 'paid' (do banco)
-  const history = stats.value.paymentsList.filter(p => p.status === 'Pago')
-  return history
+  return stats.value.paymentsList.filter(p => p.status === 'Pago')
 })
 
 const handleOpenIndividualHistory = (companyId: string) => {

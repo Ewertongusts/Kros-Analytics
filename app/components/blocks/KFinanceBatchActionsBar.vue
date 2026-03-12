@@ -103,6 +103,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { formatCurrency } from '~/utils/validators'
 
 defineProps<{
   selectedIds: string[]
@@ -113,10 +114,6 @@ defineProps<{
 defineEmits(['batch-action', 'add-tag-batch', 'clear-selection'])
 
 const isBatchTagPickerOpen = ref(false)
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
-}
 </script>
 
 <style scoped>
