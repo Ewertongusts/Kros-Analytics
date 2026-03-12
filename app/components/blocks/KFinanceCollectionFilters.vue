@@ -45,7 +45,7 @@
 
       <div 
         v-if="isTagDropdownOpen" 
-        class="absolute top-full right-0 lg:left-0 lg:right-auto mt-3 w-60 sm:w-64 bg-[#111112] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] z-[100] p-2 overflow-hidden"
+        class="absolute top-full right-0 mt-3 w-60 sm:w-64 bg-[#111112] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] z-[100] p-2 overflow-hidden"
       >
         <div class="max-h-64 overflow-y-auto custom-scrollbar p-2 space-y-1">
           <button 
