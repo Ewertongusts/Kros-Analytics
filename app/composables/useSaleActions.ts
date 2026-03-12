@@ -1,5 +1,5 @@
 export const useSaleActions = () => {
-  const { success, error: showError } = useToast()
+  const { success, error: showError, confirm } = useToast()
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -21,6 +21,15 @@ export const useSaleActions = () => {
       showError('WhatsApp não cadastrado', 'Este cliente não possui WhatsApp cadastrado')
       return
     }
+
+    // Confirmação antes de enviar
+    const clientName = sale.representative_name || sale.name || 'N/A'
+    const confirmed = await confirm(
+      `Deseja enviar o comprovante de venda para ${clientName}?`,
+      'Confirmar envio via WhatsApp'
+    )
+    
+    if (!confirmed) return
 
     try {
       // Gera o comprovante como imagem em base64
