@@ -9,10 +9,10 @@
       <!-- Header -->
       <div class="px-8 py-6 border-b border-kros-outline dark:border-[#1F1F21] flex items-center justify-between bg-white/[0.02] flex-shrink-0">
         <div>
-          <h3 class="text-xl font-bold text-kros-text dark:text-kros-surface tracking-tight uppercase">
-            {{ isEditing ? 'Editar' : 'Nova' }} <span class="text-kros-blue">Empresa</span>
+          <h3 class="text-xl font-bold text-white tracking-tight uppercase">
+            {{ isEditing ? 'Editar' : 'Novo' }} <span class="text-kros-blue">Cliente</span>
           </h3>
-          <p class="text-[10px] font-medium opacity-60 uppercase tracking-widest mt-1">Gestão de parceiro e faturamento</p>
+          <p class="text-[10px] font-medium text-white/40 uppercase tracking-widest mt-1">Gestão de parceiro e faturamento</p>
         </div>
         <button @click="close" class="p-2 rounded-xl hover:bg-red-500/10 text-red-500/50 hover:text-red-500 transition-all">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
