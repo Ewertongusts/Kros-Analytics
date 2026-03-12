@@ -2,15 +2,15 @@
   <div class="space-y-8">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="font-bold text-lg text-white">Gestão de Planos</h3>
-        <p class="text-[10px] text-white/50 uppercase tracking-widest mt-1">Crie e gerencie os planos oferecidos pela agência</p>
+        <h3 class="font-bold text-lg text-white">Catálogo de Produtos/Serviços</h3>
+        <p class="text-[10px] text-white/40 uppercase tracking-widest mt-1">Gerencie planos, serviços e produtos oferecidos</p>
       </div>
       <button 
-        @click="$emit('add-plan')"
+        @click="openNewModal"
         class="btn-primary text-[10px] font-bold uppercase tracking-widest px-6 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-        Novo Plano
+        Novo Item
       </button>
     </div>
 
