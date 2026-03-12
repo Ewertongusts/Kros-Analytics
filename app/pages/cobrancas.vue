@@ -8,7 +8,29 @@
 
       <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700">
         <!-- SUMMARY CARDS -->
-        <BlocksKFinanceCollectionSummary :payments="stats.paymentsList" />
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex-1">
+            <BlocksKFinanceCollectionSummary :payments="stats.paymentsList" />
+          </div>
+          <button 
+            @click="showCharts = !showCharts"
+            class="shrink-0 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center gap-2 text-white/70 hover:text-white"
+            title="Mostrar/Ocultar Gráficos"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="20" x2="12" y2="10"></line>
+              <line x1="18" y1="20" x2="18" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+            <span class="text-[10px] font-bold uppercase tracking-widest">{{ showCharts ? 'Ocultar' : 'Gráficos' }}</span>
+          </button>
+        </div>
+
+        <!-- CHARTS (Ocultos por padrão) -->
+        <div v-if="showCharts" class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-500">
+          <BlocksKFinanceEvolutionChart :payments="stats.paymentsList" />
+          <BlocksKFinanceDistributionChart :payments="stats.paymentsList" />
+        </div>
 
         <div class="space-y-4 animate-in fade-in duration-500">
           <div v-if="activeSubTab === 'operational'">
@@ -102,6 +124,7 @@ const isIndividualHistoryModalOpen = ref(false)
 const individualHistoryData = ref<any[]>([])
 const isPaymentModalOpen = ref(false)
 const paymentToConfirm = ref<any>(null)
+const showCharts = ref(false)
 
 const financialRecords = computed(() => processRecords(stats.value.paymentsList))
 const paymentHistory = computed(() => stats.value.paymentsList.filter(p => p.status === 'paid'))

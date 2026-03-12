@@ -24,6 +24,11 @@
         </div>
 
         <!-- PERFORMANCE E GRÁFICOS -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <BlocksKFinanceEvolutionChart :payments="stats.paymentsList" />
+          <BlocksKFinanceDistributionChart :payments="stats.paymentsList" />
+        </div>
+
         <BlocksKDashboardMainContent :stats="stats" />
 
         <BlocksKGlobalFooter />

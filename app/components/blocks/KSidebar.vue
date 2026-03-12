@@ -161,7 +161,8 @@ import {
   CreditCard,
   Calendar,
   Wrench,
-  FileText
+  FileText,
+  KanbanSquare
 } from 'lucide-vue-next'
 
 const supabase = useSupabaseClient()
@@ -176,6 +177,7 @@ const navItems = reactive([
   { name: 'Visão Geral', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Cobranças', path: '/cobrancas', icon: Receipt },
   { name: 'Despesas', path: '/despesas', icon: CreditCard },
+  { name: 'Tarefas', path: '/tarefas', icon: KanbanSquare },
   { name: 'Calendário', path: '/calendario', icon: Calendar },
   { 
     name: 'Ferramentas', 

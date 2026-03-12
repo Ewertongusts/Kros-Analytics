@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
     <!-- Card: Pendentes -->
     <div class="p-5 rounded-3xl bg-white/[0.03] border border-white/5 backdrop-blur-xl relative overflow-hidden group">
       <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
@@ -9,7 +9,7 @@
         </div>
         <span class="text-[9px] font-bold text-white/40 uppercase tracking-widest">A Receber</span>
       </div>
-      <div class="flex items-baseline gap-2">
+      <div class="flex flex-col gap-1">
         <span class="text-xl font-black text-white tracking-tighter">{{ formatCurrency(summary.pendingAmount) }}</span>
         <span class="text-[10px] font-bold text-blue-500/60 uppercase">{{ summary.pendingCount }} cobranças</span>
       </div>
@@ -24,7 +24,7 @@
         </div>
         <span class="text-[9px] font-bold text-white/40 uppercase tracking-widest">Em Atraso</span>
       </div>
-      <div class="flex items-baseline gap-2">
+      <div class="flex flex-col gap-1">
         <span class="text-xl font-black text-red-500 tracking-tighter">{{ formatCurrency(summary.overdueAmount) }}</span>
         <span class="text-[10px] font-bold text-red-500/60 uppercase">{{ summary.overdueCount }} pendências</span>
       </div>
@@ -32,16 +32,16 @@
 
     <!-- Card: Churn -->
     <div class="p-5 rounded-3xl bg-white/[0.03] border border-white/5 backdrop-blur-xl relative overflow-hidden group">
-      <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-950/20 rounded-full blur-2xl group-hover:bg-red-900/30 transition-all"></div>
+      <div class="absolute -right-4 -top-4 w-16 h-16 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-all"></div>
       <div class="flex items-center gap-3 mb-3">
-        <div class="w-8 h-8 rounded-xl bg-red-950/40 flex items-center justify-center text-red-800 border border-red-500/20">
+        <div class="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
         </div>
-        <span class="text-[9px] font-bold text-red-500/40 uppercase tracking-widest">Churn (30d+)</span>
+        <span class="text-[9px] font-bold text-white/40 uppercase tracking-widest">Churn (30d+)</span>
       </div>
-      <div class="flex items-baseline gap-2">
-        <span class="text-xl font-black text-red-900 tracking-tighter">{{ formatCurrency(summary.churnAmount) }}</span>
-        <span class="text-[10px] font-bold text-red-900 uppercase">{{ summary.churnCount }} perdidos</span>
+      <div class="flex flex-col gap-1">
+        <span class="text-xl font-black text-orange-500 tracking-tighter">{{ formatCurrency(summary.churnAmount) }}</span>
+        <span class="text-[10px] font-bold text-orange-500/60 uppercase">{{ summary.churnCount }} perdidos</span>
       </div>
     </div>
 
@@ -54,9 +54,9 @@
         </div>
         <span class="text-[9px] font-bold text-white/40 uppercase tracking-widest">Recuperação</span>
       </div>
-      <div class="flex items-baseline gap-2">
+      <div class="flex flex-col gap-2">
         <span class="text-xl font-black text-white tracking-tighter">{{ recoveryRate }}%</span>
-        <div class="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
           <div class="h-full bg-emerald-500 transition-all duration-1000" :style="{ width: recoveryRate + '%' }"></div>
         </div>
       </div>
@@ -71,7 +71,7 @@
         </div>
         <span class="text-[9px] font-bold text-white/40 uppercase tracking-widest">Liquidado Mês</span>
       </div>
-      <div class="flex items-baseline gap-2">
+      <div class="flex flex-col gap-1">
         <span class="text-xl font-black text-white tracking-tighter">{{ formatCurrency(summary.paidAmount) }}</span>
         <span class="text-[10px] font-bold text-kros-blue uppercase tracking-tighter">{{ summary.paidCount }} baixas</span>
       </div>

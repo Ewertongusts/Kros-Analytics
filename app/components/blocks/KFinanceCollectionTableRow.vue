@@ -6,12 +6,12 @@
         payment.status === 'Atrasado' ? 'hover:border-l-red-500/50' : 'hover:border-l-kros-blue/50'
       ]"
   >
-    <td class="px-4 py-5 first:rounded-l-2xl">
+    <td :class="['first:rounded-l-2xl', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
       <div @click="$emit('toggle-select', payment.id)" class="w-5 h-5 rounded-md border border-white/5 flex items-center justify-center cursor-pointer hover:border-kros-blue transition-all" :class="isSelected ? 'bg-kros-blue border-kros-blue' : ''">
         <svg v-if="isSelected" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
     </td>
-    <td class="px-4 py-5">
+    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
       <div class="flex items-center gap-3">
         <div :class="['w-9 h-9 rounded-full flex items-center justify-center font-black text-[10px] border transition-all shadow-sm', getStatusAvatarClass(payment.status)]">
           {{ payment.company_name?.charAt(0) }}
@@ -84,19 +84,19 @@
         </div>
       </div>
     </td>
-    <td class="px-4 py-5 text-center">
-       <span class="text-xs font-medium text-white/50 uppercase tracking-widest">{{ formatDate(payment.company_created_at) }}</span>
+    <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
+       <span :class="['font-medium uppercase tracking-widest text-white/50', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.company_created_at) }}</span>
     </td>
-    <td class="px-4 py-5 font-medium">
-       <span class="text-xs font-semibold tabular-nums text-white/60">{{ formatDate(payment.due_date) }}</span>
+    <td :class="['font-medium', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
+       <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.due_date) }}</span>
     </td>
-    <td class="px-4 py-5">
-       <span class="text-xs font-black tabular-nums text-white/90 tracking-tight">{{ formatCurrency(payment.amount) }}</span>
+    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
+       <span :class="['font-black tabular-nums text-white/90 tracking-tight', isCompact ? 'text-[11px]' : 'text-xs']">{{ formatCurrency(payment.amount) }}</span>
     </td>
-    <td class="px-4 py-5">
-       <span class="text-[11px] font-bold text-emerald-500/60 tabular-nums tracking-tighter">{{ formatCurrency(payment.company_ltv || 0) }}</span>
+    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
+       <span :class="['font-bold text-emerald-500/60 tabular-nums tracking-tighter', isCompact ? 'text-[10px]' : 'text-[11px]']">{{ formatCurrency(payment.company_ltv || 0) }}</span>
     </td>
-    <td class="px-4 py-5">
+    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
        <div class="flex items-center justify-center group/status relative">
           <span 
             :class="['w-2.5 h-2.5 rounded-full shadow-[0_0_12px_currentColor] transition-all duration-300 group-hover/status:scale-125 cursor-help', getStatusColor(payment.status)]" 
@@ -109,7 +109,7 @@
           </div>
        </div>
     </td>
-    <td class="px-4 py-5 whitespace-nowrap">
+    <td :class="['whitespace-nowrap', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
        <div v-if="payment.last_alert_at" class="flex flex-col">
           <div class="flex items-center gap-1.5">
             <span :class="['text-[10px] font-black uppercase tracking-tight', isUrgentAlert ? 'text-red-500 animate-pulse' : 'text-white/80']">
@@ -124,7 +124,7 @@
           <span class="text-[7px] font-bold text-white/20 uppercase tracking-widest">Aguardando disparo</span>
        </div>
     </td>
-    <td class="px-4 py-5 text-right sticky right-0 bg-[#0D0D0E]/80 backdrop-blur-xl group-hover/row:bg-[#151516]/90 transition-all z-10 border-l border-white/5">
+    <td :class="['text-right sticky right-0 bg-[#0D0D0E]/80 backdrop-blur-xl group-hover/row:bg-[#151516]/90 transition-all z-10 border-l border-white/5', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
         <div class="flex items-center justify-end gap-2 pr-1">
           <!-- 1. Botão Toggle Status do Pagamento -->
           <button 
@@ -182,6 +182,7 @@ import { computed } from 'vue'
 const props = defineProps<{
   payment: any
   isSelected: boolean
+  isCompact: boolean
   activeTagPicker: string | null
   tagDefinitions: any[]
 }>()

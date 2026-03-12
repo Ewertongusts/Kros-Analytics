@@ -6,7 +6,7 @@
           <button 
             @click="$emit('update:activeSubTab', 'operational')"
             :class="[
-              'px-4 py-2 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+              'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
               activeSubTab === 'operational' 
                 ? 'bg-kros-blue text-white shadow-lg' 
                 : 'text-white/20 hover:text-white/60 hover:bg-white/5'
@@ -17,7 +17,7 @@
           <button 
             @click="$emit('update:activeSubTab', 'history')"
             :class="[
-              'px-4 py-2 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+              'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
               activeSubTab === 'history' 
                 ? 'bg-kros-blue text-white shadow-lg' 
                 : 'text-white/20 hover:text-white/60 hover:bg-white/5'
@@ -28,7 +28,7 @@
           <button 
             @click="$emit('update:activeSubTab', 'logs')"
             :class="[
-              'px-4 py-2 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
+              'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
               activeSubTab === 'logs' 
                 ? 'bg-kros-blue text-white shadow-lg' 
                 : 'text-white/20 hover:text-white/60 hover:bg-white/5'
@@ -39,6 +39,30 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-3 sm:gap-4 lg:flex-1 lg:justify-end">
+          <!-- Total Filtrado (sempre visível) -->
+          <div class="flex items-center gap-2 px-4 py-3 bg-white/[0.02] border border-white/5 rounded-xl">
+            <span class="text-[9px] font-bold text-white/50 uppercase tracking-widest">Total Filtrado:</span>
+            <span class="text-[11px] font-black text-white uppercase tracking-widest">{{ filteredPayments.length }}</span>
+          </div>
+
+          <!-- Campo de Busca -->
+          <div class="relative flex-1 lg:flex-initial lg:min-w-[280px]">
+            <input 
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar empresa ou valor..."
+              class="w-full px-4 py-3 pl-10 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:border-kros-blue focus:outline-none transition-all"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <button 
+              v-if="searchQuery"
+              @click="searchQuery = ''"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+
           <!-- Novo Filtro de Tags (Dropdown Multi-select) -->
           <div class="relative group/tags shrink-0">
              <button 
@@ -139,6 +163,19 @@
           </div>
           <!-- Botões Globais Integrados -->
           <div class="flex items-center gap-2 ml-2 pl-4 border-l border-white/5">
+              <!-- Toggle de Densidade -->
+              <button 
+                @click="isCompact = !isCompact"
+                class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-white/10"
+                :class="isCompact ? 'text-kros-blue' : 'text-white/30 hover:text-white'"
+                :title="isCompact ? 'Visualização Compacta' : 'Visualização Expandida'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
               <button 
                 @click="$emit('config')"
                 class="p-2.5 bg-white/5 hover:bg-white/10 text-white/30 hover:text-white rounded-xl transition-all border border-transparent hover:border-white/10"
@@ -159,7 +196,8 @@
              <div class="h-8 w-px bg-white/10 mx-2"></div>
              <div class="px-3 py-1.5 bg-kros-blue/10 rounded-xl border border-kros-blue/20 flex items-center gap-3">
                 <span class="text-[10px] font-black text-kros-blue uppercase tracking-widest">{{ selectedIds.length }} selecionados</span>
-                <div class="flex items-center gap-1.5">
+                <span class="text-[11px] font-black text-kros-blue">{{ formatCurrency(selectedTotal) }}</span>
+                <div class="flex items-center gap-1.5 pl-2 ml-2 border-l border-kros-blue/20">
                    <button 
                      @click="batchAction('whatsapp-api')"
                      class="p-2 hover:bg-emerald-500/20 text-emerald-500 rounded-lg transition-all"
@@ -217,22 +255,52 @@
     </div>
 
     <div class="overflow-x-auto no-scrollbar">
-      <table class="w-full min-w-[1000px] text-left border-separate border-spacing-y-3">
+      <table class="w-full min-w-[1000px] text-left border-separate" :class="isCompact ? 'border-spacing-y-1' : 'border-spacing-y-3'">
         <thead>
-          <tr class="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50">
-            <th class="px-4 py-3 w-10">
+          <tr :class="['uppercase tracking-[0.15em] text-white/50', isCompact ? 'text-[9px] font-bold' : 'text-[10px] font-bold']">
+            <th :class="['w-10', isCompact ? 'px-3 py-2' : 'px-4 py-3']">
               <div @click="toggleSelectAll" class="w-5 h-5 rounded-md border border-white/10 flex items-center justify-center cursor-pointer hover:border-kros-blue transition-all" :class="isAllSelected ? 'bg-kros-blue border-kros-blue' : ''">
                 <svg v-if="isAllSelected" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
             </th>
-            <th class="px-4 py-3">Empresa / Parceiro</th>
-            <th class="px-4 py-3 text-center">Cadastro</th>
-            <th class="px-4 py-3">Vencimento</th>
-            <th class="px-4 py-3">Valor</th>
-            <th class="px-4 py-3">LTV Pago</th>
-            <th class="px-4 py-3 text-center w-12">Status</th>
-            <th class="px-4 py-3">Último Alerta</th>
-            <th class="px-4 py-3 text-right sticky right-0 bg-[#111112] text-white/50 z-20">Ações</th>
+            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('company_name')">
+              <div class="flex items-center gap-2">
+                Empresa / Parceiro
+                <svg v-if="sortColumn === 'company_name'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
+              </div>
+            </th>
+            <th :class="['text-center cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('company_created_at')">
+              <div class="flex items-center justify-center gap-2">
+                Cadastro
+                <svg v-if="sortColumn === 'company_created_at'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
+              </div>
+            </th>
+            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('due_date')">
+              <div class="flex items-center gap-2">
+                Vencimento
+                <svg v-if="sortColumn === 'due_date'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
+              </div>
+            </th>
+            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('amount')">
+              <div class="flex items-center gap-2">
+                Valor
+                <svg v-if="sortColumn === 'amount'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
+              </div>
+            </th>
+            <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="handleSort('company_ltv')">
+              <div class="flex items-center gap-2">
+                LTV Pago
+                <svg v-if="sortColumn === 'company_ltv'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
+              </div>
+            </th>
+            <th :class="['text-center w-12', isCompact ? 'px-3 py-2' : 'px-4 py-3']">Status</th>
+            <th :class="isCompact ? 'px-3 py-2' : 'px-4 py-3'">Último Alerta</th>
+            <th :class="['text-right sticky right-0 bg-[#111112] text-white/50 z-20', isCompact ? 'px-3 py-2' : 'px-4 py-3']">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -240,6 +308,7 @@
             v-for="payment in filteredPayments" 
             :key="payment.id"
             :payment="payment"
+            :is-compact="isCompact"
             :is-selected="selectedIds.includes(payment.id)"
             v-model:active-tag-picker="activeTagPicker"
             :tag-definitions="tagDefinitions"
@@ -305,6 +374,10 @@ const selectedTags = ref<string[]>([])
 const selectedIds = ref<string[]>([])
 const activeTagPicker = ref<string | null>(null)
 const isBatchTagPickerOpen = ref(false)
+const searchQuery = ref('')
+const sortColumn = ref<string | null>(null)
+const sortDirection = ref<'asc' | 'desc'>('asc')
+const isCompact = ref(true)
 
 const isAllSelected = computed(() => {
   return filteredPayments.value.length > 0 && selectedIds.value.length === filteredPayments.value.length
@@ -408,6 +481,10 @@ const toggleAllTags = () => {
   }
 }
 
+const hasActiveFilters = computed(() => {
+  return activeFilter.value !== 'Todos' || selectedTags.value.length > 0 || searchQuery.value !== ''
+})
+
 const filteredPayments = computed(() => {
   const now = new Date()
   const startOfWeek = new Date(now)
@@ -418,7 +495,7 @@ const filteredPayments = computed(() => {
   endOfWeek.setDate(now.getDate() + (6 - now.getDay()))
   endOfWeek.setHours(23, 59, 59, 999)
 
-  return props.payments.filter(p => {
+  let filtered = props.payments.filter(p => {
     // Filtro por Status
     let matchesStatus = false
     if (activeFilter.value === 'Todos') {
@@ -453,13 +530,77 @@ const filteredPayments = computed(() => {
       matchesStatus = p.status === activeFilter.value
     }
     
-    // Filtro por Multi-Tags (Se houver tags selecionadas, o registro deve ter PELO MENOS UMA delas)
+    // Filtro por Multi-Tags
     const matchesTag = selectedTags.value.length === 0 || 
                        (p.tags && p.tags.some((t: string) => selectedTags.value.includes(t)))
     
-    return matchesStatus && matchesTag
+    // Filtro por Busca
+    const matchesSearch = !searchQuery.value || 
+                         p.company_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                         p.amount?.toString().includes(searchQuery.value)
+    
+    return matchesStatus && matchesTag && matchesSearch
   })
+
+  // Ordenação
+  if (sortColumn.value) {
+    filtered = [...filtered].sort((a, b) => {
+      let aVal = a[sortColumn.value!]
+      let bVal = b[sortColumn.value!]
+
+      // Tratamento especial para datas
+      if (sortColumn.value === 'due_date' || sortColumn.value === 'company_created_at') {
+        aVal = aVal ? new Date(aVal).getTime() : 0
+        bVal = bVal ? new Date(bVal).getTime() : 0
+      }
+
+      // Tratamento para números
+      if (sortColumn.value === 'amount' || sortColumn.value === 'company_ltv') {
+        aVal = Number(aVal) || 0
+        bVal = Number(bVal) || 0
+      }
+
+      // Tratamento para strings
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase()
+        bVal = bVal?.toLowerCase() || ''
+      }
+
+      if (aVal < bVal) return sortDirection.value === 'asc' ? -1 : 1
+      if (aVal > bVal) return sortDirection.value === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
+  // Limitar a 10 registros se não houver filtros ativos
+  if (!hasActiveFilters.value) {
+    return filtered.slice(0, 10)
+  }
+
+  return filtered
 })
+
+const handleSort = (column: string) => {
+  if (sortColumn.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortColumn.value = column
+    sortDirection.value = 'asc'
+  }
+}
+
+const selectedTotal = computed(() => {
+  const selected = props.payments.filter(p => selectedIds.value.includes(p.id))
+  return selected.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+})
+
+const filteredTotal = computed(() => {
+  return filteredPayments.value.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+})
+
+const formatCurrency = (val: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
+}
 
 onMounted(() => {
   fetchTags()
