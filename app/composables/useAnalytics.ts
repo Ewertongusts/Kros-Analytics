@@ -80,6 +80,10 @@ export const useAnalytics = () => {
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 
+            console.log('📊 Pagamentos do banco:', paymentsData?.length || 0)
+            console.log('📊 Pagamentos com status=paid:', paymentsData?.filter((p: any) => p.status === 'paid').length || 0)
+            console.log('📊 Pagamentos com paid_at:', paymentsData?.filter((p: any) => p.paid_at).length || 0)
+
             if (paymentsData) {
                 // 2.1 Buscar últimos logs para identificar o último alerta
                 const { data: logsData } = await supabase
@@ -100,7 +104,11 @@ export const useAnalytics = () => {
                     const companyInfo = companiesMap.get(p.company_id)
                     let enrichedStatus = p.status
 
-                    if (p.status !== 'paid' && p.due_date) {
+                    // IMPORTANTE: Só enriquecer status se NÃO for 'paid'
+                    // Se já está pago, manter como 'Pago' independente da data
+                    if (p.status === 'paid') {
+                        enrichedStatus = 'Pago'
+                    } else if (p.due_date) {
                         const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`
                         const dueDate = new Date(dueDateString)
                         if (dueDate < now) {
@@ -114,8 +122,8 @@ export const useAnalytics = () => {
                         } else {
                             enrichedStatus = 'Pendente'
                         }
-                    } else if (p.status === 'paid') {
-                        enrichedStatus = 'Pago'
+                    } else {
+                        enrichedStatus = 'Pendente'
                     }
 
                     return {

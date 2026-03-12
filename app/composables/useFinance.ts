@@ -64,11 +64,20 @@ export const useFinance = () => {
         if (data.notes !== undefined) updatePayload.notes = data.notes
       }
 
-      const { error } = await (supabase.from('payments') as any)
+      console.log('💾 Salvando pagamento:', { paymentId, updatePayload })
+
+      const { data: result, error } = await (supabase.from('payments') as any)
         .update(updatePayload)
         .eq('id', paymentId)
+        .select()
+
+      console.log('💾 Resultado do update:', { result, error })
 
       if (error) throw error
+      
+      // Aguardar um pouco para garantir que o banco processou
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       await fetchStats(true)
       return { success: true, isPaid: !isPaid }
     } catch (err: any) {
@@ -104,24 +113,9 @@ export const useFinance = () => {
 
   const processRecords = (paymentsList: any[]): FinancialRecord[] => {
     return paymentsList.map(payment => {
-      let currentStatus: 'Pago' | 'Pendente' | 'Atrasado' | 'Churn' = payment.status === 'paid' ? 'Pago' : 'Pendente'
-      
-      if (currentStatus === 'Pendente' && payment.due_date) {
-        const dueDate = new Date(payment.due_date + 'T00:00:00')
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        
-        if (dueDate < today) {
-          const diffTime = today.getTime() - dueDate.getTime()
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-          
-          if (diffDays >= 30) {
-            currentStatus = 'Churn'
-          } else {
-            currentStatus = 'Atrasado'
-          }
-        }
-      }
+      // Usar o status já enriquecido que vem do fetchStats
+      // O fetchStats já faz toda a lógica de verificar paid_at, datas, etc
+      const currentStatus = payment.status as 'Pago' | 'Pendente' | 'Atrasado' | 'Churn'
 
       return {
         id: payment.id,

@@ -1,6 +1,6 @@
 <template>
   <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group hover:border-kros-blue/5 transition-all">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
       <!-- TABS INTEGRADAS -->
       <BlocksKFinanceTabsHeader 
         :active-sub-tab="activeSubTab"
@@ -25,47 +25,77 @@
         @config="$emit('config')"
         @sync="$emit('sync')"
       />
+    </div>
 
-      <!-- Seleção em Massa -->
-      <div v-if="selectedIds.length > 0" class="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
-        <div class="h-8 w-px bg-white/10 mx-2"></div>
-        <div class="px-3 py-1.5 bg-kros-blue/10 rounded-xl border border-kros-blue/20 flex items-center gap-3">
-          <span class="text-[10px] font-black text-kros-blue uppercase tracking-widest">{{ selectedIds.length }} selecionados</span>
-          <span class="text-[11px] font-black text-kros-blue">{{ formatCurrency(selectedTotal) }}</span>
-          <div class="flex items-center gap-1.5 pl-2 ml-2 border-l border-kros-blue/20">
+    <!-- Seleção em Massa - Linha Separada -->
+    <div v-if="selectedIds.length > 0" class="mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+      <div class="flex items-center justify-between gap-4 px-4 py-3 bg-white/[0.02] rounded-xl border border-white/10">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black text-white/70 uppercase tracking-widest">{{ selectedIds.length }} selecionados</span>
+            <span class="text-[11px] font-black text-white uppercase tracking-widest">{{ formatCurrency(selectedTotal) }}</span>
+          </div>
+          
+          <div class="h-6 w-px bg-white/10"></div>
+          
+          <div class="flex items-center gap-2">
+            <button 
+              @click="batchAction('mark-paid')"
+              class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all flex items-center gap-2"
+              title="Marcar como Pago em Massa"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span class="text-[9px] font-bold uppercase tracking-wider">Marcar Pago</span>
+            </button>
+            
+            <button 
+              @click="batchAction('mark-pending')"
+              class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all flex items-center gap-2"
+              title="Estornar Pagamentos em Massa"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <span class="text-[9px] font-bold uppercase tracking-wider">Estornar</span>
+            </button>
+            
             <button 
               @click="batchAction('whatsapp-api')"
-              class="p-2 hover:bg-emerald-500/20 text-emerald-500 rounded-lg transition-all"
+              class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all flex items-center gap-2"
               title="Cobrar Selecionados (WhatsApp Template)"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 448 512" fill="currentColor"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l115.3-30.2c32.4 17.7 68.8 27 108.6 27 122.4 0 222-99.6 222-222 0-59.3-23-115.1-65-157.1zM223.9 446.7c-33.1 0-65.6-8.9-93.9-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 54 81.2 54.1 130.5 0 101.7-82.8 184.5-184.6 184.5zm100.5-137c-5.5-2.8-32.6-16.1-37.7-17.9-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.2-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.5-11.3 2.5-2.5 5.5-6.5 8.3-9.7 2.8-3.2 3.7-5.5 5.6-9.2 1.9-3.7 1-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.6-13.3 37.2-26.2 4.6-12.9 4.6-24 3.2-26.2-1.4-2.3-5.1-3.7-10.6-6.5z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l115.3-30.2c32.4 17.7 68.8 27 108.6 27 122.4 0 222-99.6 222-222 0-59.3-23-115.1-65-157.1zM223.9 446.7c-33.1 0-65.6-8.9-93.9-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 54 81.2 54.1 130.5 0 101.7-82.8 184.5-184.6 184.5zm100.5-137c-5.5-2.8-32.6-16.1-37.7-17.9-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.2-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.5-11.3 2.5-2.5 5.5-6.5 8.3-9.7 2.8-3.2 3.7-5.5 5.6-9.2 1.9-3.7 1-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.6-13.3 37.2-26.2 4.6-12.9 4.6-24 3.2-26.2-1.4-2.3-5.1-3.7-10.6-6.5z"/></svg>
+              <span class="text-[9px] font-bold uppercase tracking-wider">WhatsApp</span>
             </button>
+            
             <button 
               @click="batchAction('auto-billing-on')"
-              class="p-2 hover:bg-emerald-500/20 text-emerald-500 rounded-lg transition-all"
+              class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all flex items-center gap-2"
               title="Ativar Cobrança Automática em Massa"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/></svg>
+              <span class="text-[9px] font-bold uppercase tracking-wider">Ativar Auto</span>
             </button>
+            
             <button 
               @click="batchAction('auto-billing-off')"
-              class="p-2 hover:bg-red-500/20 text-red-500 rounded-lg transition-all"
+              class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all flex items-center gap-2"
               title="Desativar Cobrança Automática"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 10-7 7-7-7"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 10-7 7-7-7"/></svg>
+              <span class="text-[9px] font-bold uppercase tracking-wider">Desativar Auto</span>
             </button>
 
             <!-- Bulk Tags -->
             <div class="relative">
               <button 
                 @click="isBatchTagPickerOpen = !isBatchTagPickerOpen"
-                class="p-2 hover:bg-kros-blue/20 text-kros-blue rounded-lg transition-all"
+                class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all flex items-center gap-2"
                 title="Adicionar Tag em Massa"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+                <span class="text-[9px] font-bold uppercase tracking-wider">Adicionar Tag</span>
               </button>
 
-              <div v-if="isBatchTagPickerOpen" class="absolute bottom-full right-0 mb-3 w-48 bg-[#111112] border border-white/10 rounded-xl shadow-2xl z-[150] p-1 animate-in slide-in-from-bottom-2 duration-200">
+              <div v-if="isBatchTagPickerOpen" class="absolute top-full left-0 mt-2 w-48 bg-[#111112] border border-white/10 rounded-xl shadow-2xl z-[150] p-1 animate-in slide-in-from-top-2 duration-200">
                 <div class="max-h-48 overflow-y-auto custom-scrollbar">
                   <div class="px-3 py-2 border-b border-white/5 mb-1">
                     <p class="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Adicionar Tag</p>
@@ -84,7 +114,10 @@
             </div>
           </div>
         </div>
-        <button @click="selectedIds = []" class="text-[9px] font-bold text-white/30 hover:text-white uppercase tracking-widest">Cancelar</button>
+        
+        <button @click="selectedIds = []" class="px-3 py-1.5 text-[9px] font-bold text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 rounded-lg transition-all">
+          Cancelar
+        </button>
       </div>
     </div>
 
@@ -181,6 +214,98 @@
       @close="isBatchMsgModalOpen = false"
       @sent="handleBatchSent"
     />
+
+    <!-- Modal de Confirmação de Pagamento em Massa -->
+    <div v-if="isBatchPaidModalOpen" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
+      <div @click="isBatchPaidModalOpen = false" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+      <div class="relative bg-[#111112] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-white uppercase tracking-tight">Marcar como Pago</h3>
+            <p class="text-[10px] text-white/40 font-bold uppercase tracking-wider mt-0.5">{{ selectedIds.length }} pagamentos selecionados</p>
+          </div>
+        </div>
+
+        <div class="mb-4 p-3 bg-white/[0.02] rounded-xl border border-white/5">
+          <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">Empresas:</p>
+          <div class="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
+            <div v-for="payment in selectedPaymentsForBatch" :key="payment.id" class="flex items-center justify-between text-[10px] py-1">
+              <span class="text-white/70 font-medium">{{ payment.company_name }}</span>
+              <span class="text-white font-bold">{{ formatCurrency(payment.amount) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 mb-4">
+          <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Total</span>
+          <span class="text-sm font-black text-emerald-500">{{ formatCurrency(selectedTotal) }}</span>
+        </div>
+
+        <div class="flex gap-3">
+          <button 
+            @click="isBatchPaidModalOpen = false"
+            class="flex-1 py-3 text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 rounded-xl transition-all"
+          >
+            Cancelar
+          </button>
+          <button 
+            @click="confirmBatchPaid"
+            class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmação de Estorno em Massa -->
+    <div v-if="isBatchPendingModalOpen" class="fixed inset-0 z-[200] flex items-center justify-center px-4">
+      <div @click="isBatchPendingModalOpen = false" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+      <div class="relative bg-[#111112] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-white uppercase tracking-tight">Estornar Pagamentos</h3>
+            <p class="text-[10px] text-white/40 font-bold uppercase tracking-wider mt-0.5">{{ selectedIds.length }} pagamentos selecionados</p>
+          </div>
+        </div>
+
+        <div class="mb-4 p-3 bg-white/[0.02] rounded-xl border border-white/5">
+          <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">Empresas:</p>
+          <div class="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
+            <div v-for="payment in selectedPaymentsForBatch" :key="payment.id" class="flex items-center justify-between text-[10px] py-1">
+              <span class="text-white/70 font-medium">{{ payment.company_name }}</span>
+              <span class="text-white font-bold">{{ formatCurrency(payment.amount) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-orange-500/10 rounded-xl border border-orange-500/20 mb-4">
+          <span class="text-[10px] font-black text-orange-500 uppercase tracking-widest">Total</span>
+          <span class="text-sm font-black text-orange-500">{{ formatCurrency(selectedTotal) }}</span>
+        </div>
+
+        <div class="flex gap-3">
+          <button 
+            @click="isBatchPendingModalOpen = false"
+            class="flex-1 py-3 text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 rounded-xl transition-all"
+          >
+            Cancelar
+          </button>
+          <button 
+            @click="confirmBatchPending"
+            class="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
+          >
+            Confirmar Estorno
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -193,10 +318,12 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config'])
 
 const isMsgModalOpen = ref(false)
 const isBatchMsgModalOpen = ref(false)
+const isBatchPaidModalOpen = ref(false)
+const isBatchPendingModalOpen = ref(false)
 const selectedPayment = ref<any>(null)
 const selectedPaymentsForBatch = ref<any[]>([])
 const { tags: tagDefinitions, fetchTags } = useTags()
@@ -235,7 +362,13 @@ const toggleSelect = (id: string) => {
 const batchAction = async (type: string) => {
   const selectedPayments = props.payments.filter(p => selectedIds.value.includes(p.id))
   
-  if (type === 'whatsapp-api') {
+  if (type === 'mark-paid') {
+    selectedPaymentsForBatch.value = selectedPayments
+    isBatchPaidModalOpen.value = true
+  } else if (type === 'mark-pending') {
+    selectedPaymentsForBatch.value = selectedPayments
+    isBatchPendingModalOpen.value = true
+  } else if (type === 'whatsapp-api') {
     selectedPaymentsForBatch.value = selectedPayments
     isBatchMsgModalOpen.value = true
   } else if (type === 'auto-billing-on') {
@@ -247,6 +380,20 @@ const batchAction = async (type: string) => {
     }
     selectedIds.value = []
   }
+}
+
+const confirmBatchPaid = () => {
+  emit('batch-mark-paid', selectedPaymentsForBatch.value)
+  isBatchPaidModalOpen.value = false
+  selectedIds.value = []
+  selectedPaymentsForBatch.value = []
+}
+
+const confirmBatchPending = () => {
+  emit('batch-mark-pending', selectedPaymentsForBatch.value)
+  isBatchPendingModalOpen.value = false
+  selectedIds.value = []
+  selectedPaymentsForBatch.value = []
 }
 
 const addTagToBatch = async (tagName: string) => {

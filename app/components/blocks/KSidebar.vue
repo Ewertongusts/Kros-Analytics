@@ -131,22 +131,7 @@
       </button>
     </div>
 
-    <!-- Toggle Button (Absolute) -->
-    <button 
-      @click="handleToggle"
-      class="absolute -right-3 top-24 w-6 h-6 bg-kros-blue text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 z-[70] hover:scale-110 active:scale-95 transition-all"
-    >
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="14" height="14" 
-        viewBox="0 0 24 24" fill="none" 
-        stroke="currentColor" stroke-width="3" 
-        stroke-linecap="round" stroke-linejoin="round"
-        :class="['transition-transform duration-500', isExpanded ? 'rotate-180' : '']"
-      >
-        <polyline points="9 18 15 12 9 6"></polyline>
-      </svg>
-    </button>
+
   </aside>
 </template>
 
@@ -197,18 +182,19 @@ const handleToggle = () => {
 }
 
 const handleMouseEnter = () => {
-  if (isAutoHidden.value) {
-    isExpanded.value = true
-  }
   if (hideTimer) clearTimeout(hideTimer)
+  if (!isExpanded.value) {
+    isExpanded.value = true
+    isAutoHidden.value = true
+  }
 }
 
 const handleMouseLeave = () => {
-  if (isAutoHidden.value) {
-    hideTimer = setTimeout(() => {
+  hideTimer = setTimeout(() => {
+    if (isAutoHidden.value) {
       isExpanded.value = false
-    }, 2000) // Auto-recolhe após 2 segundos de inatividade
-  }
+    }
+  }, 1000) // Auto-recolhe após 1 segundo de inatividade
 }
 
 const handleLogout = async () => {
@@ -218,11 +204,9 @@ const handleLogout = async () => {
 
 onMounted(async () => {
   await fetchCrmSettings()
-  // Opcional: Iniciar recolhido em telas menores
-  if (window.innerWidth < 1024) {
-    isExpanded.value = false
-    isAutoHidden.value = true
-  }
+  // Iniciar sempre recolhido
+  isExpanded.value = false
+  isAutoHidden.value = true
 })
 </script>
 

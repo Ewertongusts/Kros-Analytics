@@ -58,10 +58,9 @@ const fetchLastLog = async () => {
             .eq('payment_id', props.paymentId)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single()
             
-        if (data) {
-            lastLog.value = data
+        if (data && data.length > 0) {
+            lastLog.value = data[0]
         }
     } catch (err: any) {
         // Ignora caso erro, se não tem log ele só cai aqui silenciado.
