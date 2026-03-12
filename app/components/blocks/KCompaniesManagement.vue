@@ -2,8 +2,8 @@
   <div class="space-y-8 animate-in slide-in-from-bottom duration-700">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-xl font-bold text-white tracking-tight uppercase">Base de Empresas</h3>
-        <p class="text-xs text-white/50 font-medium uppercase tracking-widest mt-1">Gerenciamento de parceiros e faturamento ativo</p>
+        <h3 class="text-xl font-bold text-white tracking-tight uppercase">Base de Clientes</h3>
+        <p class="text-xs text-white/40 font-medium uppercase tracking-widest mt-1">Gerenciamento de parceiros e faturamento ativo</p>
       </div>
       <button 
         @click="openAddModal"
