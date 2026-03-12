@@ -191,10 +191,16 @@ onMounted(async () => {
 const handleSend = async () => {
   if (!settings.value?.api_url) return
   
+  // Validação: Verificar se tem número válido
+  const rawNum = props.payment.company_whatsapp?.replace(/\D/g, '') || ''
+  if (!rawNum || rawNum.length < 10) {
+    apiResult.value = { ok: false, body: 'Número de WhatsApp inválido ou não cadastrado. Por favor, cadastre um número válido antes de enviar mensagens.' }
+    return
+  }
+  
   submitting.value = true
   apiResult.value = null
   try {
-    const rawNum = props.payment.company_whatsapp?.replace(/\D/g, '') || ''
     // Usamos a nossa rota de proxy no Backend (Nitro) para evitar bloqueio de CORS do Navegador
     const response = await fetch('/api/messages/send', {
       method: 'POST',

@@ -461,6 +461,12 @@ const handleSendBatch = async () => {
     
     try {
       const rawNum = payment.company_whatsapp?.replace(/\D/g, '') || ''
+      
+      // Validação: Verificar se tem número válido
+      if (!rawNum || rawNum.length < 10) {
+        throw new Error('Número de WhatsApp inválido ou não cadastrado')
+      }
+      
       const compiledMessage = compileTemplate(bodyToUse, payment)
       
       const response = await fetch('/api/messages/send', {

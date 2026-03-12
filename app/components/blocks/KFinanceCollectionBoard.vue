@@ -369,6 +369,18 @@ const batchAction = async (type: string) => {
     selectedPaymentsForBatch.value = selectedPayments
     isBatchPendingModalOpen.value = true
   } else if (type === 'whatsapp-api') {
+    // Validar se todos têm WhatsApp válido
+    const paymentsWithoutWhatsApp = selectedPayments.filter(p => {
+      const rawNum = p.company_whatsapp?.replace(/\D/g, '') || ''
+      return !rawNum || rawNum.length < 10
+    })
+    
+    if (paymentsWithoutWhatsApp.length > 0) {
+      const names = paymentsWithoutWhatsApp.map(p => p.company_name).join(', ')
+      alert(`⚠️ As seguintes empresas não possuem WhatsApp válido cadastrado:\n\n${names}\n\nPor favor, cadastre os números antes de enviar mensagens.`)
+      return
+    }
+    
     selectedPaymentsForBatch.value = selectedPayments
     isBatchMsgModalOpen.value = true
   } else if (type === 'auto-billing-on') {
