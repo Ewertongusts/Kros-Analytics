@@ -2,41 +2,10 @@
   <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group transition-all">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
       <!-- TABS INTEGRADAS -->
-      <div class="flex items-center gap-1 bg-black/20 p-1 rounded-xl shadow-inner self-start">
-          <button 
-            @click="$emit('update:activeSubTab', 'operational')"
-            :class="[
-              'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
-              activeSubTab === 'operational' 
-                ? 'bg-kros-blue text-white shadow-lg' 
-                : 'text-white/20 hover:text-white/60 hover:bg-white/5'
-            ]"
-          >
-            Gestão
-          </button>
-          <button 
-            @click="$emit('update:activeSubTab', 'history')"
-            :class="[
-              'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
-              activeSubTab === 'history' 
-                ? 'bg-kros-blue text-white shadow-lg' 
-                : 'text-white/20 hover:text-white/60 hover:bg-white/5'
-            ]"
-          >
-            Histórico de Pagamentos
-          </button>
-          <button 
-            @click="$emit('update:activeSubTab', 'logs')"
-            :class="[
-              'px-5 py-3 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all',
-              activeSubTab === 'logs' 
-                ? 'bg-kros-blue text-white shadow-lg' 
-                : 'text-white/20 hover:text-white/60 hover:bg-white/5'
-            ]"
-          >
-            Cobranças
-          </button>
-      </div>
+      <BlocksKFinanceTabsHeader 
+        :active-sub-tab="activeSubTab"
+        @update:active-sub-tab="$emit('update:activeSubTab', $event)"
+      />
 
       <div class="flex flex-wrap items-center gap-3 sm:gap-4 lg:flex-1 lg:justify-end">
           <!-- Total de Logs -->
