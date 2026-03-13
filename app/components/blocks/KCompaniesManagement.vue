@@ -32,7 +32,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useCompanies } from '~/composables/useCompanies'
+import { useToast } from '~/composables/useToast'
 
 const { companies, loading, fetchCompanies, upsertCompany, deleteCompany } = useCompanies()
 const { confirm } = useToast()
@@ -59,6 +61,8 @@ const handleSave = async (formData: any) => {
   const result = await upsertCompany(formData)
   if (result.success) {
     closeModal()
+    // Recarregar imediatamente após salvar
+    await fetchCompanies()
   } else {
     alert('Erro ao salvar empresa: ' + result.error)
   }
@@ -70,11 +74,26 @@ const handleDelete = async (id: string) => {
     const result = await deleteCompany(id)
     if (!result.success) {
       alert('Erro ao excluir empresa: ' + result.error)
+    } else {
+      // Recarregar imediatamente após deletar
+      await fetchCompanies()
     }
   }
 }
 
 onMounted(() => {
+  console.log('📱 [KCompaniesManagement] Componente montado')
+  console.log('📱 [KCompaniesManagement] Chamando fetchCompanies...')
   fetchCompanies()
+  
+  // Log periódico para monitorar se os dados desaparecem
+  const interval = setInterval(() => {
+    console.log('📊 [KCompaniesManagement] Status atual - companies.length:', companies.value?.length || 0)
+    if (companies.value && companies.value.length > 0) {
+      console.log('  Primeiro:', companies.value[0]?.name)
+    }
+  }, 5000)
+  
+  onBeforeUnmount(() => clearInterval(interval))
 })
 </script>

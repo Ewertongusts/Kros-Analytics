@@ -80,6 +80,16 @@
       </div>
     </div>
 
+    <!-- Indicadores (Gráficos) - Colapsável -->
+    <div v-if="showCharts" class="px-6 animate-in fade-in duration-500">
+      <BlocksKFinanceCollectionSummary :payments="financialRecords" />
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <BlocksKFinanceEvolutionChart :payments="financialRecords" />
+        <BlocksKFinanceDistributionChart :payments="financialRecords" />
+      </div>
+    </div>
+
     <!-- Content -->
     <div class="animate-in fade-in duration-500">
       <BlocksKFinanceCollectionBoard 
@@ -103,6 +113,7 @@
         @update-company-tags="$emit('update-company-tags', $event)"
         @open-history="$emit('open-history', $event)"
         @batch-tag-progress="$emit('batch-tag-progress', $event)"
+        @open-client-details="$emit('open-client-details', $event)"
         @sync="$emit('sync')"
         @config="$emit('config')"
         @export="$emit('export', $event)"
@@ -154,6 +165,7 @@ const emit = defineEmits<{
   'create-subscription': []
   'open-timeline': []
   'toggle-charts': []
+  'open-client-details': [payment: any]
   sync: []
   config: []
   export: [format: string]

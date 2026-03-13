@@ -15,6 +15,7 @@
           <!-- Cliente -->
           <SalesFormKSaleClientAutocomplete 
             v-model="clientFields"
+            :is-editing="!!props.saleData"
             @create-customer="handleCreateCustomer"
           />
 

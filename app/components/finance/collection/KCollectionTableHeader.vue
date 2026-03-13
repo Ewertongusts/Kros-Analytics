@@ -15,26 +15,6 @@
         </div>
       </th>
       
-      <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="$emit('sort', 'company_actual_name')">
-        <div class="flex items-center gap-2">
-          Empresa
-          <svg v-if="sortColumn === 'company_actual_name'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-        </div>
-      </th>
-      
-      <th :class="['text-center cursor-pointer hover:text-white transition-colors group relative', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="$emit('sort', 'start_date')">
-        <div class="flex items-center justify-center gap-2">
-          Início Assinatura
-          <svg v-if="sortColumn === 'start_date'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-        </div>
-        <!-- Tooltip -->
-        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
-          <p class="text-[9px] font-bold text-white/90">Data em que o contrato de assinatura começou</p>
-        </div>
-      </th>
-      
       <th :class="['cursor-pointer hover:text-white transition-colors group', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="$emit('sort', 'due_date')">
         <div class="flex items-center gap-2">
           Vencimento
@@ -50,19 +30,6 @@
           <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
         </div>
       </th>
-      
-      <th :class="['cursor-pointer hover:text-white transition-colors group relative', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="$emit('sort', 'ltv')">
-        <div class="flex items-center gap-2">
-          LTV
-          <svg v-if="sortColumn === 'ltv'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="sortDirection === 'desc' ? 'rotate-180' : ''"><path d="m18 15-6-6-6 6"/></svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-50"><path d="m18 15-6-6-6 6"/></svg>
-        </div>
-        <!-- Tooltip -->
-        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
-          <p class="text-[9px] font-bold text-white/90">Lifetime Value - Valor total esperado da assinatura</p>
-        </div>
-      </th>
-      
       
       <th :class="['text-center w-12 cursor-pointer hover:text-white transition-colors group relative', isCompact ? 'px-3 py-2' : 'px-4 py-3']" @click="$emit('sort', 'subscription_status')">
         <div class="flex items-center justify-center gap-2">

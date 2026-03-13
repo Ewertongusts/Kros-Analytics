@@ -4,10 +4,28 @@
       <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">
         Cliente *
       </label>
-      <span class="text-[9px] text-white/40">Digite 2+ caracteres ou "/" para ver todos</span>
+      <span v-if="!isEditing" class="text-[9px] text-white/40">Digite 2+ caracteres ou "/" para ver todos</span>
     </div>
     
-    <div class="relative">
+    <!-- Modo Edição: Apenas mostrar o cliente selecionado como input desabilitado -->
+    <div v-if="isEditing && selectedCustomer" class="relative group">
+      <input 
+        :value="selectedCustomer.name"
+        disabled
+        type="text"
+        class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white/40 outline-none font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+      />
+      <!-- Ícone de proibido ao passar o mouse -->
+      <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Modo Criação: Input de busca + dropdown -->
+    <div v-else class="relative">
       <input 
         v-model="searchQuery"
         type="text"
@@ -61,30 +79,30 @@
           <div v-else-if="customer.email" class="text-[10px] text-white/40 mt-0.5">{{ customer.email }}</div>
         </button>
       </div>
-    </div>
-    
-    <!-- Cliente selecionado -->
-    <div 
-      v-if="selectedCustomer"
-      class="mt-3 p-4 bg-kros-blue/5 border border-kros-blue/20 rounded-xl"
-    >
-      <div class="flex items-start justify-between">
-        <div class="flex-1">
-          <div class="text-xs font-bold text-white">{{ selectedCustomer.name }}</div>
-          <div v-if="selectedCustomer.whatsapp" class="text-[10px] text-kros-blue mt-1">{{ selectedCustomer.whatsapp }}</div>
-          <div v-else-if="selectedCustomer.phone" class="text-[10px] text-kros-blue mt-1">{{ selectedCustomer.phone }}</div>
-          <div v-else-if="selectedCustomer.email" class="text-[10px] text-white/40 mt-1">{{ selectedCustomer.email }}</div>
+      
+      <!-- Cliente selecionado (modo criação) -->
+      <div 
+        v-if="selectedCustomer"
+        class="mt-3 p-4 bg-kros-blue/5 border border-kros-blue/20 rounded-xl"
+      >
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="text-xs font-bold text-white">{{ selectedCustomer.name }}</div>
+            <div v-if="selectedCustomer.whatsapp" class="text-[10px] text-kros-blue mt-1">{{ selectedCustomer.whatsapp }}</div>
+            <div v-else-if="selectedCustomer.phone" class="text-[10px] text-kros-blue mt-1">{{ selectedCustomer.phone }}</div>
+            <div v-else-if="selectedCustomer.email" class="text-[10px] text-white/40 mt-1">{{ selectedCustomer.email }}</div>
+          </div>
+          <button
+            type="button"
+            @click="clearSelection"
+            class="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
-        <button
-          type="button"
-          @click="clearSelection"
-          class="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
       </div>
     </div>
   </div>
@@ -96,6 +114,7 @@ import { useCustomers } from '~/composables/useCustomers'
 
 const props = defineProps<{
   modelValue: any
+  isEditing?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue', 'create-customer'])
@@ -152,6 +171,7 @@ const openCreateCustomerModal = () => {
 }
 
 const selectCustomer = (customer: any) => {
+  if (props.isEditing) return // Não permite mudança se isEditing for true
   selectedCustomer.value = customer
   searchQuery.value = customer.name
   showDropdown.value = false
@@ -159,6 +179,7 @@ const selectCustomer = (customer: any) => {
 }
 
 const clearSelection = () => {
+  if (props.isEditing) return // Não permite limpar se isEditing for true
   selectedCustomer.value = null
   searchQuery.value = ''
   emit('update:modelValue', null)

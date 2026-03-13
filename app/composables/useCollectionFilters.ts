@@ -6,11 +6,12 @@ export interface FilterOption {
   description: string
 }
 
-export const useCollectionFilters = (payments: any[]) => {
-  const activeFilter = ref('Todos')
-  const selectedTags = ref<string[]>([])
-  const subscriptionStatusFilter = ref<string[]>([])
-  const searchQuery = ref('')
+export const useCollectionFilters = (payments: any[], externalRefs?: any) => {
+  // Usar refs externos se fornecidos (do useViewPreferences), senão criar novos
+  const activeFilter = externalRefs?.activeFilter || ref('Todos')
+  const selectedTags = externalRefs?.selectedTags || ref<string[]>([])
+  const subscriptionStatusFilter = externalRefs?.subscriptionStatusFilter || ref<string[]>([])
+  const searchQuery = externalRefs?.searchQuery || ref('')
   const sortColumn = ref<string | null>(null)
   const sortDirection = ref<'asc' | 'desc'>('asc')
   
@@ -142,9 +143,13 @@ export const useCollectionFilters = (payments: any[]) => {
       const matchesStatus = matchesStatusFilter(p, activeFilter.value)
       const matchesTag = selectedTags.value.length === 0 || 
                          (p.tags && p.tags.some((t: string) => selectedTags.value.includes(t)))
+      
+      // Busca melhorada: cliente, empresa, valor
       const matchesSearch = !searchQuery.value || 
                            p.company_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                           p.company_actual_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                            p.amount?.toString().includes(searchQuery.value)
+      
       const matchesSubscriptionStatus = subscriptionStatusFilter.value.length === 0 ||
                                         subscriptionStatusFilter.value.includes(p.subscription_status)
       

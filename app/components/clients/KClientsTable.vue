@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, toRef } from 'vue'
 import { useClientsFilters } from '~/composables/useClientsFilters'
 
 const props = defineProps<{
@@ -77,6 +77,9 @@ const emit = defineEmits<{
 
 const isDetailsModalOpen = ref(false)
 const selectedCompany = ref<any>(null)
+
+// Converter props.companies para ref para manter reatividade
+const companiesRef = toRef(props, 'companies')
 
 const {
   searchQuery,
@@ -93,7 +96,7 @@ const {
   nextPage,
   prevPage,
   goToPage
-} = useClientsFilters(props.companies)
+} = useClientsFilters(companiesRef)
 
 const openDetailsModal = (company: any) => {
   selectedCompany.value = company
@@ -117,11 +120,4 @@ const handleToggleStatusFromModal = () => {
 watch([searchQuery, statusFilter], () => {
   currentPage.value = 1
 })
-
-// Forçar reatividade quando companies mudam
-watch(() => props.companies, (newCompanies) => {
-  if (newCompanies && newCompanies.length > 0) {
-    // Trigger recompute
-  }
-}, { deep: true })
 </script>

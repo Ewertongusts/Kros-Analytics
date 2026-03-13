@@ -1,11 +1,12 @@
 <template>
-  <UiKModal :is-open="isOpen" size="lg" @close="close">
-    <UiKModalHeader :title="editingSubscription ? 'EDITAR ASSINATURA' : 'NOVA ASSINATURA'" />
+  <UiKModal :is-open="isOpen" @close="close">
+    <UiKModalHeader :title="getModalTitle()" />
 
     <form @submit.prevent="handleSave" class="space-y-6 overflow-y-auto custom-scrollbar max-h-[70vh]">
       <!-- Seleção de Cliente -->
       <SubscriptionsKSubscriptionCustomerSelector
         v-model="form.customer"
+        :is-editing="!!editingSubscription"
         @create-customer="handleCreateCustomer"
       />
       
@@ -16,32 +17,24 @@
       
       <!-- Informações da Assinatura -->
       <div class="space-y-3">
-        <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-kros-blue">Detalhes da Assinatura</h3>
+        <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-kros-blue">Cobrança</h3>
         
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
           <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1 relative group inline-block">
-              Data de Início da Assinatura *
-              <!-- Tooltip -->
-              <span class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
-                <span class="text-[9px] font-bold text-white/90">Data em que o contrato de assinatura começou</span>
-              </span>
+            <label class="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50">
+              Início *
             </label>
             <input 
               v-model="form.start_date"
               type="date"
               required
-              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-kros-blue transition-all font-medium"
             />
           </div>
 
           <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1 relative group inline-block">
-              Dia de Vencimento *
-              <!-- Tooltip -->
-              <span class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
-                <span class="text-[9px] font-bold text-white/90">Dia do mês (1-31) em que a cobrança vence</span>
-              </span>
+            <label class="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50">
+              Vencimento *
             </label>
             <input 
               v-model.number="form.due_day"
@@ -49,46 +42,42 @@
               min="1"
               max="31"
               required
-              placeholder="Ex: 10"
-              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+              placeholder="10"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
             />
           </div>
-        </div>
-        
-        <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1 relative group inline-block">
-            Status da Assinatura
-            <!-- Tooltip -->
-            <span class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
-              <span class="text-[9px] font-bold text-white/90">Estado do contrato (Ativa, Suspensa, Cancelada, Trial)</span>
-            </span>
-          </label>
-          <select 
-            v-model="form.status"
-            class="w-full bg-[#111112] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none"
-          >
-            <option value="active">Ativa</option>
-            <option value="suspended">Suspensa</option>
-            <option value="cancelled">Cancelada</option>
-            <option value="trial">Trial</option>
-          </select>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50">
+              Status *
+            </label>
+            <select 
+              v-model="form.status"
+              class="w-full bg-[#111112] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none"
+            >
+              <option value="active">Ativa</option>
+              <option value="suspended">Suspensa</option>
+              <option value="cancelled">Cancelada</option>
+              <option value="trial">Trial</option>
+            </select>
+          </div>
         </div>
       </div>
       
       <!-- Observações -->
       <div class="space-y-2">
-        <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Observações</label>
+        <label class="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50">Notas</label>
         <textarea 
           v-model="form.notes"
-          rows="2"
-          placeholder="Anotações sobre esta assinatura..."
-          class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20 resize-none"
+          rows="3"
+          placeholder="Anotações..."
+          class="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20 resize-none"
         ></textarea>
       </div>
 
       <UiKModalActions
         cancel-text="Cancelar"
-        :confirm-text="editingSubscription ? 'SALVAR ALTERAÇÕES' : 'CRIAR ASSINATURA'"
+        :confirm-text="editingSubscription ? 'SALVAR ALTERAÇÕES' : 'CRIAR'"
         :loading-text="editingSubscription ? 'SALVANDO...' : 'CRIANDO...'"
         :loading="loading"
         submit-type="submit"
@@ -259,6 +248,24 @@ const handleSave = async () => {
 const close = () => {
   resetForm()
   emit('close')
+}
+
+const getModalTitle = () => {
+  if (!props.editingSubscription) {
+    return 'NOVA ASSINATURA'
+  }
+  
+  // Format creation date as DD/MM/YYYY
+  const createdAt = props.editingSubscription.created_at
+  if (createdAt) {
+    const date = new Date(createdAt)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `EDITAR ASSINATURA - ${day}/${month}/${year}`
+  }
+  
+  return 'EDITAR ASSINATURA'
 }
 
 watch(() => props.isOpen, (val) => {

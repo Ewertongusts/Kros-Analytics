@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, isRef } from 'vue'
 
 export const useClientsFilters = (companiesRef: any) => {
   const searchQuery = ref('')
@@ -9,7 +9,30 @@ export const useClientsFilters = (companiesRef: any) => {
   const itemsPerPage = ref(10)
 
   const filteredCompanies = computed(() => {
-    const companies = Array.isArray(companiesRef) ? companiesRef : companiesRef.value || []
+    console.log('🔍 [useClientsFilters] Computando filteredCompanies')
+    
+    // Obter o array de companies
+    let companies: any[] = []
+    
+    if (isRef(companiesRef)) {
+      // Se é um ref, usar .value
+      companies = companiesRef.value || []
+      console.log('  ✅ É um ref, length:', companies.length)
+    } else if (Array.isArray(companiesRef)) {
+      // Se é um array direto
+      companies = companiesRef
+      console.log('  ✅ É um array direto, length:', companies.length)
+    } else {
+      console.warn('⚠️ companiesRef não é um array ou ref válido')
+      return []
+    }
+    
+    // Validação: se companies está vazio, retornar array vazio
+    if (!companies || companies.length === 0) {
+      console.log('  ⚠️ Array vazio, retornando []')
+      return []
+    }
+    
     let result = [...companies]
 
     // Filtro por busca
@@ -19,7 +42,7 @@ export const useClientsFilters = (companiesRef: any) => {
         c.name?.toLowerCase().includes(query) ||
         c.representative_name?.toLowerCase().includes(query) ||
         c.email?.toLowerCase().includes(query) ||
-        c.phone?.toLowerCase().includes(query)
+        c.whatsapp?.toLowerCase().includes(query)
       )
     }
 
@@ -48,6 +71,7 @@ export const useClientsFilters = (companiesRef: any) => {
       return 0
     })
 
+    console.log('  ✅ Retornando', result.length, 'contatos filtrados')
     return result
   })
 

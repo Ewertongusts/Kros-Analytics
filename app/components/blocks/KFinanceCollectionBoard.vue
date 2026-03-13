@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group hover:border-kros-blue/5 transition-all">
+  <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] transition-all">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
       <!-- FILTROS -->
       <BlocksKFinanceCollectionFilters
@@ -17,12 +17,59 @@
         :subscription-status-filter="subscriptionStatusFilter"
         @toggle-subscription-status="toggleSubscriptionStatus"
         @clear-subscription-status="clearSubscriptionStatus"
-        :is-compact="isCompact"
-        @toggle-compact="isCompact = !isCompact"
-        @config="$emit('config')"
-        @sync="$emit('sync')"
-        @export="handleExportDebug"
       />
+
+      <!-- BOTÕES DE AÇÃO -->
+      <div class="flex items-center gap-2">
+        <button 
+          @click="isCompact = !isCompact"
+          class="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/10"
+          :class="isCompact ? 'text-kros-blue' : 'text-white/30 hover:text-white'"
+          :title="isCompact ? 'Visualização Compacta' : 'Visualização Expandida'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <button 
+          @click="rememberPreferences = !rememberPreferences"
+          class="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/10"
+          :class="rememberPreferences ? 'text-kros-blue' : 'text-white/30 hover:text-white'"
+          title="Memorizar Preferências"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+        </button>
+        
+        <button 
+          @click="$emit('export')"
+          class="p-3 bg-white/5 hover:bg-white/10 text-white/30 hover:text-white rounded-lg transition-all border border-transparent hover:border-white/10"
+          title="Exportar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        </button>
+        
+        <button 
+          @click="$emit('config')"
+          class="p-3 bg-white/5 hover:bg-white/10 text-white/30 hover:text-white rounded-lg transition-all border border-transparent hover:border-white/10"
+          title="Gerenciar Empresas"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </button>
+        <button 
+          @click="$emit('sync')"
+          class="p-3 bg-white/5 hover:bg-white/10 text-white/30 hover:text-white rounded-lg transition-all border border-transparent hover:border-white/10"
+          title="Sincronizar Dados"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/><path d="M22 3v5h-5"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Seleção em Massa - Linha Separada -->
@@ -61,6 +108,7 @@
             @open-history="$emit('open-history', $event)"
             @delete="handleDelete"
             @update-subscription-status="handleUpdateSubscriptionStatus"
+            @open-client-details="$emit('open-client-details', $event)"
           />
         </tbody>
       </table>
@@ -205,6 +253,7 @@ import { useTags } from '~/composables/useTags'
 import { useCollectionFilters } from '~/composables/useCollectionFilters'
 import { useCollectionSelection } from '~/composables/useCollectionSelection'
 import { useCollectionBatchActions } from '~/composables/useCollectionBatchActions'
+import { useViewPreferences } from '~/composables/useViewPreferences'
 import { isValidWhatsApp } from '~/utils/validators'
 
 const { confirm } = useToast()
@@ -214,7 +263,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details'])
 
 const handleExportDebug = (format: any) => {
   emit('export', format)
@@ -223,17 +272,13 @@ const handleExportDebug = (format: any) => {
 const isMsgModalOpen = ref(false)
 const selectedPayment = ref<any>(null)
 const { tags: tagDefinitions, fetchTags } = useTags()
-const isCompact = ref(true)
+const { isCompact, rememberPreferences, isLoaded, loadPreferences, searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, savePreferences } = useViewPreferences()
 
-// Composables
+// Composables - passar refs do useViewPreferences para compartilhar estado
 const {
-  activeFilter,
-  selectedTags,
-  searchQuery,
   sortColumn,
   sortDirection,
   filterOptions,
-  subscriptionStatusFilter,
   filteredPayments,
   paginatedPayments,
   currentPage,
@@ -250,7 +295,7 @@ const {
   prevPage,
   goToPage,
   resetPage
-} = useCollectionFilters(props.payments)
+} = useCollectionFilters(props.payments, { activeFilter, selectedTags, subscriptionStatusFilter, searchQuery })
 
 const {
   selectedIds,
@@ -415,7 +460,16 @@ const handleEdit = (payment: any) => {
 
 onMounted(() => {
   fetchTags()
+  loadPreferences()
 })
+
+// Watchers para salvar filtros automaticamente quando rememberPreferences está ativo
+watch([searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, isCompact, rememberPreferences], () => {
+  if (rememberPreferences.value && isLoaded.value) {
+    const prefs = useViewPreferences()
+    prefs.savePreferences()
+  }
+}, { deep: true })
 
 const openMsgModal = (payment: any) => {
   if (!isValidWhatsApp(payment.company_whatsapp)) {

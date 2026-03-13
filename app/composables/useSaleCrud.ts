@@ -74,6 +74,9 @@ export const useSaleCrud = () => {
           updated_at: new Date().toISOString()
         }
         
+        // Remover campos que não existem na tabela
+        delete updateData.last_receipt_sent_at
+        
         const { data, error: updateError } = await (supabase.from('companies') as any)
           .update(updateData)
           .eq('id', editingSale.id)
@@ -97,6 +100,9 @@ export const useSaleCrud = () => {
           sale_type: selectedSaleType,
           is_active: true
         }
+        
+        // Remover campos que não existem na tabela
+        delete insertData.last_receipt_sent_at
         
         const { data, error: insertError } = await supabase
           .from('companies')

@@ -1,48 +1,40 @@
 <template>
-  <div class="flex gap-2 flex-wrap">
+  <div class="flex gap-8 border-b border-white/10">
     <button 
       @click="$emit('update:modelValue', 'todos')"
       :class="[
-        'px-4 py-2.5 rounded-xl border transition-all text-[10px] font-bold uppercase tracking-widest',
+        'pb-3 text-[11px] font-bold uppercase tracking-widest transition-all relative',
         modelValue === 'todos' 
-          ? 'bg-kros-blue border-kros-blue text-white' 
-          : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:border-white/20'
+          ? 'text-kros-blue' 
+          : 'text-white/50 hover:text-white'
       ]"
     >
       Todos
+      <div v-if="modelValue === 'todos'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-kros-blue"></div>
     </button>
     <button 
       @click="$emit('update:modelValue', 'produto')"
       :class="[
-        'px-4 py-2.5 rounded-xl border transition-all text-[10px] font-bold uppercase tracking-widest',
+        'pb-3 text-[11px] font-bold uppercase tracking-widest transition-all relative',
         modelValue === 'produto' 
-          ? 'bg-purple-500 border-purple-500 text-white' 
-          : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:border-white/20'
+          ? 'text-purple-400' 
+          : 'text-white/50 hover:text-white'
       ]"
     >
-      📦 Produtos
+      Produtos
+      <div v-if="modelValue === 'produto'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-400"></div>
     </button>
     <button 
       @click="$emit('update:modelValue', 'servico')"
       :class="[
-        'px-4 py-2.5 rounded-xl border transition-all text-[10px] font-bold uppercase tracking-widest',
+        'pb-3 text-[11px] font-bold uppercase tracking-widest transition-all relative',
         modelValue === 'servico' 
-          ? 'bg-blue-500 border-blue-500 text-white' 
-          : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:border-white/20'
+          ? 'text-blue-400' 
+          : 'text-white/50 hover:text-white'
       ]"
     >
-      🛠️ Serviços
-    </button>
-    <button 
-      @click="$emit('update:modelValue', 'personalizado')"
-      :class="[
-        'px-4 py-2.5 rounded-xl border transition-all text-[10px] font-bold uppercase tracking-widest',
-        modelValue === 'personalizado' 
-          ? 'bg-orange-500 border-orange-500 text-white' 
-          : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:border-white/20'
-      ]"
-    >
-      ✨ Personalizados
+      Serviços
+      <div v-if="modelValue === 'servico'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400"></div>
     </button>
   </div>
 </template>

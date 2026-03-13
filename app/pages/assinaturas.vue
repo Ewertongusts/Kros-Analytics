@@ -29,6 +29,7 @@
         @toggle-charts="showCharts = !showCharts"
         @sync="handleSync"
         @config="navigateTo('/clientes')"
+        @open-client-details="handleOpenClientDetails"
         @export="(format) => { exportPayments(subscriptions, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
       />
       
@@ -82,6 +83,14 @@
       :current-item="batchProgressModal.currentItem"
       @close="batchProgressModal.isOpen = false"
     />
+
+    <ClientsKClientDetailsModal
+      :is-open="clientDetailsModal.isOpen"
+      :company="clientDetailsModal.company"
+      @close="clientDetailsModal.isOpen = false"
+      @edit="handleEditClient"
+      @toggle-status="handleToggleClientStatus"
+    />
   </LayoutsKPageLayout>
 </template>
 
@@ -114,6 +123,11 @@ const refreshKey = ref(0)
 const subscriptionModal = reactive({
   isOpen: false,
   editingSubscription: null as any
+})
+
+const clientDetailsModal = reactive({
+  isOpen: false,
+  company: null as any
 })
 
 const {
@@ -310,4 +324,48 @@ onMounted(async () => {
     console.error('Erro ao registrar acesso:', err)
   }
 })
+
+const handleOpenClientDetails = async (payment: any) => {
+  try {
+    // Buscar o cliente completo pelo company_id
+    const supabase = useSupabaseClient()
+    const { data: customer, error } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('id', payment.company_id)
+      .single()
+    
+    if (error || !customer) {
+      console.warn('Cliente não encontrado, usando dados do pagamento:', error)
+      // Fallback: usar dados do pagamento
+      clientDetailsModal.company = {
+        id: payment.company_id,
+        name: payment.company_actual_name,
+        representative_name: payment.company_name,
+        email: payment.email,
+        phone: payment.phone,
+        whatsapp: payment.whatsapp,
+        created_at: payment.created_at,
+        updated_at: payment.updated_at,
+        is_active: payment.is_active,
+        notes: payment.notes
+      }
+    } else {
+      clientDetailsModal.company = customer
+    }
+  } catch (err) {
+    console.error('Erro ao buscar cliente:', err)
+  }
+  clientDetailsModal.isOpen = true
+}
+
+const handleEditClient = () => {
+  // Navegar para página de edição de cliente
+  navigateTo(`/clientes`)
+}
+
+const handleToggleClientStatus = async () => {
+  // Implementar toggle de status do cliente se necessário
+  clientDetailsModal.isOpen = false
+}
 </script>

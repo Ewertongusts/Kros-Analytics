@@ -86,8 +86,8 @@
       </div>
 
       <div v-if="paymentStatus === 'paid'" class="flex justify-between items-center">
-        <span class="text-[10px] text-emerald-400">Recebido por:</span>
-        <span class="text-xs font-bold text-emerald-400">{{ receivedBy }}</span>
+        <span class="text-[10px] text-white/60">Recebido por:</span>
+        <span class="text-xs font-bold text-white/60">{{ receivedBy }}</span>
       </div>
     </div>
   </div>

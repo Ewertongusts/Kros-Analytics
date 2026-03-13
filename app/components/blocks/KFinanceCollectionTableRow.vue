@@ -12,24 +12,20 @@
       </div>
     </td>
     <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
-      <span :class="['font-semibold text-sm tracking-tight text-white uppercase', isCompact ? 'text-[10px]' : 'text-xs']">
-        {{ payment.company_name }}
-      </span>
-    </td>
-    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
-      <span :class="['font-medium text-white/70', isCompact ? 'text-[10px]' : 'text-xs']">{{ payment.company_actual_name }}</span>
-    </td>
-    <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
-       <span :class="['font-medium uppercase tracking-widest text-white/50', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDateWithYear(payment.start_date) }}</span>
+      <div class="cursor-pointer hover:opacity-80 transition-opacity" @click="$emit('open-client-details', payment)">
+        <p :class="['font-semibold tracking-tight text-white uppercase', isCompact ? 'text-[10px]' : 'text-xs']">
+          {{ payment.company_name }}
+        </p>
+        <p :class="['font-medium text-white/70 mt-1', isCompact ? 'text-[9px]' : 'text-[10px]']">
+          {{ payment.company_actual_name }}
+        </p>
+      </div>
     </td>
     <td :class="['font-medium', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
        <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.due_date) }}</span>
     </td>
     <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
        <span :class="['font-black tabular-nums text-white/90 tracking-tight', isCompact ? 'text-[11px]' : 'text-xs']">{{ formatCurrency(payment.amount) }}</span>
-    </td>
-    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
-       <span :class="['font-black tabular-nums text-white/90 tracking-tight', isCompact ? 'text-[11px]' : 'text-xs']">{{ formatCurrency(calculateLTV(payment)) }}</span>
     </td>
     <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
       <div class="flex items-center justify-center">
@@ -101,13 +97,13 @@ const emit = defineEmits([
   'open-logs', 
   'open-history',
   'delete',
-  'update-subscription-status'
+  'update-subscription-status',
+  'open-client-details'
 ])
 
 const { 
   formatCurrency, 
   formatDate, 
-  formatDateWithYear,
   formatDateTimeTiny, 
   formatTimeAgo, 
   isUrgentAlert, 

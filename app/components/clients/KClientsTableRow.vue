@@ -34,7 +34,7 @@
     <!-- Telefone -->
     <td class="px-6 py-5">
       <span class="text-xs font-medium text-white/60">
-        {{ company.phone || '-' }}
+        {{ company.whatsapp || '-' }}
       </span>
     </td>
 

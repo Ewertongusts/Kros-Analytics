@@ -9,6 +9,7 @@ export interface Company {
   monthly_price?: number
   email?: string
   whatsapp?: string
+  phone?: string
   representative_name?: string
   notes?: string
   billing_cycle?: string
@@ -17,6 +18,18 @@ export interface Company {
   instalment_value?: number
   tags?: string[]
   ltv?: number
+  document?: string
+  birthday?: string
+  segment?: string
+  sales_rep?: string
+  website?: string
+  address_zipcode?: string
+  address_street?: string
+  address_number?: string
+  address_complement?: string
+  address_neighborhood?: string
+  address_city?: string
+  address_state?: string
 }
 
 export const useCompanies = () => {
@@ -28,39 +41,59 @@ export const useCompanies = () => {
   const fetchCompanies = async () => {
     loading.value = true
     error.value = null
+    console.log('🔄 [useCompanies] Iniciando fetch de contatos...')
     try {
-      // Buscamos as empresas e seus pagamentos marcados como 'paid' para o LTV
+      // Buscamos as empresas - query simples e rápida
       const { data, error: fetchError } = await (supabase.from('companies') as any)
-        .select(`
-          *,
-          payments (
-            amount,
-            status
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
-      if (fetchError) throw fetchError
+      if (fetchError) {
+        console.error('❌ [useCompanies] Erro do Supabase:', fetchError)
+        throw fetchError
+      }
       
-      companies.value = (data as any[]).map(company => {
-        // Calcula o LTV: soma de todos os pagamentos com status 'paid'
-        const ltv = (company.payments || [])
-          .filter((p: any) => p.status === 'paid')
-          .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)
-
-        return {
-          ...company,
-          plan_name: company.plan_name || 'Individual',
-          monthly_price: Number(company.monthly_price || 0),
-          billing_cycle: company.billing_cycle || 'Mensal',
-          billing_day: company.billing_day || 1,
-          tags: company.tags || [],
-          ltv
-        }
-      })
+      console.log('✅ [useCompanies] Dados recebidos do Supabase:', data?.length || 0, 'contatos')
+      
+      // Validação: garantir que temos dados
+      if (!data || !Array.isArray(data)) {
+        console.error('❌ [useCompanies] Dados inválidos:', typeof data, Array.isArray(data))
+        throw new Error('Dados inválidos retornados do Supabase')
+      }
+      
+      // Processar dados sem fazer queries adicionais
+      const processedCompanies = (data as any[]).map((company) => ({
+        ...company,
+        plan_name: company.plan_name || 'Individual',
+        monthly_price: Number(company.monthly_price || 0),
+        billing_cycle: company.billing_cycle || 'Mensal',
+        billing_day: company.billing_day || 1,
+        tags: company.tags || [],
+        ltv: 0 // LTV será calculado quando necessário
+      }))
+      
+      // Validação: garantir que temos pelo menos um array
+      if (!Array.isArray(processedCompanies)) {
+        console.error('❌ [useCompanies] Erro ao processar companies - não é array')
+        throw new Error('Erro ao processar companies')
+      }
+      
+      // Atribuir dados de forma segura
+      companies.value = processedCompanies
+      console.log('✅ [useCompanies] Contatos carregados:', companies.value.length)
+      console.log('✅ [useCompanies] Primeiro contato:', companies.value[0]?.name || 'N/A')
+      
+      // Validação final: confirmar que dados foram atribuídos
+      if (!companies.value || companies.value.length === 0) {
+        console.warn('⚠️ [useCompanies] Nenhuma empresa encontrada no banco')
+      }
     } catch (e: any) {
-      console.error('Erro ao buscar empresas:', e.message)
+      console.error('❌ [useCompanies] Erro ao buscar empresas:', e.message)
       error.value = e.message
+      // Garantir que companies nunca fica undefined
+      if (!companies.value) {
+        companies.value = []
+      }
     } finally {
       loading.value = false
     }
@@ -79,13 +112,26 @@ export const useCompanies = () => {
         is_active: company.is_active,
         email: company.email,
         whatsapp: company.whatsapp,
+        phone: company.phone,
         representative_name: company.representative_name,
         notes: company.notes,
         tags: company.tags || [],
         plan_name: company.plan_name,
         monthly_price: company.monthly_price,
         billing_cycle: company.billing_cycle,
-        billing_day: company.billing_day
+        billing_day: company.billing_day,
+        document: company.document,
+        birthday: company.birthday,
+        segment: company.segment,
+        sales_rep: company.sales_rep,
+        website: company.website,
+        address_zipcode: company.address_zipcode,
+        address_street: company.address_street,
+        address_number: company.address_number,
+        address_complement: company.address_complement,
+        address_neighborhood: company.address_neighborhood,
+        address_city: company.address_city,
+        address_state: company.address_state
       }
 
       // Se for edição, mandamos o ID. Se for nova, deixamos o banco gerar.

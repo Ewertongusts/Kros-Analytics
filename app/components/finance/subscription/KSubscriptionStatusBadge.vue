@@ -1,7 +1,7 @@
 <template>
   <div class="relative">
     <button
-      @click="isOpen = !isOpen"
+      @click.stop="isOpen = !isOpen"
       :class="[
         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider transition-all cursor-pointer hover:opacity-80',
         sizeClasses,
@@ -27,16 +27,23 @@
       <span v-if="showLabel">{{ label }}</span>
     </button>
 
+    <!-- Backdrop invisível para fechar ao clicar fora -->
+    <div 
+      v-if="isOpen"
+      class="fixed inset-0 z-[9998]"
+      @click.stop="isOpen = false"
+    />
+
     <!-- Menu de opções -->
     <div
       v-if="isOpen"
-      class="absolute top-full mt-2 left-0 bg-[#111112] border border-white/10 rounded-lg shadow-xl z-50 min-w-max"
+      class="absolute top-full mt-2 left-0 bg-[#111112] border border-white/10 rounded-lg shadow-2xl z-[9999] min-w-max"
       @click.stop
     >
       <button
         v-for="option in statusOptions"
         :key="option.value"
-        @click="selectStatus(option.value)"
+        @click.stop="selectStatus(option.value)"
         :class="[
           'w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-all',
           option.value === props.status

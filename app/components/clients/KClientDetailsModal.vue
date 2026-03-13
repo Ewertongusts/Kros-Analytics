@@ -150,6 +150,66 @@
               </div>
             </div>
 
+            <!-- Produtos -->
+            <div v-if="activeTab === 'produtos'" class="space-y-4">
+              <div v-if="loading" class="text-center py-8 text-white/50">
+                <p class="text-sm">Carregando produtos...</p>
+              </div>
+              <div v-else-if="clientHistory.allSales && clientHistory.allSales.filter((s: any) => s.sale_type === 'produto').length > 0" class="space-y-3">
+                <div v-for="product in clientHistory.allSales.filter((s: any) => s.sale_type === 'produto')" :key="product.id" class="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <p class="text-sm font-bold text-white">{{ product.plan_name || 'Produto não informado' }}</p>
+                      <p class="text-xs text-white/50 mt-1">{{ formatDate(product.created_at) }}</p>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <p class="text-white/50">Valor</p>
+                      <p class="text-white font-bold">{{ formatCurrency(product.monthly_price) }}</p>
+                    </div>
+                    <div>
+                      <p class="text-white/50">Status</p>
+                      <p class="text-white font-bold">{{ product.is_active ? 'Ativo' : 'Inativo' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-8 text-white/50">
+                <p class="text-sm">Nenhum produto encontrado</p>
+              </div>
+            </div>
+
+            <!-- Serviços -->
+            <div v-if="activeTab === 'servicos'" class="space-y-4">
+              <div v-if="loading" class="text-center py-8 text-white/50">
+                <p class="text-sm">Carregando serviços...</p>
+              </div>
+              <div v-else-if="clientHistory.allSales && clientHistory.allSales.filter((s: any) => s.sale_type === 'servico').length > 0" class="space-y-3">
+                <div v-for="service in clientHistory.allSales.filter((s: any) => s.sale_type === 'servico')" :key="service.id" class="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <p class="text-sm font-bold text-white">{{ service.plan_name || 'Serviço não informado' }}</p>
+                      <p class="text-xs text-white/50 mt-1">{{ formatDate(service.created_at) }}</p>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <p class="text-white/50">Valor</p>
+                      <p class="text-white font-bold">{{ formatCurrency(service.monthly_price) }}</p>
+                    </div>
+                    <div>
+                      <p class="text-white/50">Status</p>
+                      <p class="text-white font-bold">{{ service.is_active ? 'Ativo' : 'Inativo' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-8 text-white/50">
+                <p class="text-sm">Nenhum serviço encontrado</p>
+              </div>
+            </div>
+
             <!-- Pagamentos -->
             <div v-if="activeTab === 'pagamentos'" class="space-y-3">
               <div v-if="loading" class="text-center py-8 text-white/50">
@@ -198,22 +258,55 @@
             </div>
 
             <!-- Estatísticas -->
-            <div v-if="activeTab === 'resumo'" class="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-              <div class="p-4 bg-white/5 rounded-lg">
-                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Assinaturas Ativas</p>
-                <p class="text-2xl font-bold text-kros-blue">{{ clientHistory.stats.activeSubscriptions }}</p>
+            <div v-if="activeTab === 'resumo'" class="space-y-6 pt-4 border-t border-white/10">
+              <!-- Assinaturas -->
+              <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-white/5 rounded-lg">
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Assinaturas Ativas</p>
+                  <p class="text-2xl font-bold text-kros-blue">{{ clientHistory.stats.activeSubscriptions }}</p>
+                </div>
+                <div class="p-4 bg-white/5 rounded-lg">
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Pagamentos Realizados</p>
+                  <p class="text-2xl font-bold text-emerald-500">{{ clientHistory.stats.paidPayments }}</p>
+                </div>
+                <div class="p-4 bg-white/5 rounded-lg">
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Total Pago</p>
+                  <p class="text-2xl font-bold text-white">{{ formatCurrency(clientHistory.stats.totalPaid) }}</p>
+                </div>
+                <div class="p-4 bg-white/5 rounded-lg">
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Pendente</p>
+                  <p class="text-2xl font-bold text-amber-500">{{ formatCurrency(clientHistory.stats.totalPending) }}</p>
+                </div>
               </div>
-              <div class="p-4 bg-white/5 rounded-lg">
-                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Pagamentos Realizados</p>
-                <p class="text-2xl font-bold text-emerald-500">{{ clientHistory.stats.paidPayments }}</p>
+
+              <!-- Vendas -->
+              <div class="pt-4 border-t border-white/10">
+                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-3">Vendas</p>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                    <p class="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-2">Total em Produtos</p>
+                    <p class="text-2xl font-bold text-white">{{ formatCurrency(clientHistory.stats.totalProductValue) }}</p>
+                  </div>
+                  <div class="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                    <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">Total em Serviços</p>
+                    <p class="text-2xl font-bold text-white">{{ formatCurrency(clientHistory.stats.totalServiceValue) }}</p>
+                  </div>
+                </div>
               </div>
-              <div class="p-4 bg-white/5 rounded-lg">
-                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Total Pago</p>
-                <p class="text-2xl font-bold text-white">{{ formatCurrency(clientHistory.stats.totalPaid) }}</p>
-              </div>
-              <div class="p-4 bg-white/5 rounded-lg">
-                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Pendente</p>
-                <p class="text-2xl font-bold text-amber-500">{{ formatCurrency(clientHistory.stats.totalPending) }}</p>
+
+              <!-- Assinaturas Pagas -->
+              <div class="pt-4 border-t border-white/10">
+                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-3">Assinaturas</p>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                    <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">Total Pago (Ativas)</p>
+                    <p class="text-2xl font-bold text-white">{{ formatCurrency(clientHistory.stats.totalPaidSubscriptions) }}</p>
+                  </div>
+                  <div class="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                    <p class="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">LTV Total</p>
+                    <p class="text-2xl font-bold text-white">{{ formatCurrency(clientHistory.stats.subscriptionLTV) }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -260,7 +353,8 @@ const clientHistory = ref<any>({
   subscriptions: [],
   payments: [],
   paymentHistory: [],
-  sales: null,
+  sales: [],
+  allSales: [],
   tasks: [],
   stats: {
     totalSubscriptions: 0,
@@ -270,7 +364,11 @@ const clientHistory = ref<any>({
     pendingPayments: 0,
     totalPaid: 0,
     totalPending: 0,
-    activeTasks: 0
+    activeTasks: 0,
+    totalProductValue: 0,
+    totalServiceValue: 0,
+    totalPaidSubscriptions: 0,
+    subscriptionLTV: 0
   },
   subscriptionLTV: 0
 })
@@ -278,6 +376,8 @@ const clientHistory = ref<any>({
 const tabs = [
   { id: 'resumo', label: 'Resumo' },
   { id: 'assinaturas', label: 'Assinaturas' },
+  { id: 'produtos', label: 'Produtos' },
+  { id: 'servicos', label: 'Serviços' },
   { id: 'pagamentos', label: 'Pagamentos' },
   { id: 'historico', label: 'Histórico' }
 ]
