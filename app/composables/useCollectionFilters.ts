@@ -9,6 +9,7 @@ export interface FilterOption {
 export const useCollectionFilters = (payments: any[]) => {
   const activeFilter = ref('Todos')
   const selectedTags = ref<string[]>([])
+  const subscriptionStatusFilter = ref<string[]>([])
   const searchQuery = ref('')
   const sortColumn = ref<string | null>(null)
   const sortDirection = ref<'asc' | 'desc'>('asc')
@@ -32,7 +33,7 @@ export const useCollectionFilters = (payments: any[]) => {
   ]
 
   const hasActiveFilters = computed(() => {
-    return activeFilter.value !== 'Todos' || selectedTags.value.length > 0 || searchQuery.value !== ''
+    return activeFilter.value !== 'Todos' || selectedTags.value.length > 0 || searchQuery.value !== '' || subscriptionStatusFilter.value.length > 0
   })
 
   const toggleTag = (tagName: string) => {
@@ -54,6 +55,19 @@ export const useCollectionFilters = (payments: any[]) => {
 
   const clearTags = () => {
     selectedTags.value = []
+  }
+
+  const toggleSubscriptionStatus = (status: string) => {
+    const index = subscriptionStatusFilter.value.indexOf(status)
+    if (index === -1) {
+      subscriptionStatusFilter.value.push(status)
+    } else {
+      subscriptionStatusFilter.value.splice(index, 1)
+    }
+  }
+
+  const clearSubscriptionStatus = () => {
+    subscriptionStatusFilter.value = []
   }
 
   const matchesStatusFilter = (payment: any, filter: string): boolean => {
@@ -131,8 +145,10 @@ export const useCollectionFilters = (payments: any[]) => {
       const matchesSearch = !searchQuery.value || 
                            p.company_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                            p.amount?.toString().includes(searchQuery.value)
+      const matchesSubscriptionStatus = subscriptionStatusFilter.value.length === 0 ||
+                                        subscriptionStatusFilter.value.includes(p.subscription_status)
       
-      return matchesStatus && matchesTag && matchesSearch
+      return matchesStatus && matchesTag && matchesSearch && matchesSubscriptionStatus
     })
 
     // Ordenação
@@ -210,7 +226,7 @@ export const useCollectionFilters = (payments: any[]) => {
   }
 
   // Watch para resetar página quando filtros mudam
-  watch([activeFilter, selectedTags, searchQuery], () => {
+  watch([activeFilter, selectedTags, searchQuery, subscriptionStatusFilter], () => {
     currentPage.value = 1
   })
 
@@ -227,6 +243,7 @@ export const useCollectionFilters = (payments: any[]) => {
   return {
     activeFilter,
     selectedTags,
+    subscriptionStatusFilter,
     searchQuery,
     sortColumn,
     sortDirection,
@@ -242,6 +259,8 @@ export const useCollectionFilters = (payments: any[]) => {
     toggleTag,
     toggleAllTags,
     clearTags,
+    toggleSubscriptionStatus,
+    clearSubscriptionStatus,
     handleSort,
     nextPage, // ← Novo
     prevPage, // ← Novo

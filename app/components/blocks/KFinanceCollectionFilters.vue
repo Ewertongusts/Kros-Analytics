@@ -20,6 +20,12 @@
     />
 
     <div class="flex items-center gap-2">
+      <FinanceCollectionKCollectionSubscriptionStatusFilter
+        :selected-statuses="subscriptionStatusFilter"
+        @toggle="$emit('toggle-subscription-status', $event)"
+        @clear="$emit('clear-subscription-status')"
+      />
+      
       <FinanceCollectionKCollectionStatusFilter
         :active-filter="activeFilter"
         :filter-options="filterOptions"
@@ -71,6 +77,7 @@ defineProps<{
   activeFilter: string
   filterOptions: any[]
   isCompact: boolean
+  subscriptionStatusFilter: string[]
 }>()
 
 defineEmits([
@@ -79,6 +86,8 @@ defineEmits([
   'toggle-all-tags',
   'clear-tags',
   'update:activeFilter',
+  'toggle-subscription-status',
+  'clear-subscription-status',
   'toggle-compact',
   'config',
   'sync',

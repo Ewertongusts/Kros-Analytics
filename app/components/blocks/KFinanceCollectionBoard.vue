@@ -20,6 +20,9 @@
         :active-filter="activeFilter"
         @update:active-filter="activeFilter = $event"
         :filter-options="filterOptions"
+        :subscription-status-filter="subscriptionStatusFilter"
+        @toggle-subscription-status="toggleSubscriptionStatus"
+        @clear-subscription-status="clearSubscriptionStatus"
         :is-compact="isCompact"
         @toggle-compact="isCompact = !isCompact"
         @config="$emit('config')"
@@ -240,6 +243,7 @@ const {
   sortColumn,
   sortDirection,
   filterOptions,
+  subscriptionStatusFilter,
   filteredPayments,
   paginatedPayments,
   currentPage,
@@ -249,6 +253,8 @@ const {
   toggleTag,
   toggleAllTags,
   clearTags,
+  toggleSubscriptionStatus,
+  clearSubscriptionStatus,
   handleSort,
   nextPage,
   prevPage,
@@ -479,7 +485,7 @@ const getVisiblePages = () => {
 }
 
 // Reset página quando filtros mudarem
-watch([activeFilter, selectedTags, searchQuery], () => {
+watch([activeFilter, selectedTags, searchQuery, subscriptionStatusFilter], () => {
   resetPage()
 })
 </script>
