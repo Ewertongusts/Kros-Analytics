@@ -1,6 +1,6 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
-export const useClientsFilters = (companies: any[]) => {
+export const useClientsFilters = (companiesRef: any) => {
   const searchQuery = ref('')
   const sortColumn = ref<'name' | 'representative_name' | 'created_at' | 'is_active'>('created_at')
   const sortDirection = ref<'asc' | 'desc'>('desc')
@@ -9,6 +9,7 @@ export const useClientsFilters = (companies: any[]) => {
   const itemsPerPage = ref(10)
 
   const filteredCompanies = computed(() => {
+    const companies = Array.isArray(companiesRef) ? companiesRef : companiesRef.value || []
     let result = [...companies]
 
     // Filtro por busca
