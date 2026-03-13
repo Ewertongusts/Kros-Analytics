@@ -42,7 +42,7 @@
         </div>
         <UiKExportDropdown 
           :disabled="filteredSales.length === 0"
-          @export="handleExport"
+          @export="(format) => handleExport(filteredSales, format)"
         />
       </div>
 
@@ -53,7 +53,7 @@
         @edit="editSale"
         @history="openHistory"
         @whatsapp="handleWhatsAppShare"
-        @copy="copySaleInfo"
+        @copy="handleCopySaleInfo"
         @report="generateSaleReceipt"
         @delete="handleDelete"
       />
@@ -63,7 +63,7 @@
 
     <SalesModalKSaleTypeSelector
       :is-open="isSelectTypeModalOpen"
-      @close="isSelectTypeModalOpen = false"
+      @close="closeSelectTypeModal"
       @select="selectSaleType"
     />
 
@@ -77,99 +77,72 @@
 
     <SalesReceiptKSaleReceiptModal
       :is-open="isReceiptModalOpen"
-      @close="isReceiptModalOpen = false"
-      @export="handleReceiptExport"
+      @close="closeReceiptModal"
+      @export="handleReceiptExportWrapper"
     />
 
     <SalesHistoryKSaleHistoryModal
       :is-open="isHistoryModalOpen"
       :sale="historySale"
-      @close="isHistoryModalOpen = false"
+      @close="closeHistoryModal"
     />
 
     <BlocksKSaleHistoryTimelineModal
       :is-open="isTimelineModalOpen"
       :history="timelineHistory"
       :loading="timelineLoading"
-      @close="isTimelineModalOpen = false"
+      @close="closeTimelineModal"
     />
   </LayoutsKPageLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useSaleActions } from '~/composables/useSaleActions'
 import { useSaleFilters } from '~/composables/useSaleFilters'
-import { useExport } from '~/composables/useExport'
-import { useSaleReceipt } from '~/composables/useSaleReceipt'
 import { useSaleCrud } from '~/composables/useSaleCrud'
+import { useSaleModals } from '~/composables/useSaleModals'
+import { useSaleHandlers } from '~/composables/useSaleHandlers'
+
 definePageMeta({ middleware: 'auth' })
 
-// Timeline modal
-const isTimelineModalOpen = ref(false)
-const timelineHistory = ref<any[]>([])
-const timelineLoading = ref(false)
-
-const openSalesTimeline = async () => {
-  isTimelineModalOpen.value = true
-  timelineLoading.value = true
-  
-  try {
-    const supabase = useSupabaseClient()
-    const { data, error } = await supabase
-      .from('sale_history')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(200)
-    
-    if (error) {
-      console.error('Erro ao buscar histórico:', error)
-      timelineHistory.value = []
-    } else {
-      timelineHistory.value = data || []
-    }
-    
-    // Registrar visualização do histórico
-    const user = useSupabaseUser()
-    await supabase.from('sale_history').insert({
-      action_type: 'history_viewed',
-      description: 'Histórico de vendas visualizado',
-      user_id: user.value?.id,
-      user_name: user.value?.email?.split('@')[0] || 'Sistema',
-      metadata: {
-        record_count: timelineHistory.value.length,
-        viewed_at: new Date().toISOString()
-      }
-    })
-  } catch (err) {
-    console.error('Erro:', err)
-    timelineHistory.value = []
-  } finally {
-    timelineLoading.value = false
-  }
-}
-
-const { shareViaWhatsApp, copySaleInfo } = useSaleActions()
-const { success } = useToast()
-const { exportSales } = useExport()
-const { exportAsImage, exportAsPDF } = useSaleReceipt()
 const { loading, salesData, fetchSales, saveSale, deleteSale, computeSummary } = useSaleCrud()
+const {
+  isSelectTypeModalOpen,
+  isSaleModalOpen,
+  isReceiptModalOpen,
+  isHistoryModalOpen,
+  isTimelineModalOpen,
+  selectedSaleType,
+  editingSale,
+  receiptSale,
+  historySale,
+  timelineHistory,
+  timelineLoading,
+  openSelectTypeModal,
+  closeSelectTypeModal,
+  closeSaleModal,
+  openSaleModal,
+  openReceiptModal,
+  closeReceiptModal,
+  openHistoryModal,
+  closeHistoryModal,
+  openTimelineModal,
+  closeTimelineModal,
+  setTimelineLoading,
+  setTimelineHistory,
+  selectSaleType
+} = useSaleModals()
 
-// Wrapper para shareViaWhatsApp que recarrega os dados após envio
-const handleWhatsAppShare = async (sale: any) => {
-  await shareViaWhatsApp(sale)
-  await fetchSales() // Recarrega para pegar a data atualizada
-}
+const {
+  handleWhatsAppShare,
+  handleCopySaleInfo,
+  handleExport,
+  handleReceiptExport,
+  fetchTimelineHistory,
+  logPageAccess
+} = useSaleHandlers()
 
 const activeFilter = ref('todos')
-const isSelectTypeModalOpen = ref(false)
-const isSaleModalOpen = ref(false)
-const isReceiptModalOpen = ref(false)
-const isHistoryModalOpen = ref(false)
-const selectedSaleType = ref('')
-const editingSale = ref<any>(null)
-const receiptSale = ref<any>(null)
-const historySale = ref<any>(null)
 
 const {
   searchQuery,
@@ -192,49 +165,20 @@ const filteredSales = computed(() => {
 const summary = computed(() => computeSummary(salesData.value))
 
 const openNewSaleModal = () => {
-  isSelectTypeModalOpen.value = true
-}
-
-const handleExport = (format: 'xlsx' | 'csv' | 'pdf') => {
-  exportSales(filteredSales.value, format)
-  success('Exportação concluída', `Arquivo ${format.toUpperCase()} gerado com sucesso`)
+  openSelectTypeModal()
 }
 
 const generateSaleReceipt = (sale: any) => {
-  receiptSale.value = sale
-  isReceiptModalOpen.value = true
+  openReceiptModal(sale)
 }
 
-const handleReceiptExport = async (format: 'image' | 'pdf') => {
-  if (!receiptSale.value) return
-  
-  isReceiptModalOpen.value = false
-  
-  if (format === 'image') {
-    await exportAsImage(receiptSale.value)
-  } else {
-    await exportAsPDF(receiptSale.value)
-  }
-  
-  receiptSale.value = null
-}
-
-const selectSaleType = (type: string) => {
-  selectedSaleType.value = type
-  isSelectTypeModalOpen.value = false
-  isSaleModalOpen.value = true
-}
-
-const closeSaleModal = () => {
-  isSaleModalOpen.value = false
-  selectedSaleType.value = ''
-  editingSale.value = null
+const handleReceiptExportWrapper = async (format: 'image' | 'pdf') => {
+  await handleReceiptExport(receiptSale.value, format)
+  closeReceiptModal()
 }
 
 const editSale = (sale: any) => {
-  editingSale.value = sale
-  selectedSaleType.value = sale.sale_type
-  isSaleModalOpen.value = true
+  openSaleModal(sale, sale.sale_type)
 }
 
 const handleDelete = async (sale: any) => {
@@ -247,30 +191,19 @@ const handleSaveSale = async (saleData: any) => {
 }
 
 const openHistory = (sale: any) => {
-  historySale.value = sale
-  isHistoryModalOpen.value = true
+  openHistoryModal(sale)
+}
+
+const openSalesTimeline = async () => {
+  openTimelineModal()
+  setTimelineLoading(true)
+  const history = await fetchTimelineHistory()
+  setTimelineHistory(history)
+  setTimelineLoading(false)
 }
 
 onMounted(async () => {
   await fetchSales()
-  
-  // Registrar acesso à página
-  try {
-    const supabase = useSupabaseClient()
-    const user = useSupabaseUser()
-    
-    await supabase.from('sale_history').insert({
-      action_type: 'page_accessed',
-      description: 'Página de Vendas acessada',
-      user_id: user.value?.id,
-      user_name: user.value?.email?.split('@')[0] || 'Sistema',
-      metadata: {
-        page: 'vendas',
-        accessed_at: new Date().toISOString()
-      }
-    })
-  } catch (err) {
-    console.error('Erro ao registrar acesso:', err)
-  }
+  await logPageAccess()
 })
 </script>
