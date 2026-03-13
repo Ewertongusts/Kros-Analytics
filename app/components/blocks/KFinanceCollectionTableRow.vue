@@ -32,7 +32,7 @@
       </FinanceCollectionKCollectionRowCompany>
     </td>
     <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
-       <span :class="['font-medium uppercase tracking-widest text-white/50', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.company_created_at) }}</span>
+       <span :class="['font-medium uppercase tracking-widest text-white/50', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.start_date) }}</span>
     </td>
     <td :class="['font-medium', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
        <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.due_date) }}</span>
@@ -43,7 +43,34 @@
     <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
        <span :class="['font-bold text-emerald-500/60 tabular-nums tracking-tighter', isCompact ? 'text-[10px]' : 'text-[11px]']">{{ formatCurrency(payment.company_ltv || 0) }}</span>
     </td>
-    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
+    <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
+      <div class="flex items-center justify-center">
+        <span 
+          :class="[
+            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider',
+            payment.subscription_status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+            payment.subscription_status === 'suspended' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+            payment.subscription_status === 'cancelled' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
+            payment.subscription_status === 'trial' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+            'bg-white/5 text-white/40 border border-white/10'
+          ]"
+        >
+          <svg v-if="payment.subscription_status === 'active'" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <svg v-else-if="payment.subscription_status === 'suspended'" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <svg v-else-if="payment.subscription_status === 'cancelled'" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <svg v-else-if="payment.subscription_status === 'trial'" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          {{ 
+            payment.subscription_status === 'active' ? 'Ativa' :
+            payment.subscription_status === 'suspended' ? 'Suspensa' :
+            payment.subscription_status === 'cancelled' ? 'Cancelada' :
+            payment.subscription_status === 'trial' ? 'Trial' :
+            'N/A'
+          }}
+        </span>
+      </div>
+    </td>
+    
+    <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
       <FinanceCollectionKCollectionRowStatus :status="payment.status" />
     </td>
     <td :class="['whitespace-nowrap', isCompact ? 'px-3 py-3' : 'px-4 py-5']">

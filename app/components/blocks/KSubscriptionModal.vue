@@ -20,7 +20,7 @@
         
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Data de Início *</label>
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Data de Início da Assinatura *</label>
             <input 
               v-model="form.start_date"
               type="date"
@@ -44,14 +44,15 @@
         </div>
         
         <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Status Inicial</label>
+          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Status da Assinatura</label>
           <select 
             v-model="form.status"
             class="w-full bg-[#111112] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none"
           >
-            <option value="active">Ativo</option>
-            <option value="pending">Pendente</option>
-            <option value="trial">Período de Teste</option>
+            <option value="active">Ativa</option>
+            <option value="suspended">Suspensa</option>
+            <option value="cancelled">Cancelada</option>
+            <option value="trial">Trial</option>
           </select>
         </div>
       </div>

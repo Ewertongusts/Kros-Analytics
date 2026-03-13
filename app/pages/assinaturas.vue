@@ -220,7 +220,9 @@ const adaptedSubscriptions = computed(() => {
       plan_name: sub.plan_name || 'Plano não vinculado',
       due_date: nextDueDate.toISOString().split('T')[0], // Próximo vencimento calculado
       due_day: sub.due_day, // Manter due_day para filtros
-      status: sub.status === 'active' ? 'Pendente' : 'Pago'
+      start_date: sub.start_date, // Data de início da assinatura
+      subscription_status: sub.status, // Status da assinatura (active, suspended, cancelled, trial)
+      status: sub.status === 'active' ? 'Pendente' : 'Pago' // Status do pagamento
     }
   })
   
