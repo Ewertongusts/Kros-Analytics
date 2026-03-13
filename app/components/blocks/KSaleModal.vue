@@ -13,8 +13,9 @@
 
           <form @submit.prevent="handleSave" class="space-y-4 overflow-y-auto custom-scrollbar flex-1">
           <!-- Cliente -->
-          <SalesFormKSaleClientFields 
+          <SalesFormKSaleClientAutocomplete 
             v-model="clientFields"
+            @create-customer="handleCreateCustomer"
           />
 
           <!-- Detalhes da Venda -->
@@ -278,6 +279,11 @@ const clientFields = computed({
 const handleSave = async () => {
   const saleData = prepareSaleData()
   emit('save', saleData)
+}
+
+const handleCreateCustomer = (customerName: string) => {
+  // Preencher o campo de cliente com o nome digitado
+  form.representative_name = customerName
 }
 
 // Watchers
