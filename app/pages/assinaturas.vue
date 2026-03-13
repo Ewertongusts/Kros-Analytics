@@ -24,6 +24,9 @@
         @batch-autobilling="handleBatchAutoBilling"
         @batch-mark-paid="handleBatchMarkPaid"
         @batch-mark-pending="handleBatchMarkPending"
+        @batch-suspend="handleBatchSuspend"
+        @batch-reactivate="handleBatchReactivate"
+        @batch-cancel="handleBatchCancel"
         @batch-delete="handleBatchDelete"
         @delete-success="handleDeleteSuccess"
         @edit-subscription="handleEditSubscription"
@@ -87,7 +90,7 @@ const { success } = useToast()
 const { exportPayments } = useExport()
 
 // Novo composable para gerenciar assinaturas
-const { subscriptions, loading: loadingSubscriptions, fetchSubscriptions, deleteSubscription } = useSubscriptionsManager()
+const { subscriptions, loading: loadingSubscriptions, fetchSubscriptions, deleteSubscription, suspendSubscription, reactivateSubscription, cancelSubscription } = useSubscriptionsManager()
 
 const subscriptionModal = reactive({
   isOpen: false,
@@ -150,6 +153,114 @@ const handleBatchDelete = (subs: any[]) => {
   batchDeleteModal.subscriptions = subs
   batchDeleteModal.isOpen = true
   console.log('Modal aberto:', batchDeleteModal.isOpen)
+}
+
+const handleBatchSuspend = async (subs: any[]) => {
+  const { error: showError } = useToast()
+  
+  let suspended = 0
+  let errors = 0
+  
+  console.log('Iniciando suspensão de', subs.length, 'assinaturas')
+  
+  for (const sub of subs) {
+    console.log('Suspendendo assinatura:', sub.id)
+    const result = await suspendSubscription(sub.id)
+    if (result.success) {
+      suspended++
+      console.log('Assinatura suspensa com sucesso:', sub.id)
+      // Atualizar localmente
+      const index = subscriptions.value.findIndex(s => s.id === sub.id)
+      if (index !== -1) {
+        subscriptions.value[index].status = 'suspended'
+      }
+    } else {
+      errors++
+      console.error('Erro ao suspender assinatura:', sub.id, result.error)
+    }
+  }
+  
+  console.log('Suspensão concluída:', suspended, 'suspensas,', errors, 'erros')
+  
+  if (errors > 0) {
+    showError('Erro parcial', `${suspended} suspensas, ${errors} erros`)
+  } else {
+    success('Assinaturas suspensas', `${suspended} assinatura${suspended > 1 ? 's foram suspensas' : ' foi suspensa'} temporariamente`)
+  }
+  
+  await fetchSubscriptions()
+}
+
+const handleBatchReactivate = async (subs: any[]) => {
+  const { error: showError } = useToast()
+  
+  let reactivated = 0
+  let errors = 0
+  
+  console.log('Iniciando reativação de', subs.length, 'assinaturas')
+  
+  for (const sub of subs) {
+    console.log('Reativando assinatura:', sub.id)
+    const result = await reactivateSubscription(sub.id)
+    if (result.success) {
+      reactivated++
+      console.log('Assinatura reativada com sucesso:', sub.id)
+      // Atualizar localmente
+      const index = subscriptions.value.findIndex(s => s.id === sub.id)
+      if (index !== -1) {
+        subscriptions.value[index].status = 'active'
+      }
+    } else {
+      errors++
+      console.error('Erro ao reativar assinatura:', sub.id, result.error)
+    }
+  }
+  
+  console.log('Reativação concluída:', reactivated, 'reativadas,', errors, 'erros')
+  
+  if (errors > 0) {
+    showError('Erro parcial', `${reactivated} reativadas, ${errors} erros`)
+  } else {
+    success('Assinaturas reativadas', `${reactivated} assinatura${reactivated > 1 ? 's foram reativadas' : ' foi reativada'}`)
+  }
+  
+  await fetchSubscriptions()
+}
+
+const handleBatchCancel = async (subs: any[]) => {
+  const { error: showError } = useToast()
+  
+  let cancelled = 0
+  let errors = 0
+  
+  console.log('Iniciando cancelamento de', subs.length, 'assinaturas')
+  
+  for (const sub of subs) {
+    console.log('Cancelando assinatura:', sub.id)
+    const result = await cancelSubscription(sub.id)
+    if (result.success) {
+      cancelled++
+      console.log('Assinatura cancelada com sucesso:', sub.id)
+      // Atualizar localmente
+      const index = subscriptions.value.findIndex(s => s.id === sub.id)
+      if (index !== -1) {
+        subscriptions.value[index].status = 'cancelled'
+      }
+    } else {
+      errors++
+      console.error('Erro ao cancelar assinatura:', sub.id, result.error)
+    }
+  }
+  
+  console.log('Cancelamento concluído:', cancelled, 'canceladas,', errors, 'erros')
+  
+  if (errors > 0) {
+    showError('Erro parcial', `${cancelled} canceladas, ${errors} erros`)
+  } else {
+    success('Assinaturas canceladas', `${cancelled} assinatura${cancelled > 1 ? 's foram canceladas' : ' foi cancelada'} permanentemente`)
+  }
+  
+  await fetchSubscriptions()
 }
 
 const handleConfirmBatchDelete = async () => {

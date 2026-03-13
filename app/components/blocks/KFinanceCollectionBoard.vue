@@ -224,7 +224,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export'])
 
 const handleExportDebug = (format: any) => {
   emit('export', format)
@@ -307,6 +307,30 @@ const batchAction = async (type: string) => {
     for (const p of selectedPayments) {
       emit('toggle-autobilling', p)
     }
+    clearSelection()
+  } else if (type === 'suspend') {
+    const confirmed = await confirm(
+      `Deseja suspender ${selectedIds.value.length} assinatura${selectedIds.value.length > 1 ? 's' : ''}? Os contratos ficarão pausados temporariamente.`,
+      'Suspender Assinaturas'
+    )
+    if (!confirmed) return
+    emit('batch-suspend', selectedPayments)
+    clearSelection()
+  } else if (type === 'reactivate') {
+    const confirmed = await confirm(
+      `Deseja reativar ${selectedIds.value.length} assinatura${selectedIds.value.length > 1 ? 's' : ''}? Os contratos voltarão ao status ativo.`,
+      'Reativar Assinaturas'
+    )
+    if (!confirmed) return
+    emit('batch-reactivate', selectedPayments)
+    clearSelection()
+  } else if (type === 'cancel') {
+    const confirmed = await confirm(
+      `⚠️ ATENÇÃO: Deseja cancelar ${selectedIds.value.length} assinatura${selectedIds.value.length > 1 ? 's' : ''}? Esta ação encerrará os contratos permanentemente.`,
+      'Cancelar Assinaturas'
+    )
+    if (!confirmed) return
+    emit('batch-cancel', selectedPayments)
     clearSelection()
   } else if (type === 'delete') {
     console.log('Emitindo evento batch-delete com', selectedPayments.length, 'assinaturas')
