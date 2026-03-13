@@ -148,7 +148,8 @@ import {
   Calendar,
   Wrench,
   FileText,
-  KanbanSquare
+  KanbanSquare,
+  Users
 } from 'lucide-vue-next'
 
 const supabase = useSupabaseClient()
@@ -161,6 +162,7 @@ let hideTimer: any = null
 
 const navItems = reactive([
   { name: 'Visão Geral', path: '/dashboard', icon: LayoutDashboard },
+  { name: 'Clientes', path: '/clientes', icon: Users },
   { name: 'Assinaturas', path: '/assinaturas', icon: Receipt },
   { name: 'Vendas', path: '/vendas', icon: Package },
   { name: 'Despesas', path: '/despesas', icon: CreditCard },

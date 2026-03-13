@@ -1,12 +1,18 @@
-import { ref, computed } from 'vue'
+import { ref, computed, unref } from 'vue'
 import { isValidWhatsApp } from '~/utils/validators'
 
-export const useCollectionSelection = (payments: any[], filteredPayments: any[]) => {
+export const useCollectionSelection = (payments: any[], filteredPayments: any) => {
   const selectedIds = ref<string[]>([])
   const activeTagPicker = ref<string | null>(null)
 
+  // Garantir que filteredPayments seja sempre um array
+  const getFilteredPayments = () => {
+    return unref(filteredPayments)
+  }
+
   const isAllSelected = computed(() => {
-    return filteredPayments.length > 0 && selectedIds.value.length === filteredPayments.length
+    const filtered = getFilteredPayments()
+    return filtered.length > 0 && selectedIds.value.length === filtered.length
   })
 
   const selectedTotal = computed(() => {
@@ -18,7 +24,8 @@ export const useCollectionSelection = (payments: any[], filteredPayments: any[])
     if (isAllSelected.value) {
       selectedIds.value = []
     } else {
-      selectedIds.value = filteredPayments.map(p => p.id)
+      const filtered = getFilteredPayments()
+      selectedIds.value = filtered.map(p => p.id)
     }
   }
 

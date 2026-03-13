@@ -103,7 +103,7 @@ export const useExport = () => {
     doc.save(`${filename}.pdf`)
   }
 
-  const exportPayments = (payments: any[], format: 'xlsx' | 'csv' | 'pdf') => {
+  const exportPayments = async (payments: any[], format: 'xlsx' | 'csv' | 'pdf') => {
     console.log('📦 useExport: exportPayments chamado com', payments.length, 'pagamentos e formato', format)
     
     const data = payments.map(p => ({
@@ -137,9 +137,30 @@ export const useExport = () => {
         exportToPDF(data, filename, 'Relatório de Cobranças')
         break
     }
+    
+    // Registrar exportação no histórico
+    try {
+      const supabase = useSupabaseClient()
+      const user = useSupabaseUser()
+      
+      await supabase.from('payment_history').insert({
+        action_type: 'report_exported',
+        description: `Relatório de cobranças exportado em formato ${format.toUpperCase()}`,
+        user_id: user.value?.id,
+        user_name: user.value?.email?.split('@')[0] || 'Sistema',
+        metadata: {
+          export_format: format,
+          record_count: payments.length,
+          filename: `${filename}.${format}`,
+          report_type: 'payments'
+        }
+      })
+    } catch (err) {
+      console.error('Erro ao registrar exportação:', err)
+    }
   }
 
-  const exportSales = (sales: any[], format: 'xlsx' | 'csv' | 'pdf') => {
+  const exportSales = async (sales: any[], format: 'xlsx' | 'csv' | 'pdf') => {
     console.log('📦 useExport: exportSales chamado com', sales.length, 'vendas e formato', format)
     
     const data = sales.map(s => ({
@@ -174,6 +195,27 @@ export const useExport = () => {
       case 'pdf':
         exportToPDF(data, filename, 'Relatório de Vendas')
         break
+    }
+    
+    // Registrar exportação no histórico
+    try {
+      const supabase = useSupabaseClient()
+      const user = useSupabaseUser()
+      
+      await supabase.from('sale_history').insert({
+        action_type: 'report_exported',
+        description: `Relatório de vendas exportado em formato ${format.toUpperCase()}`,
+        user_id: user.value?.id,
+        user_name: user.value?.email?.split('@')[0] || 'Sistema',
+        metadata: {
+          export_format: format,
+          record_count: sales.length,
+          filename: `${filename}.${format}`,
+          report_type: 'sales'
+        }
+      })
+    } catch (err) {
+      console.error('Erro ao registrar exportação:', err)
     }
   }
 

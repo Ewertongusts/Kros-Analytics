@@ -4,50 +4,199 @@
       :title="`${isEditing ? 'EDITAR' : 'NOVO'} CLIENTE`"
     />
 
-    <form @submit.prevent="handleSave" class="space-y-4 overflow-y-auto custom-scrollbar max-h-[60vh]">
-      <!-- Informações do Cliente -->
+    <form @submit.prevent="handleSave" class="space-y-6 overflow-y-auto custom-scrollbar max-h-[70vh]">
+      <!-- Informações Básicas -->
       <div class="space-y-3">
-        <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Nome do Cliente *</label>
-          <input 
-            v-model="form.representative_name"
-            type="text"
-            required
-            placeholder="Ex: João Silva"
-            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Nome da Empresa (Opcional)</label>
-          <input 
-            v-model="form.name"
-            type="text"
-            placeholder="Razão Social ou Nome Fantasia"
-            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">E-mail</label>
-          <input 
-            v-model="form.email"
-            type="email"
-            placeholder="exemplo@empresa.com"
-            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">WhatsApp</label>
-          <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-kros-blue/60">+55</span>
+        <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-kros-blue">Informações Básicas</h3>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2 space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Nome do Cliente *</label>
             <input 
-              v-model="form.whatsapp"
+              v-model="form.representative_name"
               type="text"
-              placeholder="(00) 00000-0000"
-              class="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+              required
+              placeholder="Ex: João Silva"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
             />
+          </div>
+
+          <div class="col-span-2 space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Nome da Empresa</label>
+            <input 
+              v-model="form.name"
+              type="text"
+              placeholder="Razão Social ou Nome Fantasia"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">CNPJ/CPF</label>
+            <input 
+              v-model="form.document"
+              type="text"
+              placeholder="00.000.000/0000-00"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Data de Aniversário</label>
+            <input 
+              v-model="form.birthday"
+              type="date"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Segmento/Ramo</label>
+            <input 
+              v-model="form.segment"
+              type="text"
+              placeholder="Ex: Tecnologia, Varejo, Serviços"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Responsável/Vendedor</label>
+            <input 
+              v-model="form.sales_rep"
+              type="text"
+              placeholder="Nome do vendedor"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Contato -->
+      <div class="space-y-3">
+        <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-kros-blue">Contato</h3>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">E-mail</label>
+            <input 
+              v-model="form.email"
+              type="email"
+              placeholder="exemplo@empresa.com"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Site</label>
+            <input 
+              v-model="form.website"
+              type="url"
+              placeholder="https://www.empresa.com"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">WhatsApp</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-kros-blue/60">+55</span>
+              <input 
+                v-model="form.whatsapp"
+                type="text"
+                placeholder="(00) 00000-0000"
+                class="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Telefone Fixo</label>
+            <input 
+              v-model="form.phone"
+              type="text"
+              placeholder="(00) 0000-0000"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Endereço -->
+      <div class="space-y-3">
+        <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-kros-blue">Endereço</h3>
+        
+        <div class="grid grid-cols-4 gap-3">
+          <div class="col-span-2 space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">CEP</label>
+            <input 
+              v-model="form.address_zipcode"
+              type="text"
+              placeholder="00000-000"
+              @blur="fetchAddressByCep"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="col-span-4 space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Rua/Avenida</label>
+            <input 
+              v-model="form.address_street"
+              type="text"
+              placeholder="Nome da rua"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Número</label>
+            <input 
+              v-model="form.address_number"
+              type="text"
+              placeholder="123"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="col-span-3 space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Complemento</label>
+            <input 
+              v-model="form.address_complement"
+              type="text"
+              placeholder="Apto, Sala, Bloco..."
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="col-span-2 space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Bairro</label>
+            <input 
+              v-model="form.address_neighborhood"
+              type="text"
+              placeholder="Nome do bairro"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Cidade</label>
+            <input 
+              v-model="form.address_city"
+              type="text"
+              placeholder="Cidade"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Estado</label>
+            <select 
+              v-model="form.address_state"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none cursor-pointer"
+            >
+              <option value="" class="bg-[#111112]">Selecione</option>
+              <option v-for="state in brazilianStates" :key="state" :value="state" class="bg-[#111112]">{{ state }}</option>
+            </select>
           </div>
         </div>
       </div>
@@ -125,6 +274,7 @@ const props = defineProps<{
   isOpen: boolean
   company?: any
   loading?: boolean
+  prefilledName?: string
 }>()
 
 const emit = defineEmits(['close', 'save'])
@@ -134,11 +284,30 @@ const form = reactive({
   id: undefined,
   name: '',
   representative_name: '',
+  document: '',
   email: '',
   whatsapp: '',
+  phone: '',
+  website: '',
+  birthday: '',
+  segment: '',
+  sales_rep: '',
+  address_zipcode: '',
+  address_street: '',
+  address_number: '',
+  address_complement: '',
+  address_neighborhood: '',
+  address_city: '',
+  address_state: '',
   notes: '',
   tags: [] as string[]
 })
+
+const brazilianStates = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+]
 
 const { tags: tagDefinitions, fetchTags } = useTags()
 const tagInput = ref('')
@@ -146,6 +315,25 @@ const tagInput = ref('')
 onMounted(() => {
   fetchTags()
 })
+
+const fetchAddressByCep = async () => {
+  const cep = form.address_zipcode.replace(/\D/g, '')
+  if (cep.length !== 8) return
+
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+    const data = await response.json()
+    
+    if (!data.erro) {
+      form.address_street = data.logradouro || ''
+      form.address_neighborhood = data.bairro || ''
+      form.address_city = data.localidade || ''
+      form.address_state = data.uf || ''
+    }
+  } catch (err) {
+    console.error('Erro ao buscar CEP:', err)
+  }
+}
 
 const tagSuggestions = computed(() => {
   return tagDefinitions.value.filter(td => !form.tags.includes(td.name))
@@ -173,8 +361,21 @@ const resetForm = () => {
   form.id = undefined
   form.name = ''
   form.representative_name = ''
+  form.document = ''
   form.email = ''
   form.whatsapp = ''
+  form.phone = ''
+  form.website = ''
+  form.birthday = ''
+  form.segment = ''
+  form.sales_rep = ''
+  form.address_zipcode = ''
+  form.address_street = ''
+  form.address_number = ''
+  form.address_complement = ''
+  form.address_neighborhood = ''
+  form.address_city = ''
+  form.address_state = ''
   form.notes = ''
   form.tags = []
   tagInput.value = ''
@@ -194,15 +395,38 @@ watch(() => props.company, (newVal) => {
     form.id = newVal.id
     form.name = newVal.name || ''
     form.representative_name = newVal.representative_name || ''
+    form.document = newVal.document || ''
     form.email = newVal.email || ''
     form.whatsapp = newVal.whatsapp || ''
+    form.phone = newVal.phone || ''
+    form.website = newVal.website || ''
+    form.birthday = newVal.birthday || ''
+    form.segment = newVal.segment || ''
+    form.sales_rep = newVal.sales_rep || ''
+    form.address_zipcode = newVal.address_zipcode || ''
+    form.address_street = newVal.address_street || ''
+    form.address_number = newVal.address_number || ''
+    form.address_complement = newVal.address_complement || ''
+    form.address_neighborhood = newVal.address_neighborhood || ''
+    form.address_city = newVal.address_city || ''
+    form.address_state = newVal.address_state || ''
     form.notes = newVal.notes || ''
     form.tags = newVal.tags || []
   } else {
     isEditing.value = false
     resetForm()
+    // Se há nome pré-preenchido, usar como nome do cliente
+    if (props.prefilledName) {
+      form.representative_name = props.prefilledName
+    }
   }
 }, { immediate: true })
+
+watch(() => props.prefilledName, (newVal) => {
+  if (newVal && !props.company) {
+    form.representative_name = newVal
+  }
+})
 </script>
 
 <style scoped>

@@ -38,6 +38,15 @@
       :history="historyModal.history"
       @close="$emit('close-history')"
     />
+
+    <BlocksKPaymentHistoryModal 
+      v-if="timelineModal.isOpen"
+      :is-open="timelineModal.isOpen"
+      :history="timelineModal.history"
+      :loading="timelineModal.loading"
+      @close="$emit('close-timeline')"
+      @refresh="$emit('refresh-timeline')"
+    />
   </div>
 </template>
 
@@ -48,6 +57,7 @@ defineProps<{
   logsModal: { isOpen: boolean; paymentId: string | null }
   paymentModal: { isOpen: boolean; payment: any }
   historyModal: { isOpen: boolean; history: any[] }
+  timelineModal: { isOpen: boolean; history: any[]; loading: boolean }
   loading: boolean
 }>()
 
@@ -60,5 +70,7 @@ defineEmits<{
   'close-payment': []
   'confirm-payment': [data: any]
   'close-history': []
+  'close-timeline': []
+  'refresh-timeline': []
 }>()
 </script>

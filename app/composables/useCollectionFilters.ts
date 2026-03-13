@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 export interface FilterOption {
   id: string
@@ -12,6 +12,10 @@ export const useCollectionFilters = (payments: any[]) => {
   const searchQuery = ref('')
   const sortColumn = ref<string | null>(null)
   const sortDirection = ref<'asc' | 'desc'>('asc')
+  
+  // Paginação
+  const currentPage = ref(1)
+  const itemsPerPage = ref(10)
 
   const filterOptions: FilterOption[] = [
     { id: 'Todos', label: 'Todos', description: 'Mostra todas as cobranças sem nenhum filtro aplicado.' },
@@ -58,10 +62,13 @@ export const useCollectionFilters = (payments: any[]) => {
     if (filter === 'Todos') return true
     
     if (filter === 'Hoje') {
-      if (!payment.due_date) return false
-      const dueDateString = payment.due_date.includes('T') ? payment.due_date : `${payment.due_date}T12:00:00`
-      const dueDate = new Date(dueDateString)
-      return dueDate.toDateString() === now.toDateString() && payment.status !== 'Pago'
+      if (!payment.due_day) return false
+      
+      // Para o filtro HOJE, verificar se o due_day é igual ao dia atual
+      const today = new Date()
+      const currentDay = today.getDate()
+      
+      return payment.due_day === currentDay && payment.status !== 'Pago'
     }
     
     if (filter === 'Crítico') {
@@ -86,21 +93,34 @@ export const useCollectionFilters = (payments: any[]) => {
     }
     
     if (filter === 'Semana') {
-      if (!payment.due_date) return false
-      const startOfWeek = new Date(now)
-      startOfWeek.setDate(now.getDate() - now.getDay())
+      if (!payment.due_day) return false
+      
+      // Para o filtro SEMANA, verificar se o due_day está na semana atual
+      const today = new Date()
+      
+      // Calcular início e fim da semana atual
+      const startOfWeek = new Date(today)
+      startOfWeek.setDate(today.getDate() - today.getDay())
       startOfWeek.setHours(0, 0, 0, 0)
       
-      const endOfWeek = new Date(now)
-      endOfWeek.setDate(now.getDate() + (6 - now.getDay()))
+      const endOfWeek = new Date(today)
+      endOfWeek.setDate(today.getDate() + (6 - today.getDay()))
       endOfWeek.setHours(23, 59, 59, 999)
       
-      const dueDateString = payment.due_date.includes('T') ? payment.due_date : `${payment.due_date}T12:00:00`
-      const dueDate = new Date(dueDateString)
-      return dueDate >= startOfWeek && dueDate <= endOfWeek
+      // Extrair os dias da semana (8 a 14 para a semana atual)
+      const startDay = startOfWeek.getDate()
+      const endDay = endOfWeek.getDate()
+      
+      // Verificar se o due_day está dentro do range da semana atual
+      return payment.due_day >= startDay && payment.due_day <= endDay
     }
     
-    return payment.status === filter
+    // Para outros filtros baseados em status
+    if (['Pendente', 'Pago', 'Atrasado'].includes(filter)) {
+      return payment.status === filter
+    }
+    
+    return false
   }
 
   const filteredPayments = computed(() => {
@@ -142,12 +162,56 @@ export const useCollectionFilters = (payments: any[]) => {
       })
     }
 
-    // Limitar a 10 registros se não houver filtros ativos
-    if (!hasActiveFilters.value) {
-      return filtered.slice(0, 10)
-    }
-
     return filtered
+  })
+
+  // Dados paginados
+  const paginatedPayments = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value
+    const end = start + itemsPerPage.value
+    return filteredPayments.value.slice(start, end)
+  })
+
+  // Informações de paginação
+  const totalPages = computed(() => {
+    return Math.ceil(filteredPayments.value.length / itemsPerPage.value)
+  })
+
+  const hasNextPage = computed(() => {
+    return currentPage.value < totalPages.value
+  })
+
+  const hasPrevPage = computed(() => {
+    return currentPage.value > 1
+  })
+
+  // Funções de paginação
+  const nextPage = () => {
+    if (hasNextPage.value) {
+      currentPage.value++
+    }
+  }
+
+  const prevPage = () => {
+    if (hasPrevPage.value) {
+      currentPage.value--
+    }
+  }
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages.value) {
+      currentPage.value = page
+    }
+  }
+
+  // Reset página quando filtros mudam
+  const resetPage = () => {
+    currentPage.value = 1
+  }
+
+  // Watch para resetar página quando filtros mudam
+  watch([activeFilter, selectedTags, searchQuery], () => {
+    currentPage.value = 1
   })
 
   const handleSort = (column: string) => {
@@ -157,6 +221,7 @@ export const useCollectionFilters = (payments: any[]) => {
       sortColumn.value = column
       sortDirection.value = 'asc'
     }
+    resetPage() // Reset para página 1 ao ordenar
   }
 
   return {
@@ -168,9 +233,19 @@ export const useCollectionFilters = (payments: any[]) => {
     filterOptions,
     hasActiveFilters,
     filteredPayments,
+    paginatedPayments, // ← Novo: dados paginados
+    currentPage,
+    totalPages,
+    hasNextPage,
+    hasPrevPage,
+    itemsPerPage,
     toggleTag,
     toggleAllTags,
     clearTags,
-    handleSort
+    handleSort,
+    nextPage, // ← Novo
+    prevPage, // ← Novo
+    goToPage, // ← Novo
+    resetPage // ← Novo
   }
 }

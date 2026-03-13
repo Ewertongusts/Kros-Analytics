@@ -186,6 +186,29 @@ export const useCompanies = () => {
       }
 
       await fetchCompanies()
+      
+      // Registrar no histórico
+      const isNew = !company.id
+      await supabase.from('payment_history').insert({
+        company_id: companyData.id,
+        action_type: isNew ? 'company_created' : 'company_updated',
+        description: isNew 
+          ? `Cliente "${companyData.representative_name || companyData.name}" foi cadastrado`
+          : `Cliente "${companyData.representative_name || companyData.name}" foi atualizado`,
+        user_id: user.value?.id,
+        user_name: user.value?.email?.split('@')[0] || 'Sistema',
+        metadata: {
+          company_name: companyData.name,
+          representative_name: companyData.representative_name,
+          whatsapp: companyData.whatsapp,
+          email: companyData.email,
+          plan_name: companyData.plan_name,
+          monthly_price: companyData.monthly_price,
+          is_active: companyData.is_active,
+          tags: companyData.tags
+        }
+      })
+      
       return { success: true }
     } catch (e: any) {
       console.error('FATAL ERROR em upsertCompany:', e)
@@ -199,11 +222,35 @@ export const useCompanies = () => {
   const deleteCompany = async (id: string) => {
     loading.value = true
     try {
+      // Buscar dados da empresa antes de deletar para o log
+      const { data: companyData } = await (supabase.from('companies') as any)
+        .select('name, representative_name, whatsapp, email')
+        .eq('id', id)
+        .single()
+      
+      const user = useSupabaseUser()
+      
       // 1. Apagar pagamentos vinculados
       await (supabase.from('payments') as any).delete().eq('company_id', id)
 
       // 2. Apagar transações vinculadas (não existem mais assinaturas isoladas)
       // await (supabase.from('transactions') as any).delete().eq('company_id', id)
+
+      // 3. Registrar no histórico antes de deletar
+      await supabase.from('payment_history').insert({
+        company_id: id,
+        action_type: 'company_deleted',
+        description: `Cliente "${companyData?.representative_name || companyData?.name || 'Desconhecido'}" foi excluído`,
+        user_id: user.value?.id,
+        user_name: user.value?.email?.split('@')[0] || 'Sistema',
+        metadata: {
+          company_name: companyData?.name,
+          representative_name: companyData?.representative_name,
+          whatsapp: companyData?.whatsapp,
+          email: companyData?.email,
+          deleted_at: new Date().toISOString()
+        }
+      })
 
       // 4. Agora apagar a empresa
       const { error: deleteError } = await (supabase.from('companies') as any)

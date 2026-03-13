@@ -1,29 +1,34 @@
--- Criação da tabela de histórico de vendas
-CREATE TABLE sale_history (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  sale_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  action_type text NOT NULL CHECK (action_type IN ('created', 'updated', 'whatsapp_sent', 'receipt_generated', 'status_changed', 'deleted')),
-  description text NOT NULL,
-  user_id uuid REFERENCES auth.users(id),
-  user_name text,
-  metadata jsonb DEFAULT '{}'::jsonb,
-  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+-- Tabela de histórico de ações em vendas
+CREATE TABLE IF NOT EXISTS sale_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sale_id UUID REFERENCES sales(id) ON DELETE CASCADE,
+  action_type TEXT NOT NULL, -- 'created', 'updated', 'deleted', 'whatsapp_sent'
+  description TEXT NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
+  user_name TEXT,
+  metadata JSONB, -- dados extras como: product_name, amount, customer_name, old_value, new_value, etc
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Índices para melhor performance
-CREATE INDEX idx_sale_history_sale_id ON sale_history(sale_id);
-CREATE INDEX idx_sale_history_created_at ON sale_history(created_at DESC);
-CREATE INDEX idx_sale_history_action_type ON sale_history(action_type);
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_sale_history_sale_id ON sale_history(sale_id);
+CREATE INDEX IF NOT EXISTS idx_sale_history_created_at ON sale_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sale_history_action_type ON sale_history(action_type);
 
--- Políticas RLS
+-- RLS Policies
 ALTER TABLE sale_history ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow authenticated users to read sale history" ON sale_history
-  FOR SELECT 
+DROP POLICY IF EXISTS "Usuários autenticados podem visualizar histórico de vendas" ON sale_history;
+CREATE POLICY "Usuários autenticados podem visualizar histórico de vendas"
+  ON sale_history FOR SELECT
   USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Allow authenticated users to insert sale history" ON sale_history
-  FOR INSERT 
+DROP POLICY IF EXISTS "Usuários autenticados podem inserir histórico de vendas" ON sale_history;
+CREATE POLICY "Usuários autenticados podem inserir histórico de vendas"
+  ON sale_history FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
 
--- Não permitir UPDATE ou DELETE no histórico (imutável)
+-- Comentários
+COMMENT ON TABLE sale_history IS 'Histórico de todas as ações realizadas em vendas';
+COMMENT ON COLUMN sale_history.action_type IS 'Tipo de ação: created, updated, deleted, whatsapp_sent';
+COMMENT ON COLUMN sale_history.metadata IS 'Dados adicionais em JSON: product_name, amount, customer_name, old_value, new_value, etc';

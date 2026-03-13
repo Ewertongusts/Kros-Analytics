@@ -67,11 +67,13 @@
         :auto-billing-enabled="payment.auto_billing_enabled"
         :payment-id="payment.id"
         :is-compact="isCompact"
+        @edit="$emit('edit', payment)"
         @toggle-status="$emit('toggle-status', payment)"
         @toggle-autobilling="$emit('toggle-autobilling', payment)"
         @open-msg-modal="$emit('open-msg-modal', payment)"
         @open-logs="$emit('open-logs', payment.id)"
         @open-history="$emit('open-history', payment.company_id)"
+        @delete="$emit('delete', payment)"
       />
     </td>
   </tr>
@@ -92,12 +94,14 @@ const emit = defineEmits([
   'toggle-select', 
   'remove-tag', 
   'add-tag', 
+  'edit',
   'toggle-status', 
   'toggle-autobilling', 
   'open-msg-modal', 
   'open-logs', 
   'open-history',
-  'update:activeTagPicker'
+  'update:activeTagPicker',
+  'delete'
 ])
 
 const { 

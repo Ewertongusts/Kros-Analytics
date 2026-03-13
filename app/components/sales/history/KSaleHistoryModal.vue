@@ -24,53 +24,116 @@
       <p class="text-white/40">Nenhuma ação registrada ainda</p>
     </div>
 
-    <div v-else class="relative">
-      <!-- Linha vertical -->
-      <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-white/10"></div>
+    <div v-else class="space-y-6">
+      <div class="relative">
+        <!-- Linha vertical -->
+        <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-white/10"></div>
 
-      <!-- Timeline -->
-      <div class="space-y-6">
-        <div 
-          v-for="(item, index) in history" 
-          :key="index"
-          class="relative pl-12"
-        >
-          <!-- Ícone -->
+        <!-- Timeline -->
+        <div class="space-y-6">
           <div 
-            :class="[
-              'absolute left-0 w-10 h-10 rounded-full flex items-center justify-center',
-              getActionColor(item.action_type).bg
-            ]"
-            v-html="getActionIcon(item.action_type)"
-          ></div>
+            v-for="(item, index) in paginatedHistory" 
+            :key="index"
+            class="relative pl-12"
+          >
+            <!-- Ícone -->
+            <div 
+              :class="[
+                'absolute left-0 w-10 h-10 rounded-full flex items-center justify-center',
+                getActionColor(item.action_type).bg
+              ]"
+              v-html="getActionIcon(item.action_type)"
+            ></div>
 
-          <!-- Conteúdo -->
-          <div class="bg-white/[0.02] border border-white/10 rounded-xl p-4">
-            <div class="flex items-start justify-between mb-2">
-              <div>
-                <p class="text-sm font-bold text-white">{{ getActionTitle(item.action_type) }}</p>
-                <p class="text-xs text-white/60 mt-1">{{ formatDateTime(item.created_at) }}</p>
+            <!-- Conteúdo -->
+            <div class="bg-white/[0.02] border border-white/10 rounded-xl p-4">
+              <div class="flex items-start justify-between mb-2">
+                <div>
+                  <p class="text-sm font-bold text-white">{{ getActionTitle(item.action_type) }}</p>
+                  <p class="text-xs text-white/60 mt-1">{{ formatDateTime(item.created_at) }}</p>
+                </div>
+                <span 
+                  :class="[
+                    'px-2 py-1 rounded-lg text-[9px] font-bold uppercase',
+                    getActionColor(item.action_type).badge
+                  ]"
+                >
+                  {{ getActionLabel(item.action_type) }}
+                </span>
               </div>
-              <span 
-                :class="[
-                  'px-2 py-1 rounded-lg text-[9px] font-bold uppercase',
-                  getActionColor(item.action_type).badge
-                ]"
-              >
-                {{ getActionLabel(item.action_type) }}
-              </span>
-            </div>
-            
-            <p v-if="item.description" class="text-sm text-white/70 mt-2">{{ item.description }}</p>
-            
-            <div v-if="item.user_name" class="flex items-center gap-2 mt-3 pt-3 border-t border-white/5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/40">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              <span class="text-xs text-white/40">{{ item.user_name }}</span>
+              
+              <p v-if="item.description" class="text-sm text-white/70 mt-2">{{ item.description }}</p>
+              
+              <div v-if="item.user_name" class="flex items-center gap-2 mt-3 pt-3 border-t border-white/5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/40">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span class="text-xs text-white/40">{{ item.user_name }}</span>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Paginação -->
+      <div v-if="history.length > itemsPerPage" class="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
+        <div class="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+          Página {{ currentPage }} de {{ totalPages }} ({{ history.length }} registros)
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button
+            @click="goToPage(1)"
+            :disabled="currentPage === 1"
+            class="px-3 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-white/70 hover:text-white rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider"
+          >
+            Primeira
+          </button>
+          
+          <button
+            @click="goToPage(currentPage - 1)"
+            :disabled="currentPage === 1"
+            class="p-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-white/70 hover:text-white rounded-lg transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
+          
+          <div class="flex items-center gap-1">
+            <button
+              v-for="page in Math.min(totalPages, 5)"
+              :key="page"
+              @click="goToPage(page)"
+              :class="[
+                'px-3 py-2 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider',
+                currentPage === page 
+                  ? 'bg-amber-500 text-white' 
+                  : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white'
+              ]"
+            >
+              {{ page }}
+            </button>
+          </div>
+          
+          <button
+            @click="goToPage(currentPage + 1)"
+            :disabled="currentPage === totalPages"
+            class="p-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-white/70 hover:text-white rounded-lg transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </button>
+          
+          <button
+            @click="goToPage(totalPages)"
+            :disabled="currentPage === totalPages"
+            class="px-3 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-white/70 hover:text-white rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider"
+          >
+            Última
+          </button>
         </div>
       </div>
     </div>
@@ -78,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -91,11 +154,30 @@ const emit = defineEmits<{
 
 const loading = ref(false)
 const history = ref<any[]>([])
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const paginatedHistory = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return history.value.slice(start, end)
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(history.value.length / itemsPerPage)
+})
+
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
 
 const fetchHistory = async () => {
   if (!props.sale) return
   
   loading.value = true
+  currentPage.value = 1
   try {
     const supabase = useSupabaseClient()
     
@@ -108,6 +190,20 @@ const fetchHistory = async () => {
     
     if (error) throw error
     history.value = data || []
+    
+    // Registrar visualização do histórico individual
+    const user = useSupabaseUser()
+    await supabase.from('sale_history').insert({
+      sale_id: props.sale.id,
+      action_type: 'history_viewed',
+      description: `Histórico individual visualizado para ${props.sale.representative_name || props.sale.name}`,
+      user_id: user.value?.id,
+      user_name: user.value?.email?.split('@')[0] || 'Sistema',
+      metadata: {
+        record_count: history.value.length,
+        viewed_at: new Date().toISOString()
+      }
+    })
   } catch (err) {
     console.error('Erro ao buscar histórico:', err)
     history.value = []

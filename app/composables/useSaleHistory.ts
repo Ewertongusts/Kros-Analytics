@@ -65,11 +65,32 @@ export const useSaleHistory = () => {
     }
   }
 
+  const fetchAllSaleHistory = async (limit = 100) => {
+    loading.value = true
+    try {
+      const { data, error: err } = await supabase
+        .from('sale_history')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (err) throw err
+      history.value = data || []
+      return { success: true, data }
+    } catch (err: any) {
+      console.error('Erro ao buscar histórico:', err)
+      return { success: false, error: err.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     history,
     loading,
     error,
     fetchHistory,
-    addHistoryEntry
+    addHistoryEntry,
+    fetchAllSaleHistory
   }
 }

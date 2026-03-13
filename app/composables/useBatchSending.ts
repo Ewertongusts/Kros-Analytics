@@ -45,6 +45,10 @@ export const useBatchSending = () => {
     const activeTemplates = templates.filter(t => t && t.id && selectedTemplateIds.includes(t.id))
     if (activeTemplates.length === 0 && !manualMessage) return
 
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    const campaignStartTime = new Date()
+
     submitting.value = true
     progress.value = 0
     errors.value = []
@@ -52,6 +56,28 @@ export const useBatchSending = () => {
     currentCompanyName.value = ''
     
     let messagesSentInCurrentBatch = 0
+    const successfulSends: string[] = []
+    const failedSends: string[] = []
+    const skippedSends: string[] = []
+
+    // Registrar INÍCIO da campanha
+    try {
+      await supabase.from('payment_history').insert({
+        action_type: 'batch_campaign_started',
+        description: `Campanha de mensagens iniciada para ${payments.length} empresa(s)`,
+        user_id: user.value?.id,
+        user_name: user.value?.email?.split('@')[0] || 'Sistema',
+        metadata: {
+          total_recipients: payments.length,
+          template_ids: selectedTemplateIds,
+          skip_recent: skipRecent,
+          skip_days: skipRecentDays,
+          started_at: campaignStartTime.toISOString()
+        }
+      })
+    } catch (err) {
+      console.error('Erro ao registrar início da campanha:', err)
+    }
 
     for (let i = 0; i < payments.length; i++) {
       const payment = payments[i]
@@ -61,6 +87,7 @@ export const useBatchSending = () => {
       if (skipRecent && checkSkipLimit(payment.id, skipRecentDays)) {
         sentStatus.value[payment.id] = 'skipped'
         progress.value++
+        skippedSends.push(payment.company_name)
         continue
       }
 
@@ -76,7 +103,32 @@ export const useBatchSending = () => {
         for (let c = breakTime; c > 0; c--) {
           countdown.value = c
           await new Promise(resolve => setTimeout(resolve, 1000))
-          if (!onClose()) return // Interrompe se fechar
+          if (!onClose()) {
+            // Campanha CANCELADA durante pausa
+            try {
+              await supabase.from('payment_history').insert({
+                action_type: 'batch_campaign_cancelled',
+                description: `Campanha cancelada durante pausa: ${successfulSends.length} enviadas antes do cancelamento`,
+                user_id: user.value?.id,
+                user_name: user.value?.email?.split('@')[0] || 'Sistema',
+                metadata: {
+                  total_recipients: payments.length,
+                  successful_count: successfulSends.length,
+                  failed_count: failedSends.length,
+                  skipped_count: skippedSends.length,
+                  cancelled_at_progress: i + 1,
+                  successful_companies: successfulSends,
+                  failed_companies: failedSends,
+                  started_at: campaignStartTime.toISOString(),
+                  cancelled_at: new Date().toISOString()
+                }
+              })
+            } catch (err) {
+              console.error('Erro ao registrar cancelamento:', err)
+            }
+            submitting.value = false
+            return
+          }
         }
         countdown.value = 0
         messagesSentInCurrentBatch = 0
@@ -110,11 +162,13 @@ export const useBatchSending = () => {
 
         messagesSentInCurrentBatch++
         sentStatus.value[payment.id] = 'success'
+        successfulSends.push(payment.company_name)
 
       } catch (err: any) {
         console.error(`Erro ao enviar para ${payment.company_name}:`, err)
         errors.value.push({ company: payment.company_name, error: err.message })
         sentStatus.value[payment.id] = 'error'
+        failedSends.push(payment.company_name)
         
         await logMessage({
           company_name: payment.company_name,
@@ -136,10 +190,63 @@ export const useBatchSending = () => {
         for (let c = randomDelay; c > 0; c--) {
           countdown.value = c
           await new Promise(resolve => setTimeout(resolve, 1000))
-          if (!onClose()) return // Parar se fechar
+          if (!onClose()) {
+            // Campanha CANCELADA durante delay
+            try {
+              await supabase.from('payment_history').insert({
+                action_type: 'batch_campaign_cancelled',
+                description: `Campanha cancelada: ${successfulSends.length} enviadas antes do cancelamento`,
+                user_id: user.value?.id,
+                user_name: user.value?.email?.split('@')[0] || 'Sistema',
+                metadata: {
+                  total_recipients: payments.length,
+                  successful_count: successfulSends.length,
+                  failed_count: failedSends.length,
+                  skipped_count: skippedSends.length,
+                  cancelled_at_progress: i + 1,
+                  successful_companies: successfulSends,
+                  failed_companies: failedSends,
+                  started_at: campaignStartTime.toISOString(),
+                  cancelled_at: new Date().toISOString()
+                }
+              })
+            } catch (err) {
+              console.error('Erro ao registrar cancelamento:', err)
+            }
+            submitting.value = false
+            return
+          }
         }
         countdown.value = 0
       }
+    }
+
+    // Registrar FINALIZAÇÃO da campanha
+    const campaignEndTime = new Date()
+    const durationSeconds = Math.floor((campaignEndTime.getTime() - campaignStartTime.getTime()) / 1000)
+    
+    try {
+      await supabase.from('payment_history').insert({
+        action_type: 'batch_campaign_completed',
+        description: `Campanha finalizada: ${successfulSends.length} enviadas, ${failedSends.length} falharam, ${skippedSends.length} ignoradas`,
+        user_id: user.value?.id,
+        user_name: user.value?.email?.split('@')[0] || 'Sistema',
+        metadata: {
+          total_recipients: payments.length,
+          successful_count: successfulSends.length,
+          failed_count: failedSends.length,
+          skipped_count: skippedSends.length,
+          successful_companies: successfulSends,
+          failed_companies: failedSends,
+          skipped_companies: skippedSends,
+          template_ids: selectedTemplateIds,
+          duration_seconds: durationSeconds,
+          started_at: campaignStartTime.toISOString(),
+          completed_at: campaignEndTime.toISOString()
+        }
+      })
+    } catch (err) {
+      console.error('Erro ao registrar finalização da campanha:', err)
     }
 
     submitting.value = false

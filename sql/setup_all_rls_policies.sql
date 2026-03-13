@@ -136,6 +136,15 @@ CREATE POLICY "Allow authenticated users to update transactions" ON transactions
 CREATE POLICY "Allow authenticated users to delete transactions" ON transactions FOR DELETE USING (auth.uid() IS NOT NULL);
 
 -- ============================================
+-- TABELA: payment_history (Histórico de Assinaturas)
+-- ============================================
+ALTER TABLE payment_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow authenticated users to read payment history" ON payment_history;
+DROP POLICY IF EXISTS "Allow authenticated users to insert payment history" ON payment_history;
+CREATE POLICY "Allow authenticated users to read payment history" ON payment_history FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Allow authenticated users to insert payment history" ON payment_history FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+-- ============================================
 -- TABELA: subscriptions (se existir)
 -- ============================================
 -- Descomente se a tabela existir no seu banco
@@ -170,5 +179,7 @@ UNION ALL
 SELECT 'crm_settings', COUNT(*) FROM crm_settings
 UNION ALL
 SELECT 'sale_history', COUNT(*) FROM sale_history
+UNION ALL
+SELECT 'payment_history', COUNT(*) FROM payment_history
 UNION ALL
 SELECT 'transactions', COUNT(*) FROM transactions;

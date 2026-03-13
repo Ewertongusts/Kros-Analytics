@@ -38,9 +38,6 @@
 
         <!-- Tab: Config. API -->
         <BlocksKFinanceCrmSettings v-if="activeTab === 'settings'" />
-
-        <!-- Tab: Empresas -->
-        <BlocksKCompaniesManagement v-if="activeTab === 'companies'" />
       </div>
       <!-- GLOW EFFECTS -->
       <div class="fixed -top-40 -right-40 w-96 h-96 bg-kros-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -73,8 +70,7 @@ const tabs = [
   { id: 'preferences', name: 'Preferências' },
   { id: 'white-label', name: 'White Label' },
   { id: 'plans', name: 'Catálogo' },
-  { id: 'settings', name: 'Config. API' },
-  { id: 'companies', name: 'Empresas' }
+  { id: 'settings', name: 'Config. API' }
 ]
 
 const profileData = reactive({
