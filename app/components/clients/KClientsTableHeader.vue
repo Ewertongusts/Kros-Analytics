@@ -1,6 +1,15 @@
 <template>
   <thead>
     <tr class="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50">
+      <th class="px-4 py-4 w-12">
+        <input 
+          type="checkbox"
+          :checked="allSelected"
+          @change="$emit('toggle-all', $event.target.checked)"
+          class="w-5 h-5 rounded-md border-2 border-white/20 bg-gradient-to-br from-white/5 to-white/[0.02] text-kros-blue focus:ring-2 focus:ring-kros-blue/50 focus:ring-offset-0 cursor-pointer transition-all hover:border-white/30 checked:border-kros-blue checked:shadow-lg checked:shadow-kros-blue/20"
+        />
+      </th>
+
       <th class="px-6 py-4 w-20">
         <div @click="$emit('sort', 'is_active')" class="flex items-center gap-2 cursor-pointer hover:text-white transition-colors group">
           Status
@@ -50,9 +59,11 @@
 defineProps<{
   sortColumn: string | null
   sortDirection: 'asc' | 'desc'
+  allSelected: boolean
 }>()
 
 defineEmits<{
   sort: [column: 'is_active' | 'representative_name' | 'name' | 'created_at']
+  'toggle-all': [checked: boolean]
 }>()
 </script>

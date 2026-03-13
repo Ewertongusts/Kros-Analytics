@@ -1,7 +1,17 @@
 <template>
-  <tr class="group/row bg-white/[0.02] hover:bg-white/[0.04] transition-all rounded-2xl border border-transparent hover:border-white/10">
+  <tr class="group/row bg-white/[0.02] hover:bg-white/[0.04] transition-all rounded-2xl border border-transparent hover:border-white/10" :class="{ 'bg-kros-blue/10 border-kros-blue/30': isSelected }">
+    <!-- Checkbox -->
+    <td class="px-4 py-5 first:rounded-l-2xl">
+      <input 
+        type="checkbox"
+        :checked="isSelected"
+        @change="$emit('toggle-select', company.id)"
+        class="w-5 h-5 rounded-md border-2 border-white/20 bg-gradient-to-br from-white/5 to-white/[0.02] text-kros-blue focus:ring-2 focus:ring-kros-blue/50 focus:ring-offset-0 cursor-pointer transition-all hover:border-white/30 checked:border-kros-blue checked:shadow-lg checked:shadow-kros-blue/20"
+      />
+    </td>
+
     <!-- Status -->
-    <td class="px-6 py-5 first:rounded-l-2xl">
+    <td class="px-6 py-5">
       <div class="flex items-center gap-2.5">
         <span :class="['w-2 h-2 rounded-full shadow-[0_0_10px_currentColor]', company.is_active ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-red-500 shadow-red-500/20']"></span>
         <span :class="['text-xs font-bold uppercase tracking-widest', company.is_active ? 'text-emerald-500' : 'text-red-500']">
@@ -90,12 +100,14 @@
 <script setup lang="ts">
 defineProps<{
   company: any
+  isSelected: boolean
 }>()
 
 defineEmits<{
   view: [company: any]
   edit: [company: any]
   delete: [id: string]
+  'toggle-select': [id: string]
 }>()
 
 const formatDate = (date: string) => {

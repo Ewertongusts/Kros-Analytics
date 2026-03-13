@@ -10,6 +10,17 @@
         @create-customer="handleCreateCustomer"
       />
       
+      <!-- WhatsApp do Cliente -->
+      <div v-if="form.customer" class="space-y-2">
+        <label class="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50">WhatsApp</label>
+        <input 
+          :value="form.customer.whatsapp || form.customer.phone || '-'"
+          type="text"
+          disabled
+          class="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none font-medium opacity-60 cursor-not-allowed"
+        />
+      </div>
+      
       <!-- Seleção de Plano -->
       <SubscriptionsKSubscriptionPlanSelector
         v-model="form.plan"

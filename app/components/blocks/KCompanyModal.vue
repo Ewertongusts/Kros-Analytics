@@ -46,6 +46,7 @@
             <input 
               v-model="form.birthday"
               type="date"
+              max="9999-12-31"
               class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium"
             />
           </div>
@@ -98,12 +99,13 @@
           </div>
 
           <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">WhatsApp</label>
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">WhatsApp *</label>
             <div class="relative">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-kros-blue/60">+55</span>
               <input 
                 v-model="form.whatsapp"
                 type="text"
+                required
                 placeholder="(00) 00000-0000"
                 class="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
               />
@@ -382,6 +384,28 @@ const resetForm = () => {
 }
 
 const handleSave = () => {
+  // Validar WhatsApp obrigatório
+  if (!form.whatsapp || !form.whatsapp.trim()) {
+    alert('WhatsApp é obrigatório para criar um contato')
+    return
+  }
+  
+  // Limpar e validar data
+  if (form.birthday) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+    if (!dateRegex.test(form.birthday)) {
+      form.birthday = ''
+    } else {
+      // Validar se é uma data válida
+      const date = new Date(form.birthday + 'T00:00:00')
+      if (isNaN(date.getTime())) {
+        form.birthday = ''
+      }
+    }
+  } else {
+    form.birthday = ''
+  }
+  
   emit('save', { ...form })
 }
 
