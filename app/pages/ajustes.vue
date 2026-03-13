@@ -14,7 +14,7 @@
           v-if="activeTab === 'profile'" 
           :user="user" 
           :profile-data="profileData"
-          @save="handleSaveProfile"
+          @save="handleSaveProfileWrapper"
         />
 
         <!-- Tab: Segurança -->
@@ -29,8 +29,8 @@
           :settings="wlSettings"
           :loading="wlLoading"
           :status="wlStatus"
-          @save="handleSaveWhiteLabel"
-          @upload="handleFileUpload"
+          @save="handleSaveWhiteLabelWrapper"
+          @upload="handleFileUploadWrapper"
         />
 
         <!-- Tab: Planos -->
@@ -49,8 +49,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useWhiteLabel } from '~/composables/useWhiteLabel'
+import { useSettingsHandlers } from '~/composables/useSettingsHandlers'
 
 definePageMeta({
   middleware: 'auth'
@@ -60,6 +61,7 @@ const route = useRoute()
 const user = useSupabaseUser()
 const { settings: wlSettings, saveSettings: wlSave, fetchSettings: wlFetch, loading: wlLoading, uploadImage: wlUpload } = useWhiteLabel()
 const { stats, fetchStats: fetchAnalyticsStats } = useAnalytics()
+const { handleSaveProfile, handleSaveWhiteLabel, handleFileUpload } = useSettingsHandlers()
 
 const activeTab = ref(route.query.tab?.toString() || 'profile')
 const wlStatus = ref<{ success: boolean; message: string } | null>(null)
@@ -84,88 +86,42 @@ onMounted(async () => {
   await fetchAnalyticsStats()
 })
 
-const handleSaveProfile = async (data: any) => {
-  try {
-    const supabase = useSupabaseClient()
-    
-    // Buscar usuário de forma mais robusta
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !authUser) {
-      console.error('Erro ao buscar usuário:', authError)
-      alert('Erro: Não foi possível identificar o usuário logado. Faça login novamente.')
-      return
-    }
-
-    const userId = authUser.id
-    console.log('Salvando perfil para usuário:', userId, data)
-
-    // Tentar atualizar em user_profiles
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .upsert({
-        id: userId,
-        full_name: data.name,
-        name: data.name,
-        role: data.role,
-        phone: data.phone,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'id'
-      })
-
-    if (profileError) {
-      console.error('Erro ao salvar em user_profiles:', profileError)
-      alert('Erro ao salvar perfil: ' + profileError.message)
-      return
-    }
-
+const handleSaveProfileWrapper = async (data: any) => {
+  const res = await handleSaveProfile(data)
+  if (res.success) {
     Object.assign(profileData, data)
     alert('Perfil atualizado com sucesso!')
-    
-    // Limpar cache do composable para forçar reload
-    const { clearCurrentUser } = useCurrentUser()
-    clearCurrentUser()
-  } catch (err: any) {
-    console.error('Erro ao salvar perfil:', err)
-    alert('Erro ao salvar perfil: ' + err.message)
+  } else {
+    alert('Erro ao salvar perfil: ' + res.error)
   }
 }
 
-const handleSaveWhiteLabel = async (data: any) => {
-  const res = await wlSave(data)
+const handleSaveWhiteLabelWrapper = async (data: any) => {
+  const res = await handleSaveWhiteLabel(wlSave, data)
   if (res.success) {
     wlStatus.value = { success: true, message: 'Identidade atualizada com sucesso!' }
   } else {
     wlStatus.value = { success: false, message: 'Erro ao aplicar identidade.' }
   }
-  
+
   setTimeout(() => { wlStatus.value = null }, 3000)
 }
 
-const handleFileUpload = async (event: Event, type: 'logo' | 'favicon') => {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
+const handleFileUploadWrapper = async (event: Event, type: 'logo' | 'favicon') => {
+  const res = await handleFileUpload(wlUpload, event, type)
 
-  console.log(`Fazendo upload de ${type}...`)
-  const res = await wlUpload(file, type)
-  
   if (res.success && res.url) {
-    console.log('Upload sucesso. Nova URL:', res.url)
-    
-    // Forçar atualização do objeto para garantir reatividade profunda
     const current = { ...wlSettings.value }
     if (type === 'logo') current.logo_url = res.url
     else current.favicon_url = res.url
-    
+
     wlSettings.value = current
-    
+
     wlStatus.value = { success: true, message: `${type.toUpperCase()} carregado com sucesso!` }
   } else {
-    console.error('Erro no upload:', res.error)
     wlStatus.value = { success: false, message: `Erro ao fazer upload do ${type}.` }
   }
-  
+
   setTimeout(() => { wlStatus.value = null }, 3000)
 }
 </script>

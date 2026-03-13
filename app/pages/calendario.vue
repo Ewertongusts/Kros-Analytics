@@ -46,77 +46,38 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, computed } from 'vue'
+import { useFinanceHandlers } from '~/composables/useFinanceHandlers'
 
 definePageMeta({
   middleware: 'auth'
 })
 
 const { stats, loading: loadingAnalytics, fetchStats } = useAnalytics()
-const { loading: loadingFinance, saveExpense, togglePaymentStatus, toggleAutoBilling, processRecords } = useFinance()
+const { processRecords } = useFinance()
 
-const isModalOpen = ref(false)
-const activeTab = ref('expenses')
-const tabs = [
-  { id: 'expenses', name: 'Saídas' },
-  { id: 'plans', name: 'Planos' },
-  { id: 'calendar', name: 'Calendário' },
-  { id: 'settings', name: 'Config. API' }
-]
+const {
+  loadingFinance,
+  isModalOpen,
+  isAutoBillingModalOpen,
+  autoBillingTargetPayment,
+  isLogsModalOpen,
+  logsTargetPaymentId,
+  handleSaveExpense,
+  handleTogglePaymentStatus,
+  handleOpenLogs,
+  handleToggleAutoBilling,
+  handleConfirmAutoBilling
+} = useFinanceHandlers()
 
 const financialRecords = computed(() => processRecords(stats.value.paymentsList))
 
-const handleSaveExpense = async (data: any) => {
-  const res = await saveExpense(data)
-  if (res.success) {
-    isModalOpen.value = false
-  } else {
-    alert('Erro ao salvar: ' + res.error)
-  }
+const handleSaveExpenseWrapper = async (data: any) => {
+  await handleSaveExpense(data)
 }
 
-const handleTogglePaymentStatus = async (payment: any) => {
-  const isPaid = payment.status === 'Pago'
-  const action = isPaid ? 'estornar para PENDENTE' : 'confirmar RECEBIMENTO'
-  
-  const confirmed = await confirm(`Deseja ${action} o pagamento de ${payment.company_name}?`, 'Confirmar ação')
-  if (!confirmed) return
-  
-  const res = await togglePaymentStatus(payment)
-  if (res.success) {
-    alert(res.isPaid ? 'Pagamento recebido com sucesso!' : 'Pagamento estornado com sucesso!')
-  } else {
-    alert('Erro ao processar: ' + res.error)
-  }
-}
-
-const isAutoBillingModalOpen = ref(false)
-const autoBillingTargetPayment = ref<any>(null)
-const isLogsModalOpen = ref(false)
-const logsTargetPaymentId = ref<string | null>(null)
-
-const handleOpenLogs = (paymentId?: string) => {
-    logsTargetPaymentId.value = paymentId || null
-    isLogsModalOpen.value = true
-}
-
-const handleToggleAutoBilling = async (payment: any) => {
-  if (payment.auto_billing_enabled) {
-    const res = await toggleAutoBilling(payment.id, false)
-    if (!res.success) alert('Erro ao desativar: ' + res.error)
-  } else {
-    autoBillingTargetPayment.value = payment
-    isAutoBillingModalOpen.value = true
-  }
-}
-
-const handleConfirmAutoBilling = async (customMessage: string) => {
-  const payment = autoBillingTargetPayment.value
-  if (!payment) return
-
-  isAutoBillingModalOpen.value = false
-  const res = await toggleAutoBilling(payment.id, true, customMessage)
-  if (!res.success) alert('Erro ao ativar: ' + res.error)
+const handleTogglePaymentStatusWrapper = async (payment: any) => {
+  await handleTogglePaymentStatus(payment, fetchStats)
 }
 
 onMounted(async () => {

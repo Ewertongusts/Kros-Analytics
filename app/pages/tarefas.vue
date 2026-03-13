@@ -78,64 +78,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import type { Task } from '~/composables/useTasks'
+import { useTaskHandlers } from '~/composables/useTaskHandlers'
 
 definePageMeta({
   middleware: 'auth'
 })
 
-const { tasks, loading, fetchTasks, createTask, updateTask, deleteTask: removeTask, moveTask: moveTaskStatus } = useTasks()
+const { tasks, loading, fetchTasks } = useTasks()
 const { companies, fetchCompanies } = useCompanies()
 const { tags: tagDefinitions, fetchTags } = useTags()
 
-const loadingAction = ref(false)
-const isTaskModalOpen = ref(false)
-const selectedTask = ref<Task | null>(null)
+const {
+  isTaskModalOpen,
+  selectedTask,
+  loadingAction,
+  openTaskModal,
+  closeTaskModal,
+  handleSaveTask,
+  moveTask,
+  deleteTask
+} = useTaskHandlers()
 
 const todoTasks = computed(() => tasks.value.filter(t => t.status === 'todo'))
 const inProgressTasks = computed(() => tasks.value.filter(t => t.status === 'in_progress'))
 const doneTasks = computed(() => tasks.value.filter(t => t.status === 'done'))
-
-const openTaskModal = (task?: Task) => {
-  selectedTask.value = task || null
-  isTaskModalOpen.value = true
-}
-
-const closeTaskModal = () => {
-  isTaskModalOpen.value = false
-  selectedTask.value = null
-}
-
-const handleSaveTask = async (taskData: Task) => {
-  loadingAction.value = true
-  
-  let res
-  if (selectedTask.value?.id) {
-    res = await updateTask(selectedTask.value.id, taskData)
-  } else {
-    res = await createTask(taskData)
-  }
-
-  if (res.success) {
-    closeTaskModal()
-  } else {
-    alert('Erro ao salvar: ' + res.error)
-  }
-  
-  loadingAction.value = false
-}
-
-const moveTask = async (task: Task, newStatus: 'todo' | 'in_progress' | 'done') => {
-  if (!task.id) return
-  await moveTaskStatus(task.id, newStatus)
-}
-
-const deleteTask = async (id: string) => {
-  const confirmed = await confirm('Deseja realmente deletar esta tarefa?', 'Deletar tarefa')
-  if (!confirmed) return
-  await removeTask(id)
-}
 
 const syncData = async () => {
   await fetchTasks()
