@@ -72,6 +72,31 @@ export const useFinance = () => {
 
       if (error) throw error
       
+      // Enviar webhook para CRM quando pagamento é confirmado
+      if (!isPaid && result && result.length > 0) {
+        const payment = result[0]
+        try {
+          await $fetch('/api/webhooks/send', {
+            method: 'POST',
+            body: {
+              event_type: 'payment.received',
+              payload: {
+                id: payment.id,
+                company_id: payment.company_id,
+                amount: payment.amount,
+                plan_name: payment.plan_name,
+                status: 'paid',
+                paid_at: payment.paid_at,
+                notes: payment.notes || null
+              }
+            }
+          })
+          console.log('✅ Webhook enviado: payment.received')
+        } catch (webhookError: any) {
+          console.warn(`⚠️ Erro ao enviar webhook: ${webhookError.message}`)
+        }
+      }
+      
       // Aguardar um pouco para garantir que o banco processou
       await new Promise(resolve => setTimeout(resolve, 100))
       

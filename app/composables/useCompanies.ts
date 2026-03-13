@@ -144,6 +144,7 @@ export const useCompanies = () => {
         payload.user_id = user.value.id
       }
 
+      const isNew = !company.id
       const { data: companyData, error: companyError } = await (supabase.from('companies') as any)
         .upsert(payload, { onConflict: 'id' })
         .select()
@@ -155,6 +156,35 @@ export const useCompanies = () => {
       }
 
       console.log('Empresa salva com sucesso:', companyData)
+
+      // Enviar webhook para CRM
+      try {
+        const eventType = isNew ? 'customer.created' : 'customer.updated'
+        await $fetch('/api/webhooks/send', {
+          method: 'POST',
+          body: {
+            event_type: eventType,
+            payload: {
+              id: companyData.id,
+              name: companyData.name,
+              email: companyData.email,
+              whatsapp: companyData.whatsapp,
+              phone: companyData.phone,
+              representative_name: companyData.representative_name,
+              document: companyData.document,
+              is_active: companyData.is_active,
+              plan_name: companyData.plan_name,
+              monthly_price: companyData.monthly_price,
+              tags: companyData.tags,
+              created_at: companyData.created_at
+            }
+          }
+        })
+        console.log(`✅ Webhook enviado: ${eventType}`)
+      } catch (webhookError: any) {
+        console.warn(`⚠️ Erro ao enviar webhook: ${webhookError.message}`)
+        // Não falhar a operação se o webhook falhar
+      }
 
       // Se empresa foi inativada, cancelar cobranças pendentes
       if (!company.is_active) {
@@ -221,20 +251,43 @@ export const useCompanies = () => {
 
         // Só cria um novo pendente se o mês estiver complementamente limpo de pagamentos
         if (!monthPayment || monthPayment.length === 0) {
-          await (supabase.from('payments') as any).insert({
+          const { data: newPayment } = await (supabase.from('payments') as any).insert({
             company_id: companyData.id,
             amount: company.monthly_price,
             status: 'pending',
             due_date: dueDateStr,
             plan_name: company.plan_name || 'Individual'
-          })
+          }).select().single()
+
+          // Enviar webhook para CRM quando assinatura é gerada
+          try {
+            await $fetch('/api/webhooks/send', {
+              method: 'POST',
+              body: {
+                event_type: 'subscription.created',
+                payload: {
+                  id: newPayment?.id,
+                  company_id: companyData.id,
+                  company_name: companyData.name,
+                  representative_name: companyData.representative_name,
+                  plan_name: company.plan_name || 'Individual',
+                  amount: company.monthly_price,
+                  due_date: dueDateStr,
+                  status: 'pending',
+                  created_at: new Date().toISOString()
+                }
+              }
+            })
+            console.log('✅ Webhook enviado: subscription.created')
+          } catch (webhookError: any) {
+            console.warn(`⚠️ Erro ao enviar webhook: ${webhookError.message}`)
+          }
         }
       }
 
       await fetchCompanies()
       
       // Registrar no histórico
-      const isNew = !company.id
       await supabase.from('payment_history').insert({
         company_id: companyData.id,
         action_type: isNew ? 'company_created' : 'company_updated',
@@ -270,7 +323,7 @@ export const useCompanies = () => {
     try {
       // Buscar dados da empresa antes de deletar para o log
       const { data: companyData } = await (supabase.from('companies') as any)
-        .select('name, representative_name, whatsapp, email')
+        .select('name, representative_name, whatsapp, email, id')
         .eq('id', id)
         .single()
       
@@ -304,6 +357,29 @@ export const useCompanies = () => {
         .eq('id', id)
 
       if (deleteError) throw deleteError
+
+      // 5. Enviar webhook para CRM
+      try {
+        await $fetch('/api/webhooks/send', {
+          method: 'POST',
+          body: {
+            event_type: 'customer.deleted',
+            payload: {
+              id: companyData?.id,
+              name: companyData?.name,
+              representative_name: companyData?.representative_name,
+              email: companyData?.email,
+              whatsapp: companyData?.whatsapp,
+              deleted_at: new Date().toISOString()
+            }
+          }
+        })
+        console.log('✅ Webhook enviado: customer.deleted')
+      } catch (webhookError: any) {
+        console.warn(`⚠️ Erro ao enviar webhook: ${webhookError.message}`)
+        // Não falhar a operação se o webhook falhar
+      }
+
       await fetchCompanies()
       return { success: true }
     } catch (e: any) {

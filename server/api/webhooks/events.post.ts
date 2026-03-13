@@ -1,3 +1,5 @@
+import { serverSupabaseClient } from '#supabase/server'
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   
@@ -13,18 +15,16 @@ export default defineEventHandler(async (event) => {
   }
   
   try {
-    const supabase = useSupabaseClient()
-    const user = useSupabaseUser()
+    const client = await serverSupabaseClient(event)
     
     // Registrar evento recebido
-    const { error } = await supabase.from('webhook_events').insert({
+    const { error } = await client.from('webhook_events').insert({
       event_type: body.event_type,
       source_system: body.source_system,
       payload: body.payload,
       processed: false,
-      received_at: new Date().toISOString(),
-      user_id: user.value?.id
-    })
+      received_at: new Date().toISOString()
+    } as any)
     
     if (error) {
       console.error('Erro ao registrar webhook:', error)
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
     }
     
     // Processar evento baseado no tipo
-    await processWebhookEvent(body)
+    await processWebhookEvent(body, client)
     
     return {
       success: true,
@@ -47,41 +47,31 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-const processWebhookEvent = async (event: any) => {
-  const supabase = useSupabaseClient()
-  
+const processWebhookEvent = async (event: any, client: any) => {
   switch (event.event_type) {
     case 'customer.created':
-      await handleCustomerCreated(event.payload)
+      await handleCustomerCreated(event.payload, client)
       break
     case 'customer.updated':
-      await handleCustomerUpdated(event.payload)
+      await handleCustomerUpdated(event.payload, client)
       break
     case 'customer.deleted':
-      await handleCustomerDeleted(event.payload)
+      await handleCustomerDeleted(event.payload, client)
       break
     case 'payment.received':
-      await handlePaymentReceived(event.payload)
+      await handlePaymentReceived(event.payload, client)
       break
     case 'payment.failed':
-      await handlePaymentFailed(event.payload)
+      await handlePaymentFailed(event.payload, client)
       break
     default:
       console.log('Evento desconhecido:', event.event_type)
   }
-  
-  // Marcar como processado
-  await supabase
-    .from('webhook_events')
-    .update({ processed: true, processed_at: new Date().toISOString() })
-    .eq('id', event.id)
 }
 
-const handleCustomerCreated = async (payload: any) => {
-  const supabase = useSupabaseClient()
-  
+const handleCustomerCreated = async (payload: any, client: any) => {
   // Criar cliente no sistema
-  await supabase.from('companies').insert({
+  await client.from('companies').insert({
     name: payload.name,
     representative_name: payload.contact_name,
     email: payload.email,
@@ -92,11 +82,9 @@ const handleCustomerCreated = async (payload: any) => {
   })
 }
 
-const handleCustomerUpdated = async (payload: any) => {
-  const supabase = useSupabaseClient()
-  
+const handleCustomerUpdated = async (payload: any, client: any) => {
   // Atualizar cliente
-  await supabase
+  await client
     .from('companies')
     .update({
       name: payload.name,
@@ -107,21 +95,17 @@ const handleCustomerUpdated = async (payload: any) => {
     .eq('external_id', payload.id)
 }
 
-const handleCustomerDeleted = async (payload: any) => {
-  const supabase = useSupabaseClient()
-  
+const handleCustomerDeleted = async (payload: any, client: any) => {
   // Deletar cliente
-  await supabase
+  await client
     .from('companies')
     .delete()
     .eq('external_id', payload.id)
 }
 
-const handlePaymentReceived = async (payload: any) => {
-  const supabase = useSupabaseClient()
-  
+const handlePaymentReceived = async (payload: any, client: any) => {
   // Atualizar pagamento como recebido
-  await supabase
+  await client
     .from('payments')
     .update({
       status: 'paid',
@@ -131,11 +115,9 @@ const handlePaymentReceived = async (payload: any) => {
     .eq('external_id', payload.id)
 }
 
-const handlePaymentFailed = async (payload: any) => {
-  const supabase = useSupabaseClient()
-  
+const handlePaymentFailed = async (payload: any, client: any) => {
   // Atualizar pagamento como falho
-  await supabase
+  await client
     .from('payments')
     .update({
       status: 'failed',

@@ -38,6 +38,9 @@
 
         <!-- Tab: Config. API -->
         <BlocksKFinanceCrmSettings v-if="activeTab === 'settings'" />
+
+        <!-- Tab: Webhooks -->
+        <BlocksKWebhooksManagement v-if="activeTab === 'webhooks'" />
       </div>
       <!-- GLOW EFFECTS -->
       <div class="fixed -top-40 -right-40 w-96 h-96 bg-kros-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -72,7 +75,8 @@ const tabs = [
   { id: 'preferences', name: 'Preferências' },
   { id: 'white-label', name: 'White Label' },
   { id: 'plans', name: 'Catálogo' },
-  { id: 'settings', name: 'Config. API' }
+  { id: 'settings', name: 'Config. API' },
+  { id: 'webhooks', name: 'Webhooks' }
 ]
 
 const profileData = reactive({

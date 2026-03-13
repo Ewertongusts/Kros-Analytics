@@ -3,7 +3,8 @@
  * Suporta múltiplos horários, segmentação e relatórios
  */
 
-import { cronSchedules, globalCronConfig, shouldSendMessages, calculateDaysUntilDue } from '~/server/config/cronConfig'
+import { cronSchedules, globalCronConfig, shouldSendMessages, calculateDaysUntilDue } from '../../config/cronConfig'
+import { serverSupabaseClient } from '#supabase/server'
 
 interface CronResult {
   success: boolean
@@ -83,7 +84,7 @@ export default defineEventHandler(async (event): Promise<CronResult> => {
       }
     }
 
-    const supabase = useSupabaseClient()
+    const supabase = await serverSupabaseClient(event)
     const results: any[] = []
     let sentCount = 0
     let failedCount = 0

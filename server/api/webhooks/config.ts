@@ -1,8 +1,10 @@
+import { serverSupabaseClient } from '#supabase/server'
+
 export default defineEventHandler(async (event) => {
   const method = event.node.req.method
   
   if (method === 'GET') {
-    return await getWebhookConfigs()
+    return await getWebhookConfigs(event)
   } else if (method === 'POST') {
     return await createWebhookConfig(event)
   } else if (method === 'PUT') {
@@ -12,79 +14,108 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-const getWebhookConfigs = async () => {
-  const supabase = useSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('webhook_configs')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  
-  return data
+const getWebhookConfigs = async (event: any) => {
+  try {
+    const supabase = await serverSupabaseClient(event)
+    
+    const { data, error } = await supabase
+      .from('webhook_configs')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    
+    return data || []
+  } catch (err: any) {
+    console.error('Erro ao buscar webhooks:', err)
+    return []
+  }
 }
 
 const createWebhookConfig = async (event: any) => {
-  const body = await readBody(event)
-  const supabase = useSupabaseClient()
-  
-  // Gerar token seguro
-  const token = generateSecureToken()
-  
-  const { data, error } = await supabase
-    .from('webhook_configs')
-    .insert({
-      name: body.name,
-      url: body.url,
-      event_types: body.event_types,
-      token: token,
-      active: true
+  try {
+    const body = await readBody(event)
+    const supabase = await serverSupabaseClient(event)
+    
+    // Gerar token seguro
+    const token = generateSecureToken()
+    
+    const { error } = await supabase
+      .from('webhook_configs')
+      .insert({
+        name: body.name,
+        url: body.url,
+        event_types: body.event_types,
+        token: token,
+        active: true
+      } as any)
+    
+    if (error) {
+      console.error('Erro ao inserir webhook:', error)
+      throw error
+    }
+    
+    return {
+      success: true,
+      message: 'Webhook criado com sucesso',
+      token: token
+    }
+  } catch (err: any) {
+    console.error('Erro em createWebhookConfig:', err)
+    throw createError({
+      statusCode: 500,
+      statusMessage: err.message || 'Erro ao criar webhook'
     })
-    .select()
-    .single()
-  
-  if (error) throw error
-  
-  return {
-    ...data,
-    token: token // Retornar token apenas na criação
   }
 }
 
 const updateWebhookConfig = async (event: any) => {
-  const body = await readBody(event)
-  const supabase = useSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('webhook_configs')
-    .update({
-      name: body.name,
-      url: body.url,
-      event_types: body.event_types,
-      active: body.active
+  try {
+    const body = await readBody(event)
+    const supabase = await serverSupabaseClient(event)
+    
+    const { error } = await supabase
+      .from('webhook_configs')
+      .update({
+        name: body.name,
+        url: body.url,
+        event_types: body.event_types,
+        active: body.active
+      } as any)
+      .eq('id', body.id)
+    
+    if (error) throw error
+    
+    return { success: true }
+  } catch (err: any) {
+    console.error('Erro em updateWebhookConfig:', err)
+    throw createError({
+      statusCode: 500,
+      statusMessage: err.message || 'Erro ao atualizar webhook'
     })
-    .eq('id', body.id)
-    .select()
-    .single()
-  
-  if (error) throw error
-  
-  return data
+  }
 }
 
 const deleteWebhookConfig = async (event: any) => {
-  const body = await readBody(event)
-  const supabase = useSupabaseClient()
-  
-  const { error } = await supabase
-    .from('webhook_configs')
-    .delete()
-    .eq('id', body.id)
-  
-  if (error) throw error
-  
-  return { success: true }
+  try {
+    const body = await readBody(event)
+    const supabase = await serverSupabaseClient(event)
+    
+    const { error } = await supabase
+      .from('webhook_configs')
+      .delete()
+      .eq('id', body.id)
+    
+    if (error) throw error
+    
+    return { success: true }
+  } catch (err: any) {
+    console.error('Erro em deleteWebhookConfig:', err)
+    throw createError({
+      statusCode: 500,
+      statusMessage: err.message || 'Erro ao deletar webhook'
+    })
+  }
 }
 
 const generateSecureToken = () => {
