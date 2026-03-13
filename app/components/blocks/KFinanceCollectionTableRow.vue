@@ -12,27 +12,15 @@
       </div>
     </td>
     <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
-      <FinanceCollectionKCollectionRowCompany
-        :company-name="payment.company_name"
-        :plan-name="payment.plan_name"
-        :rep="payment.company_rep"
-        :status="payment.status"
-      >
-        <template #tags>
-          <FinanceCollectionKCollectionRowTags
-            :tags="payment.tags || []"
-            :whatsapp="payment.company_whatsapp"
-            :tag-definitions="tagDefinitions"
-            :show-picker="activeTagPicker === payment.id"
-            @remove-tag="handleRemoveTag"
-            @add-tag="handleAddTag"
-            @toggle-picker="toggleTagPicker"
-          />
-        </template>
-      </FinanceCollectionKCollectionRowCompany>
+      <span :class="['font-semibold text-sm tracking-tight text-white uppercase', isCompact ? 'text-[10px]' : 'text-xs']">
+        {{ payment.company_name }}
+      </span>
+    </td>
+    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
+      <span :class="['font-medium text-white/70', isCompact ? 'text-[10px]' : 'text-xs']">{{ payment.company_actual_name }}</span>
     </td>
     <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
-       <span :class="['font-medium uppercase tracking-widest text-white/50', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.start_date) }}</span>
+       <span :class="['font-medium uppercase tracking-widest text-white/50', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDateWithYear(payment.start_date) }}</span>
     </td>
     <td :class="['font-medium', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
        <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.due_date) }}</span>
@@ -41,13 +29,14 @@
        <span :class="['font-black tabular-nums text-white/90 tracking-tight', isCompact ? 'text-[11px]' : 'text-xs']">{{ formatCurrency(payment.amount) }}</span>
     </td>
     <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
-       <span :class="['font-bold text-emerald-500/60 tabular-nums tracking-tighter', isCompact ? 'text-[10px]' : 'text-[11px]']">{{ formatCurrency(payment.company_ltv || 0) }}</span>
+       <span :class="['font-black tabular-nums text-white/90 tracking-tight', isCompact ? 'text-[11px]' : 'text-xs']">{{ formatCurrency(calculateLTV(payment)) }}</span>
     </td>
     <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
       <div class="flex items-center justify-center">
         <FinanceSubscriptionKSubscriptionStatusBadge 
           :status="payment.subscription_status" 
           :size="isCompact ? 'sm' : 'md'"
+          @update:status="$emit('update-subscription-status', { id: payment.id, status: $event })"
         />
       </div>
     </td>
@@ -100,27 +89,25 @@ const props = defineProps<{
   payment: any
   isSelected: boolean
   isCompact: boolean
-  activeTagPicker: string | null
   tagDefinitions: any[]
 }>()
 
 const emit = defineEmits([
   'toggle-select', 
-  'remove-tag', 
-  'add-tag', 
   'edit',
   'toggle-status', 
   'toggle-autobilling', 
   'open-msg-modal', 
   'open-logs', 
   'open-history',
-  'update:activeTagPicker',
-  'delete'
+  'delete',
+  'update-subscription-status'
 ])
 
 const { 
   formatCurrency, 
   formatDate, 
+  formatDateWithYear,
   formatDateTimeTiny, 
   formatTimeAgo, 
   isUrgentAlert, 
@@ -137,16 +124,18 @@ const mapPaymentStatus = (status: string): 'paid' | 'pending' | 'overdue' => {
   return statusMap[status] || 'pending'
 }
 
-const toggleTagPicker = () => {
-  emit('update:activeTagPicker', props.activeTagPicker === props.payment.id ? null : props.payment.id)
-}
-
-const handleRemoveTag = (tagName: string) => {
-  emit('remove-tag', props.payment, tagName)
-}
-
-const handleAddTag = (tagName: string) => {
-  emit('add-tag', props.payment, tagName)
+// Calcular LTV (Lifetime Value) baseado no valor mensal e duração esperada
+const calculateLTV = (payment: any): number => {
+  // Se a assinatura tem data de fim, calcular baseado no período
+  if (payment.end_date && payment.start_date) {
+    const start = new Date(payment.start_date)
+    const end = new Date(payment.end_date)
+    const months = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
+    return payment.amount * Math.max(months, 1)
+  }
+  
+  // Caso contrário, assumir 12 meses (1 ano) como padrão
+  return payment.amount * 12
 }
 </script>
 

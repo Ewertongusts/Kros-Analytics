@@ -1,12 +1,6 @@
 <template>
   <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group hover:border-kros-blue/5 transition-all">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
-      <!-- TABS INTEGRADAS -->
-      <BlocksKFinanceTabsHeader 
-        :active-sub-tab="activeSubTab"
-        @update:active-sub-tab="$emit('update:activeSubTab', $event)"
-      />
-
       <!-- FILTROS -->
       <BlocksKFinanceCollectionFilters
         :total-count="filteredPayments.length"
@@ -37,9 +31,6 @@
       :selected-total="selectedTotal"
       :tag-definitions="tagDefinitions"
       @batch-action="batchAction"
-      @add-tag-batch="addTagToBatch"
-      @remove-tag-batch="removeTagFromBatch"
-      @remove-all-tags-batch="removeAllTagsFromBatch"
       @clear-selection="clearSelection"
     />
 
@@ -60,11 +51,8 @@
             :payment="payment"
             :is-compact="isCompact"
             :is-selected="selectedIds.includes(payment.id)"
-            v-model:active-tag-picker="activeTagPicker"
             :tag-definitions="tagDefinitions"
             @toggle-select="toggleSelect"
-            @remove-tag="removeTag"
-            @add-tag="addTag"
             @edit="handleEdit"
             @toggle-status="$emit('toggle-status', $event)"
             @toggle-autobilling="toggleAutoBilling"
@@ -72,6 +60,7 @@
             @open-logs="$emit('open-logs', $event)"
             @open-history="$emit('open-history', $event)"
             @delete="handleDelete"
+            @update-subscription-status="handleUpdateSubscriptionStatus"
           />
         </tbody>
       </table>
@@ -225,7 +214,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'update-company-tags', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'batch-tag-progress'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export'])
 
 const handleExportDebug = (format: any) => {
   emit('export', format)
@@ -265,7 +254,6 @@ const {
 
 const {
   selectedIds,
-  activeTagPicker,
   isAllSelected,
   selectedTotal,
   toggleSelectAll,
@@ -364,244 +352,6 @@ const confirmBatchPending = () => {
   emit('batch-mark-pending', selectedPaymentsForBatch.value)
   closeBatchModals()
   clearSelection()
-}
-
-const addTagToBatch = async (tagName: string) => {
-  const selectedPayments = getSelectedPayments()
-  
-  console.log('=== addTagToBatch ===')
-  console.log('Tag:', tagName)
-  console.log('Pagamentos selecionados:', selectedPayments.length)
-  
-  if (selectedPayments.length === 0) {
-    const { error } = useToast()
-    error('Nenhum item selecionado', 'Selecione ao menos um item para continuar')
-    return
-  }
-
-  const confirmed = await confirm(`Deseja adicionar a tag "${tagName}" para as ${selectedPayments.length} empresas selecionadas?`, 'Adicionar tag')
-  if (!confirmed) return
-
-  console.log('Adicionando tag em massa...')
-  
-  // Coletar todas as atualizações necessárias
-  const updates: Array<{ companyId: string, tags: string[] }> = []
-  for (const p of selectedPayments) {
-    const currentTags = [...(p.tags || [])]
-    if (!currentTags.includes(tagName)) {
-      currentTags.push(tagName)
-      updates.push({ companyId: p.company_id, tags: currentTags })
-    }
-  }
-  
-  // Se não há nada para atualizar
-  if (updates.length === 0) {
-    const { warning } = useToast()
-    warning('Nenhuma atualização necessária', `Todas as empresas selecionadas já possuem a tag "${tagName}"`)
-    clearSelection()
-    return
-  }
-  
-  // Emitir evento para abrir modal de progresso
-  emit('batch-tag-progress', {
-    action: 'add',
-    tagName,
-    total: updates.length,
-    processed: 0
-  })
-  
-  // Processar todas as atualizações
-  for (let i = 0; i < updates.length; i++) {
-    const update = updates[i]
-    console.log('Emitindo update-company-tags para:', update.companyId, 'tags:', update.tags)
-    emit('update-company-tags', update)
-    
-    // Atualizar progresso
-    emit('batch-tag-progress', {
-      action: 'add',
-      tagName,
-      total: updates.length,
-      processed: i + 1,
-      successCount: i + 1
-    })
-    
-    // Aguardar menos tempo para não travar
-    await new Promise(resolve => setTimeout(resolve, 50))
-  }
-
-  console.log('Total de empresas atualizadas:', updates.length)
-  
-  clearSelection()
-  
-  const { success } = useToast()
-  success('Tags adicionadas', `Tag "${tagName}" adicionada a ${updates.length} empresa${updates.length > 1 ? 's' : ''}`)
-  
-  // Aguardar um pouco antes de recarregar
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  // Emitir sync para recarregar dados
-  console.log('Emitindo sync após adicionar tags')
-  emit('sync')
-}
-
-const removeTagFromBatch = async (tagName: string) => {
-  const selectedPayments = getSelectedPayments()
-  
-  console.log('=== removeTagFromBatch ===')
-  console.log('Tag:', tagName)
-  console.log('Pagamentos selecionados:', selectedPayments.length)
-  
-  if (selectedPayments.length === 0) {
-    const { error } = useToast()
-    error('Nenhum item selecionado', 'Selecione ao menos um item para continuar')
-    return
-  }
-
-  const confirmed = await confirm(`Deseja remover a tag "${tagName}" de ${selectedPayments.length} empresas selecionadas?`, 'Remover tag')
-  if (!confirmed) return
-
-  console.log('Removendo tag em massa...')
-  
-  // Emitir evento para abrir modal de progresso
-  emit('batch-tag-progress', {
-    action: 'remove',
-    tagName,
-    total: selectedPayments.length,
-    processed: 0
-  })
-  
-  // Coletar todas as atualizações necessárias
-  const updates: Array<{ companyId: string, tags: string[] }> = []
-  for (const p of selectedPayments) {
-    const currentTags = (p.tags || []).filter((t: string) => t !== tagName)
-    updates.push({ companyId: p.company_id, tags: currentTags })
-  }
-  
-  // Processar todas as atualizações
-  for (let i = 0; i < updates.length; i++) {
-    const update = updates[i]
-    console.log('Emitindo update-company-tags para:', update.companyId, 'tags:', update.tags)
-    emit('update-company-tags', update)
-    
-    // Atualizar progresso
-    emit('batch-tag-progress', {
-      action: 'remove',
-      tagName,
-      total: updates.length,
-      processed: i + 1,
-      successCount: i + 1
-    })
-    
-    // Aguardar menos tempo para não travar
-    await new Promise(resolve => setTimeout(resolve, 50))
-  }
-
-  console.log('Total de empresas atualizadas:', updates.length)
-  
-  clearSelection()
-  
-  const { success } = useToast()
-  success('Tags removidas', `Tag "${tagName}" removida de ${updates.length} empresa${updates.length > 1 ? 's' : ''}`)
-  
-  // Aguardar um pouco antes de recarregar
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  // Emitir sync para recarregar dados
-  console.log('Emitindo sync após remover tags')
-  emit('sync')
-}
-
-const removeAllTagsFromBatch = async () => {
-  const selectedPayments = getSelectedPayments()
-  
-  console.log('=== removeAllTagsFromBatch ===')
-  console.log('Pagamentos selecionados:', selectedPayments.length)
-  
-  if (selectedPayments.length === 0) {
-    const { error } = useToast()
-    error('Nenhum item selecionado', 'Selecione ao menos um item para continuar')
-    return
-  }
-
-  const confirmed = await confirm(`Deseja remover TODAS as tags de ${selectedPayments.length} empresas selecionadas?`, 'Remover todas as tags')
-  if (!confirmed) return
-
-  console.log('Removendo todas as tags em massa...')
-  
-  // Emitir evento para abrir modal de progresso
-  emit('batch-tag-progress', {
-    action: 'remove-all',
-    tagName: 'todas',
-    total: selectedPayments.length,
-    processed: 0
-  })
-  
-  // Coletar todas as atualizações necessárias
-  const updates: Array<{ companyId: string, tags: string[] }> = []
-  for (const p of selectedPayments) {
-    // Remover todas as tags (array vazio)
-    updates.push({ companyId: p.company_id, tags: [] })
-  }
-  
-  // Processar todas as atualizações
-  for (let i = 0; i < updates.length; i++) {
-    const update = updates[i]
-    console.log('Emitindo update-company-tags para:', update.companyId, 'removendo todas as tags')
-    emit('update-company-tags', update)
-    
-    // Atualizar progresso
-    emit('batch-tag-progress', {
-      action: 'remove-all',
-      tagName: 'todas',
-      total: updates.length,
-      processed: i + 1,
-      successCount: i + 1
-    })
-    
-    // Aguardar menos tempo para não travar
-    await new Promise(resolve => setTimeout(resolve, 50))
-  }
-
-  console.log('Total de empresas atualizadas:', updates.length)
-  
-  clearSelection()
-  
-  const { success } = useToast()
-  success('Tags removidas', `Todas as tags foram removidas de ${updates.length} empresa${updates.length > 1 ? 's' : ''}`)
-  
-  // Aguardar um pouco antes de recarregar
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  // Emitir sync para recarregar dados
-  console.log('Emitindo sync após remover todas as tags')
-  emit('sync')
-}
-
-const addTag = (payment: any, tagName: string) => {
-  const currentTags = [...(payment.tags || [])]
-  if (!currentTags.includes(tagName)) {
-    currentTags.push(tagName)
-    // Atualizar localmente primeiro para feedback imediato
-    payment.tags = currentTags
-    emit('update-company-tags', { companyId: payment.company_id, tags: currentTags })
-  }
-  activeTagPicker.value = null
-}
-
-const removeTag = async (payment: any, tagName: string) => {
-  const confirmed = await confirm(`Deseja remover a tag "${tagName}"?`, 'Remover tag')
-  if (!confirmed) return
-  
-  const currentTags = (payment.tags || []).filter((t: string) => t !== tagName)
-  
-  // Atualizar localmente primeiro para feedback imediato
-  // Usar splice para garantir reatividade do Vue
-  payment.tags.splice(0, payment.tags.length, ...currentTags)
-  
-  // Forçar atualização da UI
-  await nextTick()
-  
-  emit('update-company-tags', { companyId: payment.company_id, tags: currentTags })
 }
 
 const handleDelete = async (payment: any) => {
@@ -705,7 +455,7 @@ const getVisiblePages = () => {
 }
 
 // Reset página quando filtros mudarem
-watch([activeFilter, selectedTags, searchQuery, subscriptionStatusFilter], () => {
+watch([activeFilter, searchQuery, subscriptionStatusFilter], () => {
   resetPage()
 })
 </script>

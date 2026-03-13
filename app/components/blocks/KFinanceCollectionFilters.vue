@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-wrap items-center gap-3 sm:gap-4 lg:flex-1 lg:justify-end">
+  <div class="flex flex-wrap items-center gap-3 sm:gap-4">
     <!-- Total Filtrado -->
     <div class="flex items-center gap-2 px-4 py-3 bg-white/[0.02] border border-white/5 rounded-xl">
       <span class="text-[9px] font-bold text-white/50 uppercase tracking-widest">Total Filtrado:</span>
@@ -19,22 +19,20 @@
       @clear="$emit('clear-tags')"
     />
 
-    <div class="flex items-center gap-2">
-      <FinanceCollectionKCollectionSubscriptionStatusFilter
-        :selected-statuses="subscriptionStatusFilter"
-        @toggle="$emit('toggle-subscription-status', $event)"
-        @clear="$emit('clear-subscription-status')"
-      />
-      
-      <FinanceCollectionKCollectionStatusFilter
-        :active-filter="activeFilter"
-        :filter-options="filterOptions"
-        @update:active-filter="$emit('update:activeFilter', $event)"
-      />
-    </div>
+    <FinanceCollectionKCollectionSubscriptionStatusFilter
+      :selected-statuses="subscriptionStatusFilter"
+      @toggle="$emit('toggle-subscription-status', $event)"
+      @clear="$emit('clear-subscription-status')"
+    />
+    
+    <FinanceCollectionKCollectionStatusFilter
+      :active-filter="activeFilter"
+      :filter-options="filterOptions"
+      @update:active-filter="$emit('update:activeFilter', $event)"
+    />
 
     <!-- Botões de Ação -->
-    <div class="flex items-center gap-2 ml-2 pl-4 border-l border-white/5">
+    <div class="flex items-center gap-2 ml-auto">
       <button 
         @click="$emit('toggle-compact')"
         class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-white/10"

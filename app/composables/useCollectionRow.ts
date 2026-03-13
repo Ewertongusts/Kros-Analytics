@@ -11,6 +11,12 @@ export const useCollectionRow = (payment: any) => {
     return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(safeDate))
   }
 
+  const formatDateWithYear = (date: string) => {
+    if (!date) return '-'
+    const safeDate = date.includes('T') ? date : `${date}T12:00:00`
+    return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }).format(new Date(safeDate))
+  }
+
   const formatDateTimeTiny = (date: string) => {
     if (!date) return '-'
     return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(date))
@@ -63,6 +69,7 @@ export const useCollectionRow = (payment: any) => {
   return {
     formatCurrency,
     formatDate,
+    formatDateWithYear,
     formatDateTimeTiny,
     formatTimeAgo,
     isUrgentAlert,

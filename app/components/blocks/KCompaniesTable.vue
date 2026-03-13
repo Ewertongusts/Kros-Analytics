@@ -4,11 +4,9 @@
       <thead>
         <tr class="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50">
           <th class="px-6 py-4">Status</th>
-          <th class="px-6 py-4">Empresa / Parceiro</th>
+          <th class="px-6 py-4">Cliente / Empresa</th>
+          <th class="px-6 py-4">Empresa</th>
           <th class="px-6 py-4 text-center">Cadastro</th>
-          <th class="px-6 py-4">Plano Ativo</th>
-          <th class="px-6 py-4">MRR</th>
-          <th class="px-6 py-4">LTV Pago</th>
           <th class="px-6 py-4 text-right">Ações</th>
         </tr>
       </thead>
@@ -24,49 +22,19 @@
             </div>
           </td>
           <td class="px-6 py-5">
-            <h4 class="font-semibold text-sm tracking-tight text-white uppercase underline decoration-kros-blue/20 underline-offset-4 mb-2">
-              {{ company.name }}
+            <h4 class="font-semibold text-sm tracking-tight text-white uppercase">
+              {{ company.representative_name || company.name }}
             </h4>
-            
-            <div v-if="company.tags && company.tags.length" class="flex flex-wrap gap-1.5">
-              <span 
-                v-for="tag in company.tags" 
-                :key="tag"
-                :style="getTagStyle(tag)"
-                :title="getTagDescription(tag)"
-                class="text-[10px] font-bold px-2.5 py-1 rounded-lg border uppercase tracking-wider transition-all cursor-help"
-              >
-                {{ tag }}
-              </span>
-            </div>
-
-            <p v-if="company.representative_name" class="text-xs font-medium text-white/60 mt-2.5 uppercase tracking-widest">
-              REP: {{ company.representative_name }}
-            </p>
+          </td>
+          <td class="px-6 py-5">
+            <span class="text-xs font-medium text-white/60 uppercase tracking-widest">
+              {{ company.name }}
+            </span>
           </td>
           <td class="px-6 py-5 text-center">
              <span class="text-xs font-medium text-white/60 uppercase tracking-widest whitespace-nowrap">
                {{ formatDate(company.created_at) }}
              </span>
-          </td>
-          <td class="px-6 py-5">
-            <div class="flex flex-col gap-1.5">
-               <span class="text-xs font-bold bg-kros-blue/10 text-kros-blue px-3 py-1.5 rounded-lg border border-kros-blue/20 uppercase tracking-tight w-fit text-center">
-                 {{ company.plan_name || 'Individual' }}
-               </span>
-               <span class="text-[10px] font-semibold text-white/40 uppercase tracking-widest ml-1">
-                 • {{ company.billing_cycle || 'Mensal' }}
-               </span>
-            </div>
-          </td>
-          <td class="px-6 py-5">
-             <span class="font-bold text-xs tracking-tighter text-white/90 whitespace-nowrap">{{ formatCurrency(company.monthly_price || 0) }}</span>
-          </td>
-          <td class="px-6 py-5">
-             <div class="flex flex-col">
-                <span class="font-bold text-sm tracking-tighter text-white/90 whitespace-nowrap">{{ formatCurrency(company.ltv || 0) }}</span>
-                <span class="text-[10px] font-bold text-white/30 uppercase tracking-widest">Total LTV</span>
-             </div>
           </td>
           <td class="px-6 py-5 last:rounded-r-2xl text-right">
              <div class="flex items-center justify-end gap-3 opacity-0 group-hover/row:opacity-100 transition-all">
@@ -90,41 +58,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useTags } from '~/composables/useTags'
+import { computed } from 'vue'
 
 const props = defineProps<{
   companies: any[]
 }>()
 
 const emit = defineEmits(['edit', 'delete'])
-
-const { tags: tagDefinitions, fetchTags } = useTags()
-
-const getTagStyle = (tagName: string) => {
-  const def = tagDefinitions.value.find(t => t.name === tagName)
-  if (def) {
-    return {
-      backgroundColor: `${def.color}15`,
-      color: def.color,
-      borderColor: `${def.color}30`
-    }
-  }
-  return {
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-    color: '#3B82F6',
-    borderColor: 'rgba(59, 130, 246, 0.1)'
-  }
-}
-
-const getTagDescription = (tagName: string) => {
-  const def = tagDefinitions.value.find(t => t.name === tagName)
-  return def?.description || ''
-}
-
-onMounted(() => {
-  fetchTags()
-})
 
 const onEdit = (company: any) => {
   console.log('Botão Editar clicado no componente Tabela', company)

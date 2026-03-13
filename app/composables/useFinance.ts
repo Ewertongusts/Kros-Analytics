@@ -3,7 +3,8 @@ import { ref } from 'vue'
 export interface FinancialRecord {
   id: string
   company_id: string
-  company_name: string
+  company_name: string // Nome do cliente (representative_name)
+  company_actual_name: string // Nome da empresa
   plan_name: string
   due_date: string
   amount: number
@@ -116,7 +117,8 @@ export const useFinance = () => {
       return {
         id: payment.id,
         company_id: payment.company_id,
-        company_name: payment.companies?.name || 'Empresa desconhecida',
+        company_name: payment.companies?.representative_name || payment.companies?.name || 'Cliente desconhecido',
+        company_actual_name: payment.companies?.name || 'Empresa desconhecida',
         plan_name: payment.plan_name || 'Individual',
         due_date: payment.due_date,
         amount: payment.amount || 0,

@@ -54,7 +54,8 @@
             @click="selectCustomer(customer)"
             class="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
           >
-            <div class="text-xs font-bold text-white">{{ customer.name }}</div>
+            <div class="text-xs font-bold text-white">{{ customer.representative_name || customer.name }}</div>
+            <div v-if="customer.name && customer.representative_name" class="text-[10px] text-white/50 mt-0.5">{{ customer.name }}</div>
             <div v-if="customer.whatsapp" class="text-[10px] text-emerald-400 mt-0.5">{{ customer.whatsapp }}</div>
             <div v-else-if="customer.phone" class="text-[10px] text-emerald-400 mt-0.5">{{ customer.phone }}</div>
             <div v-else-if="customer.email" class="text-[10px] text-white/40 mt-0.5">{{ customer.email }}</div>
@@ -166,6 +167,7 @@ const filteredCustomers = computed(() => {
   
   const query = searchQuery.value.toLowerCase()
   return customers.value.filter(c => 
+    c.representative_name?.toLowerCase().includes(query) ||
     c.name?.toLowerCase().includes(query) ||
     c.email?.toLowerCase().includes(query) ||
     c.whatsapp?.includes(query) ||
@@ -198,13 +200,13 @@ const openCreateCustomerModal = () => {
 
 const selectCustomer = (customer: any) => {
   selectedCustomer.value = customer
-  searchQuery.value = customer.name
+  searchQuery.value = customer.representative_name || customer.name
   showDropdown.value = false
   
   // Atualizar o modelo com os dados do cliente
   emit('update:modelValue', {
-    representative_name: customer.name,
-    name: customer.company_name || '',
+    representative_name: customer.representative_name || customer.name,
+    name: customer.name || '',
     email: customer.email || '',
     whatsapp: customer.whatsapp || customer.phone || ''
   })

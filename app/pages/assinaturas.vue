@@ -2,24 +2,13 @@
   <LayoutsKPageLayout>
     <UiKSkeleton v-if="loadingAnalytics || loadingFinance" type="table" :rows="5" />
 
-    <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700">
-      <SubscriptionsKSubscriptionsHeader 
-        :show-charts="showCharts" 
-        @toggle-charts="showCharts = !showCharts"
-        @open-timeline="handleOpenTimeline"
-        @create-subscription="subscriptionModal.isOpen = true"
-      />
-
-      <SubscriptionsKSubscriptionsCharts 
-        :show="showCharts" 
-        :payments="stats.paymentsList" 
-      />
-
+    <div v-else class="space-y-0 mb-20 animate-in fade-in duration-700">
       <SubscriptionsKSubscriptionsContent
         v-model:active-tab="activeSubTab"
         :key="`content-${refreshKey}`"
         :financial-records="adaptedSubscriptions"
         :payment-history="paymentHistory"
+        :show-charts="showCharts"
         @toggle-status="handleTogglePaymentStatus"
         @toggle-autobilling="handleToggleAutoBilling"
         @batch-autobilling="handleBatchAutoBilling"
@@ -35,6 +24,9 @@
         @update-company-tags="handleUpdateCompanyTags"
         @open-history="handleOpenIndividualHistory"
         @batch-tag-progress="handleBatchTagProgress"
+        @create-subscription="subscriptionModal.isOpen = true"
+        @open-timeline="handleOpenTimeline"
+        @toggle-charts="showCharts = !showCharts"
         @sync="handleSync"
         @config="navigateTo('/clientes')"
         @export="(format) => { exportPayments(subscriptions, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
@@ -276,6 +268,7 @@ const adaptedSubscriptions = computed(() => {
     return {
       ...sub,
       company_name: sub.customer_name || 'Cliente não vinculado',
+      company_actual_name: sub.customer_actual_name || 'Empresa não vinculada',
       company_id: sub.customer_id,
       plan_name: sub.plan_name || 'Plano não vinculado',
       tags: sub.tags || [], // Garantir que tags sejam incluídas

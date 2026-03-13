@@ -14,7 +14,7 @@
       </button>
     </div>
 
-    <BlocksKCompaniesTable 
+    <ClientsKClientsTable 
       :companies="companies" 
       @edit="openEditModal" 
       @delete="handleDelete" 

@@ -1,11 +1,6 @@
 <template>
   <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group transition-all">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 lg:justify-end">
-      <BlocksKFinanceTabsHeader 
-        :active-sub-tab="activeSubTab"
-        @update:active-sub-tab="$emit('update:activeSubTab', $event)"
-      />
-
       <FinanceHistoryKHistoryFilters
         v-model:search-query="searchQuery"
         v-model:plan-filter="planFilter"

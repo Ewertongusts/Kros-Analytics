@@ -44,7 +44,7 @@ export const useSubscriptionsManager = () => {
         .from('subscriptions')
         .select(`
           *,
-          customer:companies!customer_id(id, name, email, tags),
+          customer:companies!customer_id(id, name, email, tags, representative_name),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
         .order('created_at', { ascending: false })
@@ -62,7 +62,8 @@ export const useSubscriptionsManager = () => {
       // Atualizar com novos dados
       subscriptions.value = (data || []).map((sub: any) => ({
         ...sub,
-        customer_name: sub.customer?.name,
+        customer_name: sub.customer?.representative_name || sub.customer?.name,
+        customer_actual_name: sub.customer?.name,
         customer_email: sub.customer?.email,
         tags: sub.customer?.tags || [],
         plan_name: sub.plan?.name,
@@ -88,7 +89,7 @@ export const useSubscriptionsManager = () => {
         .from('subscriptions')
         .select(`
           *,
-          customer:companies!customer_id(id, name, email),
+          customer:companies!customer_id(id, name, email, representative_name),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
         .eq('id', id)
@@ -150,7 +151,7 @@ export const useSubscriptionsManager = () => {
         }])
         .select(`
           *,
-          customer:companies!customer_id(id, name, email),
+          customer:companies!customer_id(id, name, email, representative_name),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
         .single()
@@ -159,7 +160,8 @@ export const useSubscriptionsManager = () => {
       
       const newSub = {
         ...data,
-        customer_name: data.customer?.name,
+        customer_name: data.customer?.representative_name || data.customer?.name,
+        customer_actual_name: data.customer?.name,
         customer_email: data.customer?.email,
         plan_name: data.plan?.name,
         plan_billing_cycle: data.plan?.billing_cycle
@@ -190,7 +192,7 @@ export const useSubscriptionsManager = () => {
         .eq('id', id)
         .select(`
           *,
-          customer:companies!customer_id(id, name, email),
+          customer:companies!customer_id(id, name, email, representative_name),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
         .single()
@@ -199,7 +201,8 @@ export const useSubscriptionsManager = () => {
       
       const updatedSub = {
         ...data,
-        customer_name: data.customer?.name,
+        customer_name: data.customer?.representative_name || data.customer?.name,
+        customer_actual_name: data.customer?.name,
         customer_email: data.customer?.email,
         plan_name: data.plan?.name,
         plan_billing_cycle: data.plan?.billing_cycle

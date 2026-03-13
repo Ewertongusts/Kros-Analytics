@@ -5,12 +5,6 @@
     </div>
     <div class="flex flex-col">
       <p class="font-bold text-sm text-white uppercase tracking-tight">{{ companyName }}</p>
-      <div class="flex items-center gap-2 mt-0.5">
-        <p class="text-[9px] text-white/40 font-bold uppercase tracking-widest">{{ planName }}</p>
-        <span v-if="rep" class="w-1 h-1 rounded-full bg-white/10"></span>
-        <p v-if="rep" class="text-[9px] text-white/30 font-bold uppercase tracking-tighter">{{ rep }}</p>
-      </div>
-      <slot name="tags"></slot>
     </div>
   </div>
 </template>
@@ -20,6 +14,7 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   companyName: string
+  companyActualName?: string
   planName: string
   rep?: string
   status: string
