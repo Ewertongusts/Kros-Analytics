@@ -166,6 +166,16 @@
                 <div class="px-3 py-2 border-b border-white/5 mb-1">
                   <p class="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Remover Tag</p>
                 </div>
+                
+                <!-- Opção para remover TODAS as tags -->
+                <button 
+                  @click="handleRemoveAllTags"
+                  class="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-500/20 transition-all text-left group/rtag border-b border-white/5 mb-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                  <span class="text-[9px] font-black text-red-400 uppercase tracking-widest group-hover/rtag:text-red-300">Remover Todas</span>
+                </button>
+                
                 <button 
                   v-for="tag in tagDefinitions" 
                   :key="tag.id"
@@ -201,7 +211,7 @@ defineProps<{
   tagDefinitions: any[]
 }>()
 
-const emit = defineEmits(['batch-action', 'add-tag-batch', 'remove-tag-batch', 'clear-selection'])
+const emit = defineEmits(['batch-action', 'add-tag-batch', 'remove-tag-batch', 'remove-all-tags-batch', 'clear-selection'])
 
 const isBatchTagPickerOpen = ref(false)
 const isBatchRemoveTagPickerOpen = ref(false)
@@ -213,6 +223,11 @@ const handleAddTag = (tagName: string) => {
 
 const handleRemoveTag = (tagName: string) => {
   emit('remove-tag-batch', tagName)
+  isBatchRemoveTagPickerOpen.value = false
+}
+
+const handleRemoveAllTags = () => {
+  emit('remove-all-tags-batch')
   isBatchRemoveTagPickerOpen.value = false
 }
 </script>

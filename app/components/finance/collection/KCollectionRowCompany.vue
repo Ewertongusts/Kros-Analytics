@@ -10,8 +10,7 @@
         <span v-if="rep" class="w-1 h-1 rounded-full bg-white/10"></span>
         <p v-if="rep" class="text-[9px] text-white/30 font-bold uppercase tracking-tighter">{{ rep }}</p>
       </div>
-      
-      <slot name="tags" />
+      <slot name="tags"></slot>
     </div>
   </div>
 </template>

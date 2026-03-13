@@ -11,12 +11,16 @@
       @batch-autobilling="$emit('batch-autobilling', $event)"
       @batch-mark-paid="$emit('batch-mark-paid', $event)"
       @batch-mark-pending="$emit('batch-mark-pending', $event)"
+      @batch-suspend="$emit('batch-suspend', $event)"
+      @batch-reactivate="$emit('batch-reactivate', $event)"
+      @batch-cancel="$emit('batch-cancel', $event)"
       @batch-delete="$emit('batch-delete', $event)"
       @delete-success="$emit('delete-success', $event)"
       @edit-subscription="$emit('edit-subscription', $event)"
       @open-logs="$emit('open-logs', $event)"
       @update-company-tags="$emit('update-company-tags', $event)"
       @open-history="$emit('open-history', $event)"
+      @batch-tag-progress="$emit('batch-tag-progress', $event)"
       @sync="$emit('sync')"
       @config="$emit('config')"
       @export="$emit('export', $event)"
@@ -53,12 +57,16 @@ const emit = defineEmits<{
   'batch-autobilling': [payments: any[]]
   'batch-mark-paid': [payments: any[]]
   'batch-mark-pending': [payments: any[]]
+  'batch-suspend': [payments: any[]]
+  'batch-reactivate': [payments: any[]]
+  'batch-cancel': [payments: any[]]
   'batch-delete': [payments: any[]]
   'delete-success': [id: string]
   'edit-subscription': [subscription: any]
   'open-logs': [paymentId?: string]
   'update-company-tags': [data: { companyId: string, tags: string[] }]
   'open-history': [companyId: string]
+  'batch-tag-progress': [data: any]
   sync: []
   config: []
   export: [format: string]

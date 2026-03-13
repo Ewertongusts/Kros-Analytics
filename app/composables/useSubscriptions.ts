@@ -90,8 +90,18 @@ export const useSubscriptions = () => {
   }
 
   const handleUpdateCompanyTags = async ({ companyId, tags }: { companyId: string, tags: string[] }) => {
+    console.log('=== handleUpdateCompanyTags CHAMADO ===')
+    console.log('Company ID:', companyId)
+    console.log('Tags:', tags)
+    console.log('financialRecords.value:', financialRecords.value.length)
+    
     const payment = financialRecords.value.find(p => p.company_id === companyId)
-    if (!payment) return
+    if (!payment) {
+      console.log('ERRO: Payment não encontrado para company_id:', companyId)
+      return
+    }
+    
+    console.log('Payment encontrado:', payment.company_name)
 
     const oldTags = payment.tags || []
     const addedTags = tags.filter(t => !oldTags.includes(t))

@@ -16,7 +16,7 @@
       </div>
     </div>
     
-    <!-- Tags -->
+    <!-- Tags como bolinhas -->
     <div class="flex items-center gap-1.5 flex-wrap max-w-[180px]">
       <div 
         v-for="tag in tags" 

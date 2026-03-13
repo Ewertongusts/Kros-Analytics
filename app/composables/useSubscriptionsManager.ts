@@ -39,24 +39,37 @@ export const useSubscriptionsManager = () => {
     loading.value = true
     error.value = null
     try {
+      console.log('fetchSubscriptions: buscando dados do banco...')
       const { data, error: err } = await supabase
         .from('subscriptions')
         .select(`
           *,
-          customer:companies!customer_id(id, name, email),
+          customer:companies!customer_id(id, name, email, tags),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
         .order('created_at', { ascending: false })
       
       if (err) throw err
       
+      console.log('fetchSubscriptions: dados recebidos:', data?.length)
+      
+      // Limpar array primeiro para forçar reatividade
+      subscriptions.value = []
+      
+      // Aguardar próximo tick
+      await new Promise(resolve => setTimeout(resolve, 0))
+      
+      // Atualizar com novos dados
       subscriptions.value = (data || []).map((sub: any) => ({
         ...sub,
         customer_name: sub.customer?.name,
         customer_email: sub.customer?.email,
+        tags: sub.customer?.tags || [],
         plan_name: sub.plan?.name,
         plan_billing_cycle: sub.plan?.billing_cycle
       }))
+      
+      console.log('fetchSubscriptions: subscriptions.value atualizado:', subscriptions.value.length)
       
       return { success: true, data: subscriptions.value }
     } catch (err: any) {
@@ -207,25 +220,82 @@ export const useSubscriptionsManager = () => {
   }
 
   const cancelSubscription = async (id: string, reason?: string) => {
-    return updateSubscription(id, {
+    const result = await updateSubscription(id, {
       status: 'cancelled',
       end_date: new Date().toISOString().split('T')[0],
       notes: reason ? `Cancelada: ${reason}` : 'Cancelada'
     })
+    
+    if (result.success) {
+      const sub = result.data
+      const { addHistoryEntry } = usePaymentHistory()
+      await addHistoryEntry({
+        payment_id: id,
+        company_id: sub.customer_id,
+        action_type: 'subscription_cancelled',
+        description: `Assinatura cancelada${reason ? `: ${reason}` : ''}`,
+        metadata: {
+          subscription_id: id,
+          plan_name: sub.plan_name,
+          customer_name: sub.customer_name,
+          cancelled_at: new Date().toISOString()
+        }
+      })
+    }
+    
+    return result
   }
 
   const suspendSubscription = async (id: string, reason?: string) => {
-    return updateSubscription(id, {
+    const result = await updateSubscription(id, {
       status: 'suspended',
       notes: reason ? `Suspensa: ${reason}` : 'Suspensa'
     })
+    
+    if (result.success) {
+      const sub = result.data
+      const { addHistoryEntry } = usePaymentHistory()
+      await addHistoryEntry({
+        payment_id: id,
+        company_id: sub.customer_id,
+        action_type: 'subscription_suspended',
+        description: `Assinatura suspensa${reason ? `: ${reason}` : ''}`,
+        metadata: {
+          subscription_id: id,
+          plan_name: sub.plan_name,
+          customer_name: sub.customer_name,
+          suspended_at: new Date().toISOString()
+        }
+      })
+    }
+    
+    return result
   }
 
   const reactivateSubscription = async (id: string) => {
-    return updateSubscription(id, {
+    const result = await updateSubscription(id, {
       status: 'active',
       end_date: undefined
     })
+    
+    if (result.success) {
+      const sub = result.data
+      const { addHistoryEntry } = usePaymentHistory()
+      await addHistoryEntry({
+        payment_id: id,
+        company_id: sub.customer_id,
+        action_type: 'subscription_reactivated',
+        description: 'Assinatura reativada',
+        metadata: {
+          subscription_id: id,
+          plan_name: sub.plan_name,
+          customer_name: sub.customer_name,
+          reactivated_at: new Date().toISOString()
+        }
+      })
+    }
+    
+    return result
   }
 
   const deleteSubscription = async (id: string) => {
@@ -234,12 +304,32 @@ export const useSubscriptionsManager = () => {
       console.log('deleteSubscription: apagando', id)
       console.log('Array antes:', subscriptions.value.length)
       
+      // Buscar dados da assinatura antes de deletar para o log
+      const subToDelete = subscriptions.value.find(s => s.id === id)
+      
       const { error: err } = await supabase
         .from('subscriptions')
         .delete()
         .eq('id', id)
       
       if (err) throw err
+      
+      // Registrar no histórico
+      if (subToDelete) {
+        const { addHistoryEntry } = usePaymentHistory()
+        await addHistoryEntry({
+          payment_id: id,
+          company_id: subToDelete.customer_id,
+          action_type: 'subscription_deleted',
+          description: 'Assinatura deletada permanentemente',
+          metadata: {
+            subscription_id: id,
+            plan_name: subToDelete.plan_name,
+            customer_name: subToDelete.customer_name,
+            deleted_at: new Date().toISOString()
+          }
+        })
+      }
       
       // Forçar reatividade criando novo array
       subscriptions.value = subscriptions.value.filter(s => s.id !== id)
@@ -255,10 +345,135 @@ export const useSubscriptionsManager = () => {
   }
 
   const toggleAutoBilling = async (id: string, enabled: boolean, message?: string) => {
-    return updateSubscription(id, {
+    const result = await updateSubscription(id, {
       auto_billing_enabled: enabled,
       auto_billing_message: message || null
     })
+    
+    if (result.success) {
+      const sub = result.data
+      const { addHistoryEntry } = usePaymentHistory()
+      await addHistoryEntry({
+        payment_id: id,
+        company_id: sub.customer_id,
+        action_type: enabled ? 'auto_billing_enabled' : 'auto_billing_disabled',
+        description: `Cobrança automática ${enabled ? 'ativada' : 'desativada'}`,
+        metadata: {
+          subscription_id: id,
+          plan_name: sub.plan_name,
+          customer_name: sub.customer_name,
+          auto_billing_enabled: enabled,
+          message: message || null
+        }
+      })
+    }
+    
+    return result
+  }
+
+  // Ações em massa com callback de progresso
+  const batchSuspend = async (ids: string[], reason?: string, onProgress?: (current: number, total: number, item?: any) => void) => {
+    const results = {
+      success: true,
+      successCount: 0,
+      failureCount: 0,
+      errors: [] as Array<{ id: string, error: string }>
+    }
+    
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i]
+      if (onProgress) onProgress(i, ids.length, id)
+      
+      const result = await suspendSubscription(id, reason)
+      if (result.success) {
+        results.successCount++
+      } else {
+        results.failureCount++
+        results.errors.push({ id, error: result.error || 'Erro desconhecido' })
+      }
+    }
+    
+    if (onProgress) onProgress(ids.length, ids.length)
+    results.success = results.failureCount === 0
+    return results
+  }
+
+  const batchReactivate = async (ids: string[], onProgress?: (current: number, total: number, item?: any) => void) => {
+    const results = {
+      success: true,
+      successCount: 0,
+      failureCount: 0,
+      errors: [] as Array<{ id: string, error: string }>
+    }
+    
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i]
+      if (onProgress) onProgress(i, ids.length, id)
+      
+      const result = await reactivateSubscription(id)
+      if (result.success) {
+        results.successCount++
+      } else {
+        results.failureCount++
+        results.errors.push({ id, error: result.error || 'Erro desconhecido' })
+      }
+    }
+    
+    if (onProgress) onProgress(ids.length, ids.length)
+    results.success = results.failureCount === 0
+    return results
+  }
+
+  const batchCancel = async (ids: string[], reason?: string, onProgress?: (current: number, total: number, item?: any) => void) => {
+    const results = {
+      success: true,
+      successCount: 0,
+      failureCount: 0,
+      errors: [] as Array<{ id: string, error: string }>
+    }
+    
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i]
+      if (onProgress) onProgress(i, ids.length, id)
+      
+      const result = await cancelSubscription(id, reason)
+      if (result.success) {
+        results.successCount++
+      } else {
+        results.failureCount++
+        results.errors.push({ id, error: result.error || 'Erro desconhecido' })
+      }
+    }
+    
+    if (onProgress) onProgress(ids.length, ids.length)
+    results.success = results.failureCount === 0
+    return results
+  }
+
+  const batchDelete = async (ids: string[], onProgress?: (current: number, total: number, item?: any) => void) => {
+    const results = {
+      success: true,
+      successCount: 0,
+      failureCount: 0,
+      errors: [] as Array<{ id: string, error: string }>
+    }
+    
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i]
+      if (onProgress) onProgress(i, ids.length, id)
+      
+      const result = await deleteSubscription(id)
+      if (result.success) {
+        results.successCount++
+      } else {
+        results.failureCount++
+        results.errors.push({ id, error: result.error || 'Erro desconhecido' })
+      }
+    }
+    
+    if (onProgress) onProgress(ids.length, ids.length)
+    results.success = results.failureCount === 0
+    return results
   }
 
   return {
@@ -274,6 +489,10 @@ export const useSubscriptionsManager = () => {
     suspendSubscription,
     reactivateSubscription,
     deleteSubscription,
-    toggleAutoBilling
+    toggleAutoBilling,
+    batchSuspend,
+    batchReactivate,
+    batchCancel,
+    batchDelete
   }
 }

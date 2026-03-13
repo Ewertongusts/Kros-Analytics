@@ -20,7 +20,13 @@
         
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Data de Início da Assinatura *</label>
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1 relative group inline-block">
+              Data de Início da Assinatura *
+              <!-- Tooltip -->
+              <span class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
+                <span class="text-[9px] font-bold text-white/90">Data em que o contrato de assinatura começou</span>
+              </span>
+            </label>
             <input 
               v-model="form.start_date"
               type="date"
@@ -30,7 +36,13 @@
           </div>
 
           <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Dia de Vencimento *</label>
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1 relative group inline-block">
+              Dia de Vencimento *
+              <!-- Tooltip -->
+              <span class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
+                <span class="text-[9px] font-bold text-white/90">Dia do mês (1-31) em que a cobrança vence</span>
+              </span>
+            </label>
             <input 
               v-model.number="form.due_day"
               type="number"
@@ -44,7 +56,13 @@
         </div>
         
         <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Status da Assinatura</label>
+          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1 relative group inline-block">
+            Status da Assinatura
+            <!-- Tooltip -->
+            <span class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 delay-500 whitespace-nowrap z-[100]">
+              <span class="text-[9px] font-bold text-white/90">Estado do contrato (Ativa, Suspensa, Cancelada, Trial)</span>
+            </span>
+          </label>
           <select 
             v-model="form.status"
             class="w-full bg-[#111112] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none"

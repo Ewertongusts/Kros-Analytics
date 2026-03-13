@@ -1,7 +1,7 @@
 import { ref, computed, unref } from 'vue'
 import { isValidWhatsApp } from '~/utils/validators'
 
-export const useCollectionSelection = (payments: any[], filteredPayments: any) => {
+export const useCollectionSelection = (paymentsGetter: () => any[], filteredPayments: any) => {
   const selectedIds = ref<string[]>([])
   const activeTagPicker = ref<string | null>(null)
 
@@ -16,6 +16,7 @@ export const useCollectionSelection = (payments: any[], filteredPayments: any) =
   })
 
   const selectedTotal = computed(() => {
+    const payments = paymentsGetter()
     const selected = payments.filter(p => selectedIds.value.includes(p.id))
     return selected.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
   })
@@ -43,7 +44,23 @@ export const useCollectionSelection = (payments: any[], filteredPayments: any) =
   }
 
   const getSelectedPayments = () => {
-    return payments.filter(p => selectedIds.value.includes(p.id))
+    const payments = paymentsGetter()
+    console.log('=== getSelectedPayments DEBUG ===')
+    console.log('selectedIds:', selectedIds.value)
+    console.log('payments array length:', payments.length)
+    console.log('payments sample IDs:', payments.slice(0, 3).map(p => p.id))
+    
+    const selected = payments.filter(p => {
+      const isSelected = selectedIds.value.includes(p.id)
+      if (isSelected) {
+        console.log('Found selected payment:', p.id, p.company_name)
+      }
+      return isSelected
+    })
+    
+    console.log('Selected payments found:', selected.length)
+    console.log('================================')
+    return selected
   }
 
   const validateWhatsAppForBatch = async (selectedPayments: any[]) => {

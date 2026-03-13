@@ -1,55 +1,24 @@
 <template>
   <div class="space-y-4">
-    <!-- Filtros -->
-    <div class="flex flex-wrap items-center gap-3 mb-6">
-      <select 
-        v-model="filterType"
-        class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-kros-blue focus:outline-none transition-all appearance-none cursor-pointer"
+    <!-- Abas por Tipo de Evento -->
+    <div class="flex flex-wrap items-center gap-1 mb-4 pb-3 border-b border-white/5">
+      <button
+        v-for="tab in eventTabs"
+        :key="tab.value"
+        @click="filterType = tab.value; currentPage = 1"
+        :class="[
+          'flex items-center gap-1 px-2.5 py-1.5 rounded-md transition-all text-[10px] font-bold uppercase tracking-wider',
+          filterType === tab.value
+            ? `${tab.activeBg} ${tab.activeText} border ${tab.activeBorder}`
+            : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
+        ]"
       >
-        <option value="all" class="bg-[#111112] text-white">Todas as ações</option>
-        <option value="paid" class="bg-[#111112] text-white">Pagamentos</option>
-        <option value="reversed" class="bg-[#111112] text-white">Estornos</option>
-        <option value="auto_billing" class="bg-[#111112] text-white">Automação</option>
-        <option value="tags" class="bg-[#111112] text-white">Tags</option>
-        <option value="messages" class="bg-[#111112] text-white">Mensagens</option>
-        <option value="batch" class="bg-[#111112] text-white">Ações em Massa</option>
-      </select>
-
-      <select 
-        v-model="filterPeriod"
-        class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-kros-blue focus:outline-none transition-all appearance-none cursor-pointer"
-      >
-        <option value="all" class="bg-[#111112] text-white">Todo o período</option>
-        <option value="today" class="bg-[#111112] text-white">Hoje</option>
-        <option value="yesterday" class="bg-[#111112] text-white">Ontem</option>
-        <option value="7days" class="bg-[#111112] text-white">Últimos 7 dias</option>
-        <option value="30days" class="bg-[#111112] text-white">Últimos 30 dias</option>
-        <option value="90days" class="bg-[#111112] text-white">Últimos 90 dias</option>
-        <option value="custom" class="bg-[#111112] text-white">Período personalizado</option>
-      </select>
-
-      <!-- Datas personalizadas -->
-      <template v-if="filterPeriod === 'custom'">
-        <input 
-          v-model="startDate"
-          type="date"
-          class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-kros-blue focus:outline-none transition-all"
-          placeholder="Data inicial"
-        />
-        <span class="text-white/40 text-sm">até</span>
-        <input 
-          v-model="endDate"
-          type="date"
-          class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-kros-blue focus:outline-none transition-all"
-          placeholder="Data final"
-        />
-      </template>
-
-      <div class="flex-1"></div>
-
-      <div class="text-[10px] font-bold text-white/40 uppercase tracking-widest">
-        {{ filteredHistory.length }} registros
-      </div>
+        <component :is="tab.icon" class="w-3 h-3" />
+        <span class="hidden sm:inline">{{ tab.label }}</span>
+        <span v-if="getTabCount(tab.value) > 0" :class="['text-[7px] font-black px-1 py-0.5 rounded', tab.badgeBg]">
+          {{ getTabCount(tab.value) }}
+        </span>
+      </button>
     </div>
 
     <!-- Loading -->
@@ -214,11 +183,110 @@ const props = withDefaults(defineProps<{
 })
 
 const filterType = ref('all')
-const filterPeriod = ref('all')
-const startDate = ref('')
-const endDate = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 10
+
+// Definição das abas
+const eventTabs = [
+  {
+    value: 'all',
+    label: 'Todas',
+    icon: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z' })
+    ]),
+    activeBg: 'bg-white/10',
+    activeText: 'text-white',
+    activeBorder: 'border-white/20',
+    badgeBg: 'bg-white/20 text-white'
+  },
+  {
+    value: 'paid',
+    label: 'Pagamentos',
+    icon: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M20 6 9 17l-5-5' })
+    ]),
+    activeBg: 'bg-emerald-500/20',
+    activeText: 'text-emerald-400',
+    activeBorder: 'border-emerald-500/30',
+    badgeBg: 'bg-emerald-500/30 text-emerald-400'
+  },
+  {
+    value: 'reversed',
+    label: 'Estornos',
+    icon: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M1 4v6h6M23 20v-6h-6' }),
+      h('path', { d: 'M20.49 9A9 9 0 0 0 5.64 5.64M3.51 15A9 9 0 0 0 18.36 18.36' })
+    ]),
+    activeBg: 'bg-orange-500/20',
+    activeText: 'text-orange-400',
+    activeBorder: 'border-orange-500/30',
+    badgeBg: 'bg-orange-500/30 text-orange-400'
+  },
+  {
+    value: 'auto_billing',
+    label: 'Automação',
+    icon: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M13 2 3 14h9l-1 8 10-12h-9l1-8z' })
+    ]),
+    activeBg: 'bg-purple-500/20',
+    activeText: 'text-purple-400',
+    activeBorder: 'border-purple-500/30',
+    badgeBg: 'bg-purple-500/30 text-purple-400'
+  },
+  {
+    value: 'tags',
+    label: 'Tags',
+    icon: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z' }),
+      h('path', { d: 'M12 15v7' })
+    ]),
+    activeBg: 'bg-cyan-500/20',
+    activeText: 'text-cyan-400',
+    activeBorder: 'border-cyan-500/30',
+    badgeBg: 'bg-cyan-500/30 text-cyan-400'
+  },
+  {
+    value: 'messages',
+    label: 'Mensagens',
+    icon: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'm3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z' })
+    ]),
+    activeBg: 'bg-green-500/20',
+    activeText: 'text-green-400',
+    activeBorder: 'border-green-500/30',
+    badgeBg: 'bg-green-500/30 text-green-400'
+  },
+  {
+    value: 'batch',
+    label: 'Em Massa',
+    icon: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M12 5v14M5 12h14' })
+    ]),
+    activeBg: 'bg-blue-500/20',
+    activeText: 'text-blue-400',
+    activeBorder: 'border-blue-500/30',
+    badgeBg: 'bg-blue-500/30 text-blue-400'
+  }
+]
+
+const getTabCount = (tabValue: string) => {
+  if (!props.history || !Array.isArray(props.history)) return 0
+  
+  const typeMap: Record<string, string[]> = {
+    all: [],
+    paid: ['paid'],
+    reversed: ['reversed'],
+    auto_billing: ['auto_billing_enabled', 'auto_billing_disabled'],
+    tags: ['tag_added', 'tag_removed'],
+    messages: ['message_sent'],
+    batch: ['batch_paid', 'batch_reversed']
+  }
+  
+  const types = typeMap[tabValue] || []
+  if (types.length === 0) return props.history.length
+  
+  return props.history.filter(h => types.includes(h.action_type)).length
+}
 
 const filteredHistory = computed(() => {
   if (!props.history || !Array.isArray(props.history)) return []
@@ -231,61 +299,13 @@ const filteredHistory = computed(() => {
       paid: ['paid'],
       reversed: ['reversed'],
       auto_billing: ['auto_billing_enabled', 'auto_billing_disabled'],
-      tags: ['tag_added', 'tag_removed'],
+      tags: ['tags_updated', 'tag_added', 'tag_removed'],
       messages: ['message_sent'],
-      batch: ['batch_paid', 'batch_reversed']
+      batch: ['batch_paid', 'batch_reversed', 'batch_autobilling_started', 'batch_autobilling_completed']
     }
     
     const types = typeMap[filterType.value] || []
-    filtered = filtered.filter(h => types.includes(h.action_type))
-  }
-  
-  // Filtro por período
-  if (filterPeriod.value !== 'all') {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    
-    filtered = filtered.filter(h => {
-      const entryDate = new Date(h.created_at)
-      
-      switch (filterPeriod.value) {
-        case 'today':
-          return entryDate >= today
-        case 'yesterday':
-          return entryDate >= yesterday && entryDate < today
-        case '7days':
-          const last7Days = new Date(today)
-          last7Days.setDate(last7Days.getDate() - 7)
-          return entryDate >= last7Days
-        case '30days':
-          const last30Days = new Date(today)
-          last30Days.setDate(last30Days.getDate() - 30)
-          return entryDate >= last30Days
-        case '90days':
-          const last90Days = new Date(today)
-          last90Days.setDate(last90Days.getDate() - 90)
-          return entryDate >= last90Days
-        case 'custom':
-          if (startDate.value && endDate.value) {
-            const start = new Date(startDate.value)
-            const end = new Date(endDate.value)
-            end.setHours(23, 59, 59, 999) // Incluir o dia todo
-            return entryDate >= start && entryDate <= end
-          } else if (startDate.value) {
-            const start = new Date(startDate.value)
-            return entryDate >= start
-          } else if (endDate.value) {
-            const end = new Date(endDate.value)
-            end.setHours(23, 59, 59, 999)
-            return entryDate <= end
-          }
-          return true
-        default:
-          return true
-      }
-    })
+    filtered = filtered.filter(h => types.some(t => h.action_type?.includes(t) || h.action_type === t))
   }
   
   return filtered
@@ -308,7 +328,7 @@ const goToPage = (page: number) => {
 }
 
 // Reset para página 1 quando filtros mudarem
-watch([filterType, filterPeriod, startDate, endDate], () => {
+watch([filterType], () => {
   currentPage.value = 1
 })
 

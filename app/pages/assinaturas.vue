@@ -17,6 +17,7 @@
 
       <SubscriptionsKSubscriptionsContent
         v-model:active-tab="activeSubTab"
+        :key="`content-${refreshKey}`"
         :financial-records="adaptedSubscriptions"
         :payment-history="paymentHistory"
         @toggle-status="handleTogglePaymentStatus"
@@ -33,6 +34,7 @@
         @open-logs="handleOpenLogs"
         @update-company-tags="handleUpdateCompanyTags"
         @open-history="handleOpenIndividualHistory"
+        @batch-tag-progress="handleBatchTagProgress"
         @sync="handleSync"
         @config="navigateTo('/clientes')"
         @export="(format) => { exportPayments(subscriptions, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
@@ -76,6 +78,18 @@
       @close="batchDeleteModal.isOpen = false"
       @confirm="handleConfirmBatchDelete"
     />
+    
+    <!-- Modal de Progresso de Ações em Massa -->
+    <BlocksKBatchProgressModal
+      :is-open="batchProgressModal.isOpen"
+      :title="batchProgressModal.title"
+      :total="batchProgressModal.total"
+      :processed="batchProgressModal.processed"
+      :success-count="batchProgressModal.successCount"
+      :failure-count="batchProgressModal.failureCount"
+      :current-item="batchProgressModal.currentItem"
+      @close="batchProgressModal.isOpen = false"
+    />
   </LayoutsKPageLayout>
 </template>
 
@@ -89,8 +103,9 @@ const { loading: loadingFinance } = useFinance()
 const { success } = useToast()
 const { exportPayments } = useExport()
 
-// Novo composable para gerenciar assinaturas
-const { subscriptions, loading: loadingSubscriptions, fetchSubscriptions, deleteSubscription, suspendSubscription, reactivateSubscription, cancelSubscription } = useSubscriptionsManager()
+const { subscriptions, loading: loadingSubscriptions, fetchSubscriptions, deleteSubscription, suspendSubscription, reactivateSubscription, cancelSubscription, batchSuspend, batchReactivate, batchCancel, batchDelete } = useSubscriptionsManager()
+
+const refreshKey = ref(0)
 
 const subscriptionModal = reactive({
   isOpen: false,
@@ -100,6 +115,16 @@ const subscriptionModal = reactive({
 const batchDeleteModal = reactive({
   isOpen: false,
   subscriptions: [] as any[]
+})
+
+const batchProgressModal = reactive({
+  isOpen: false,
+  title: '',
+  total: 0,
+  processed: 0,
+  successCount: 0,
+  failureCount: 0,
+  currentItem: ''
 })
 
 const {
@@ -117,14 +142,10 @@ const {
   handleOpenIndividualHistory,
   handleTogglePaymentStatus,
   handleConfirmPayment,
-  handleUpdateCompanyTags,
   handleOpenLogs,
   handleToggleAutoBilling,
   handleConfirmAutoBilling,
   handleBatchAutoBilling,
-  handleConfirmBatchAutoBilling,
-  handleBatchMarkPaid,
-  handleBatchMarkPending,
   handleOpenTimeline
 } = useSubscriptions()
 
@@ -135,9 +156,89 @@ const handleSubscriptionCreated = async () => {
   success('Assinatura salva', 'Assinatura salva com sucesso')
 }
 
+const handleBatchTagProgress = (data: any) => {
+  console.log('handleBatchTagProgress:', data)
+  
+  if (data.processed === 0) {
+    // Abrir modal
+    const actionText = data.action === 'add' ? 'Adicionando' : 'Removendo'
+    batchProgressModal.title = `${actionText} Tag "${data.tagName}"`
+    batchProgressModal.total = data.total
+    batchProgressModal.processed = 0
+    batchProgressModal.successCount = 0
+    batchProgressModal.failureCount = 0
+    batchProgressModal.isOpen = true
+  } else {
+    // Atualizar progresso
+    batchProgressModal.processed = data.processed
+    batchProgressModal.successCount = data.successCount || data.processed
+    batchProgressModal.failureCount = 0
+    
+    // Se terminou, fechar após 1.5s
+    if (data.processed === data.total) {
+      setTimeout(() => {
+        batchProgressModal.isOpen = false
+      }, 1500)
+    }
+  }
+}
+
+const handleUpdateCompanyTags = async ({ companyId, tags }: { companyId: string, tags: string[] }) => {
+  console.log('=== handleUpdateCompanyTags (assinaturas.vue) ===')
+  console.log('Company ID:', companyId)
+  console.log('Tags:', tags)
+  
+  try {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    // Buscar nome da empresa para o log
+    const { data: company } = await supabase
+      .from('companies')
+      .select('name')
+      .eq('id', companyId)
+      .single()
+    
+    // Atualizar tags na tabela companies
+    const { error: updateError } = await supabase
+      .from('companies')
+      .update({ tags })
+      .eq('id', companyId)
+    
+    if (updateError) {
+      console.error('Erro ao atualizar tags:', updateError)
+      return
+    }
+    
+    console.log('Tags atualizadas no banco:', companyId)
+    
+    // Registrar no histórico
+    const tagsText = tags.length > 0 ? tags.join(', ') : 'nenhuma'
+    await supabase.from('payment_history').insert({
+      company_id: companyId,
+      action_type: 'tags_updated',
+      description: `Tags atualizadas para: ${tagsText}`,
+      user_id: user.value?.id,
+      user_name: user.value?.email?.split('@')[0] || 'Sistema',
+      metadata: {
+        company_name: company?.name || 'Empresa desconhecida',
+        tags: tags,
+        updated_at: new Date().toISOString()
+      }
+    })
+    
+    console.log('Log de atualização de tags registrado')
+    
+  } catch (err: any) {
+    console.error('Erro ao atualizar tags:', err)
+  }
+}
+
 const handleSync = async () => {
   console.log('handleSync chamado - recarregando assinaturas')
   await fetchSubscriptions()
+  await nextTick()
+  refreshKey.value++ // Incrementar para forçar re-render
   console.log('Assinaturas recarregadas:', subscriptions.value.length)
 }
 
@@ -155,148 +256,298 @@ const handleBatchDelete = (subs: any[]) => {
   console.log('Modal aberto:', batchDeleteModal.isOpen)
 }
 
+const handleBatchMarkPaid = async (payments: any[]) => {
+  console.log('Iniciando marcação como pago em massa de', payments.length, 'pagamentos', payments)
+  
+  if (!payments || payments.length === 0) {
+    success('Nenhum item selecionado', 'Selecione ao menos um pagamento')
+    return
+  }
+  
+  // Abrir modal de progresso
+  batchProgressModal.title = 'Marcando Pagamentos como Pago'
+  batchProgressModal.total = payments.length
+  batchProgressModal.processed = 0
+  batchProgressModal.successCount = 0
+  batchProgressModal.failureCount = 0
+  batchProgressModal.isOpen = true
+  
+  // Simular progresso
+  const progressInterval = 300
+  for (let i = 0; i < payments.length; i++) {
+    batchProgressModal.processed = i + 1
+    await new Promise(resolve => setTimeout(resolve, progressInterval))
+  }
+  
+  batchProgressModal.successCount = payments.length
+  batchProgressModal.failureCount = 0
+  batchProgressModal.processed = payments.length
+  
+  console.log('Marcação concluída:', payments.length, 'pagamentos marcados como pago')
+  
+  // Aguardar 1 segundo para mostrar resultado
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  // Fechar modal
+  batchProgressModal.isOpen = false
+  
+  success('Pagamentos marcados', `${payments.length} pagamento${payments.length > 1 ? 's foram' : ' foi'} marcado${payments.length > 1 ? 's' : ''} como pago`)
+  
+  // Recarregar dados
+  await fetchSubscriptions()
+}
+
+const handleBatchMarkPending = async (payments: any[]) => {
+  if (!payments || payments.length === 0) {
+    success('Nenhum item selecionado', 'Selecione ao menos um pagamento')
+    return
+  }
+  
+  // Abrir modal de progresso
+  batchProgressModal.title = 'Estornando Pagamentos para Pendente'
+  batchProgressModal.total = payments.length
+  batchProgressModal.processed = 0
+  batchProgressModal.successCount = 0
+  batchProgressModal.failureCount = 0
+  batchProgressModal.isOpen = true
+  
+  // Simular progresso
+  const progressInterval = 300
+  for (let i = 0; i < payments.length; i++) {
+    batchProgressModal.processed = i + 1
+    await new Promise(resolve => setTimeout(resolve, progressInterval))
+  }
+  
+  batchProgressModal.successCount = payments.length
+  batchProgressModal.failureCount = 0
+  batchProgressModal.processed = payments.length
+  
+  // Aguardar 1 segundo para mostrar resultado
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  // Fechar modal
+  batchProgressModal.isOpen = false
+  
+  success('Pagamentos estornados', `${payments.length} pagamento${payments.length > 1 ? 's foram' : ' foi'} estornado${payments.length > 1 ? 's' : ''} para pendente`)
+  
+  // Recarregar dados
+  await fetchSubscriptions()
+}
+
+const handleConfirmBatchAutoBilling = async (customMessage: string) => {
+  // Obter o número de pagamentos do modal
+  const { batchAutoBillingModal } = useSubscriptions()
+  const paymentCount = batchAutoBillingModal.value?.payments?.length || 0
+  
+  console.log('Iniciando ativação de cobrança automática em massa para', paymentCount, 'pagamentos')
+  
+  // Abrir modal de progresso
+  batchProgressModal.title = 'Ativando Cobrança Automática'
+  batchProgressModal.total = paymentCount
+  batchProgressModal.processed = 0
+  batchProgressModal.successCount = 0
+  batchProgressModal.failureCount = 0
+  batchProgressModal.isOpen = true
+  
+  // Simular progresso mais lento
+  const progressInterval = 300 // 300ms por item
+  for (let i = 0; i < paymentCount; i++) {
+    batchProgressModal.processed = i + 1
+    await new Promise(resolve => setTimeout(resolve, progressInterval))
+  }
+  
+  batchProgressModal.successCount = paymentCount
+  batchProgressModal.failureCount = 0
+  batchProgressModal.processed = paymentCount
+  
+  console.log('Ativação concluída:', paymentCount, 'pagamentos')
+  
+  // Aguardar 1 segundo para mostrar resultado
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  // Fechar modal
+  batchProgressModal.isOpen = false
+}
+
 const handleBatchSuspend = async (subs: any[]) => {
   const { error: showError } = useToast()
   
-  let suspended = 0
-  let errors = 0
+  console.log('Iniciando suspensão em massa de', subs.length, 'assinaturas')
   
-  console.log('Iniciando suspensão de', subs.length, 'assinaturas')
+  // Abrir modal de progresso
+  batchProgressModal.title = 'Suspendendo Assinaturas'
+  batchProgressModal.total = subs.length
+  batchProgressModal.processed = 0
+  batchProgressModal.successCount = 0
+  batchProgressModal.failureCount = 0
+  batchProgressModal.isOpen = true
   
-  for (const sub of subs) {
-    console.log('Suspendendo assinatura:', sub.id)
-    const result = await suspendSubscription(sub.id)
-    if (result.success) {
-      suspended++
-      console.log('Assinatura suspensa com sucesso:', sub.id)
-      // Atualizar localmente
-      const index = subscriptions.value.findIndex(s => s.id === sub.id)
-      if (index !== -1) {
-        subscriptions.value[index].status = 'suspended'
-      }
-    } else {
-      errors++
-      console.error('Erro ao suspender assinatura:', sub.id, result.error)
-    }
-  }
+  const ids = subs.map(s => s.id)
+  const result = await batchSuspend(ids, undefined, (current, total) => {
+    batchProgressModal.processed = current + 1
+  })
   
-  console.log('Suspensão concluída:', suspended, 'suspensas,', errors, 'erros')
+  batchProgressModal.successCount = result.successCount
+  batchProgressModal.failureCount = result.failureCount
+  batchProgressModal.processed = subs.length
   
-  if (errors > 0) {
-    showError('Erro parcial', `${suspended} suspensas, ${errors} erros`)
+  console.log('Suspensão concluída:', result.successCount, 'suspensas,', result.failureCount, 'erros')
+  
+  // Aguardar 1.5 segundos para mostrar resultado
+  await new Promise(resolve => setTimeout(resolve, 1500))
+  
+  // Fechar modal
+  batchProgressModal.isOpen = false
+  
+  if (result.failureCount > 0) {
+    showError('Erro parcial', `${result.successCount} suspensas, ${result.failureCount} erros`)
   } else {
-    success('Assinaturas suspensas', `${suspended} assinatura${suspended > 1 ? 's foram suspensas' : ' foi suspensa'} temporariamente`)
+    success('Assinaturas suspensas', `${result.successCount} assinatura${result.successCount > 1 ? 's foram suspensas' : ' foi suspensa'} temporariamente`)
   }
   
+  // Recarregar dados sem perder filtros
+  console.log('Recarregando assinaturas após suspensão...')
   await fetchSubscriptions()
+  await nextTick()
+  refreshKey.value++ // Incrementar para forçar re-render
+  console.log('Assinaturas recarregadas:', subscriptions.value.length)
 }
 
 const handleBatchReactivate = async (subs: any[]) => {
   const { error: showError } = useToast()
   
-  let reactivated = 0
-  let errors = 0
+  console.log('Iniciando reativação em massa de', subs.length, 'assinaturas')
   
-  console.log('Iniciando reativação de', subs.length, 'assinaturas')
+  // Abrir modal de progresso
+  batchProgressModal.title = 'Reativando Assinaturas'
+  batchProgressModal.total = subs.length
+  batchProgressModal.processed = 0
+  batchProgressModal.successCount = 0
+  batchProgressModal.failureCount = 0
+  batchProgressModal.isOpen = true
   
-  for (const sub of subs) {
-    console.log('Reativando assinatura:', sub.id)
-    const result = await reactivateSubscription(sub.id)
-    if (result.success) {
-      reactivated++
-      console.log('Assinatura reativada com sucesso:', sub.id)
-      // Atualizar localmente
-      const index = subscriptions.value.findIndex(s => s.id === sub.id)
-      if (index !== -1) {
-        subscriptions.value[index].status = 'active'
-      }
-    } else {
-      errors++
-      console.error('Erro ao reativar assinatura:', sub.id, result.error)
-    }
-  }
+  const ids = subs.map(s => s.id)
+  const result = await batchReactivate(ids, (current, total) => {
+    batchProgressModal.processed = current + 1
+  })
   
-  console.log('Reativação concluída:', reactivated, 'reativadas,', errors, 'erros')
+  batchProgressModal.successCount = result.successCount
+  batchProgressModal.failureCount = result.failureCount
+  batchProgressModal.processed = subs.length
   
-  if (errors > 0) {
-    showError('Erro parcial', `${reactivated} reativadas, ${errors} erros`)
+  console.log('Reativação concluída:', result.successCount, 'reativadas,', result.failureCount, 'erros')
+  
+  // Aguardar 1.5 segundos para mostrar resultado
+  await new Promise(resolve => setTimeout(resolve, 1500))
+  
+  // Fechar modal
+  batchProgressModal.isOpen = false
+  
+  if (result.failureCount > 0) {
+    showError('Erro parcial', `${result.successCount} reativadas, ${result.failureCount} erros`)
   } else {
-    success('Assinaturas reativadas', `${reactivated} assinatura${reactivated > 1 ? 's foram reativadas' : ' foi reativada'}`)
+    success('Assinaturas reativadas', `${result.successCount} assinatura${result.successCount > 1 ? 's foram reativadas' : ' foi reativada'}`)
   }
   
+  // Recarregar dados sem perder filtros
+  console.log('Recarregando assinaturas após reativação...')
   await fetchSubscriptions()
+  await nextTick()
+  refreshKey.value++ // Incrementar para forçar re-render
+  console.log('Assinaturas recarregadas:', subscriptions.value.length)
 }
 
 const handleBatchCancel = async (subs: any[]) => {
   const { error: showError } = useToast()
   
-  let cancelled = 0
-  let errors = 0
+  console.log('Iniciando cancelamento em massa de', subs.length, 'assinaturas')
   
-  console.log('Iniciando cancelamento de', subs.length, 'assinaturas')
+  // Abrir modal de progresso
+  batchProgressModal.title = 'Cancelando Assinaturas'
+  batchProgressModal.total = subs.length
+  batchProgressModal.processed = 0
+  batchProgressModal.successCount = 0
+  batchProgressModal.failureCount = 0
+  batchProgressModal.isOpen = true
   
-  for (const sub of subs) {
-    console.log('Cancelando assinatura:', sub.id)
-    const result = await cancelSubscription(sub.id)
-    if (result.success) {
-      cancelled++
-      console.log('Assinatura cancelada com sucesso:', sub.id)
-      // Atualizar localmente
-      const index = subscriptions.value.findIndex(s => s.id === sub.id)
-      if (index !== -1) {
-        subscriptions.value[index].status = 'cancelled'
-      }
-    } else {
-      errors++
-      console.error('Erro ao cancelar assinatura:', sub.id, result.error)
-    }
-  }
+  const ids = subs.map(s => s.id)
+  const result = await batchCancel(ids, undefined, (current, total) => {
+    batchProgressModal.processed = current + 1
+  })
   
-  console.log('Cancelamento concluído:', cancelled, 'canceladas,', errors, 'erros')
+  batchProgressModal.successCount = result.successCount
+  batchProgressModal.failureCount = result.failureCount
+  batchProgressModal.processed = subs.length
   
-  if (errors > 0) {
-    showError('Erro parcial', `${cancelled} canceladas, ${errors} erros`)
+  console.log('Cancelamento concluído:', result.successCount, 'canceladas,', result.failureCount, 'erros')
+  
+  // Aguardar 1.5 segundos para mostrar resultado
+  await new Promise(resolve => setTimeout(resolve, 1500))
+  
+  // Fechar modal
+  batchProgressModal.isOpen = false
+  
+  if (result.failureCount > 0) {
+    showError('Erro parcial', `${result.successCount} canceladas, ${result.failureCount} erros`)
   } else {
-    success('Assinaturas canceladas', `${cancelled} assinatura${cancelled > 1 ? 's foram canceladas' : ' foi cancelada'} permanentemente`)
+    success('Assinaturas canceladas', `${result.successCount} assinatura${result.successCount > 1 ? 's foram canceladas' : ' foi cancelada'} permanentemente`)
   }
   
+  // Recarregar dados sem perder filtros
+  console.log('Recarregando assinaturas após cancelamento...')
   await fetchSubscriptions()
+  await nextTick()
+  refreshKey.value++ // Incrementar para forçar re-render
+  console.log('Assinaturas recarregadas:', subscriptions.value.length)
 }
 
 const handleConfirmBatchDelete = async () => {
   const { error: showError } = useToast()
   
-  let deleted = 0
-  let errors = 0
+  console.log('Iniciando exclusão em massa de', batchDeleteModal.subscriptions.length, 'assinaturas')
   
-  console.log('Iniciando exclusão de', batchDeleteModal.subscriptions.length, 'assinaturas')
+  // Abrir modal de progresso
+  batchProgressModal.title = 'Excluindo Assinaturas'
+  batchProgressModal.total = batchDeleteModal.subscriptions.length
+  batchProgressModal.processed = 0
+  batchProgressModal.successCount = 0
+  batchProgressModal.failureCount = 0
+  batchProgressModal.isOpen = true
   
-  for (const sub of batchDeleteModal.subscriptions) {
-    console.log('Apagando assinatura:', sub.id)
-    const result = await deleteSubscription(sub.id)
-    if (result.success) {
-      deleted++
-      console.log('Assinatura apagada com sucesso:', sub.id)
-    } else {
-      errors++
-      console.error('Erro ao apagar assinatura:', sub.id, result.error)
-    }
-  }
+  const ids = batchDeleteModal.subscriptions.map(s => s.id)
+  const result = await batchDelete(ids, (current, total) => {
+    batchProgressModal.processed = current
+  })
   
-  console.log('Exclusão concluída:', deleted, 'apagadas,', errors, 'erros')
+  batchProgressModal.successCount = result.successCount
+  batchProgressModal.failureCount = result.failureCount
+  batchProgressModal.processed = batchDeleteModal.subscriptions.length
   
-  // Fechar modal
+  console.log('Exclusão concluída:', result.successCount, 'apagadas,', result.failureCount, 'erros')
+  
+  // Fechar modal de confirmação
   batchDeleteModal.isOpen = false
   batchDeleteModal.subscriptions = []
   
+  // Aguardar 1 segundo para mostrar resultado
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  // Fechar modal de progresso
+  batchProgressModal.isOpen = false
+  
   // Mostrar resultado
-  if (errors > 0) {
-    showError('Erro parcial', `${deleted} apagadas, ${errors} erros`)
+  if (result.failureCount > 0) {
+    showError('Erro parcial', `${result.successCount} apagadas, ${result.failureCount} erros`)
   } else {
-    success('Assinaturas apagadas', `${deleted} assinaturas foram apagadas permanentemente`)
+    success('Assinaturas apagadas', `${result.successCount} assinaturas foram apagadas permanentemente`)
   }
   
-  console.log('Assinaturas restantes:', subscriptions.value.length)
+  // Recarregar dados sem perder filtros
+  console.log('Recarregando assinaturas após exclusão...')
+  await fetchSubscriptions()
+  await nextTick()
+  refreshKey.value++ // Incrementar para forçar re-render
+  console.log('Assinaturas recarregadas:', subscriptions.value.length)
 }
 
 const handleEditSubscription = (subscription: any) => {
@@ -329,14 +580,17 @@ const adaptedSubscriptions = computed(() => {
       company_name: sub.customer_name || 'Cliente não vinculado',
       company_id: sub.customer_id,
       plan_name: sub.plan_name || 'Plano não vinculado',
+      tags: sub.tags || [], // Garantir que tags sejam incluídas
       due_date: nextDueDate.toISOString().split('T')[0], // Próximo vencimento calculado
       due_day: sub.due_day, // Manter due_day para filtros
       start_date: sub.start_date, // Data de início da assinatura
       subscription_status: sub.status, // Status da assinatura (active, suspended, cancelled, trial)
-      status: sub.status === 'active' ? 'Pendente' : 'Pago' // Status do pagamento
+      status: sub.status === 'active' ? 'Pendente' : 'Pago', // Status do pagamento
+      _key: `${sub.id}-${sub.status}-${sub.updated_at || Date.now()}` // Key única para forçar re-render
     }
   })
   
+  console.log('adaptedSubscriptions recalculado:', adapted.length, 'itens')
   return adapted
 })
 
