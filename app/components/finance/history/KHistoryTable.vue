@@ -3,7 +3,7 @@
     <table class="w-full min-w-[900px] text-left border-separate border-spacing-y-3">
       <thead>
         <tr class="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50">
-          <th class="px-4 py-3">Empresa</th>
+          <th class="px-4 py-3">Cliente</th>
           <th class="px-4 py-3">Status</th>
           <th class="px-4 py-3">Data Pagamento</th>
           <th class="px-4 py-3">Vencimento</th>
@@ -17,11 +17,13 @@
         <tr v-for="payment in payments" :key="payment.id" 
             class="group/row bg-white/[0.02] hover:bg-white/[0.04] transition-all rounded-2xl border border-transparent">
           <td class="px-4 py-5 first:rounded-l-2xl">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold text-[10px] border border-emerald-500/10">
-                {{ payment.companies?.name?.charAt(0) || 'E' }}
-              </div>
-              <span class="font-semibold text-sm text-white uppercase tracking-tight">{{ payment.companies?.name }}</span>
+            <div class="cursor-pointer hover:opacity-80 transition-opacity" @click="$emit('open-client-details', payment)">
+              <p class="font-semibold text-xs tracking-tight text-white uppercase">
+                {{ payment.companies?.name }}
+              </p>
+              <p class="font-medium text-[10px] text-white/70 mt-1">
+                {{ payment.companies?.actual_name || payment.companies?.name }}
+              </p>
             </div>
           </td>
           <td class="px-4 py-5">
@@ -99,6 +101,7 @@ defineProps<{
 defineEmits<{
   pay: [payment: any]
   reverse: [payment: any]
+  'open-client-details': [payment: any]
 }>()
 
 const formatCurrency = (val: number) => {

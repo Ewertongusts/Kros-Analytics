@@ -174,11 +174,19 @@ const handleSend = async () => {
   if (!settings.value?.api_url) return
   
   // Validação: Verificar se tem número válido
-  const rawNum = props.payment.company_whatsapp?.replace(/\D/g, '') || ''
-  if (!rawNum || rawNum.length < 10) {
+  let rawNum = props.payment.company_whatsapp?.replace(/\D/g, '') || ''
+  
+  // Garantir que o número tenha o código do país (55)
+  if (rawNum && !rawNum.startsWith('55')) {
+    rawNum = '55' + rawNum
+  }
+  
+  if (!rawNum || rawNum.length < 12) { // Mínimo: 55 + DDD (2) + número (8/9)
     apiResult.value = { ok: false, body: 'Número de WhatsApp inválido ou não cadastrado. Por favor, cadastre um número válido antes de enviar mensagens.' }
     return
   }
+  
+  console.log('📱 [handleSend] Número formatado:', rawNum)
   
   submitting.value = true
   apiResult.value = null
@@ -209,8 +217,7 @@ const handleSend = async () => {
          whatsapp: rawNum,
          message_body: compiledMessage.value,
          status: 'Sucesso - Enviado (Manual)',
-         is_cron: false,
-         payment_id: props.payment.id
+         is_cron: false
       })
     } else {
       // Mostrar notificação de erro
@@ -222,8 +229,7 @@ const handleSend = async () => {
          whatsapp: rawNum,
          message_body: compiledMessage.value,
          status: 'Erro de Envio (Manual)',
-         is_cron: false,
-         payment_id: props.payment.id
+         is_cron: false
       })
     }
   } catch (err: any) {
@@ -236,11 +242,10 @@ const handleSend = async () => {
     apiResult.value = { ok: false, body: err?.message || 'Erro de rede desconhecido' }
     await (useSupabaseClient() as any).from('message_logs').insert({
        company_name: props.payment.company_name,
-       whatsapp: props.payment.company_whatsapp || 'M/A',
+       whatsapp: props.payment.company_whatsapp || 'N/A',
        message_body: compiledMessage.value,
        status: `Falha (Manual): ${err?.message}`,
-       is_cron: false,
-       payment_id: props.payment.id
+       is_cron: false
     })
   } finally {
     submitting.value = false

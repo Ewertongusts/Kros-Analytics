@@ -19,6 +19,7 @@
       :payments="paginatedHistory" 
       @pay="$emit('pay', $event)"
       @reverse="$emit('reverse', $event)"
+      @open-client-details="$emit('open-client-details', $event)"
     />
 
     <FinanceLogsKLogsPagination
@@ -41,7 +42,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-defineEmits(['update:activeSubTab', 'sync', 'config', 'pay', 'reverse'])
+defineEmits(['update:activeSubTab', 'sync', 'config', 'pay', 'reverse', 'open-client-details'])
 
 const {
   startDate,

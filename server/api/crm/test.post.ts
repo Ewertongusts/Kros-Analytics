@@ -48,10 +48,8 @@ export default defineEventHandler(async (event) => {
     
     // Considerar sucesso se:
     // 1. response.ok (200-299) OU
-    // 2. Status 401 mas corpo da resposta indica sucesso (mensagem enviada)
-    const isActualSuccess = response.ok || 
-      (response.status === 401 && responseBody?.success) ||
-      (response.status === 401 && responseBody?.message?.toLowerCase().includes('enviada'))
+    // 2. responseBody.success === true (mesmo com 401)
+    const isActualSuccess = response.ok || responseBody?.success === true
     
     const resultStatus = isActualSuccess ? 'success' : 'error'
 

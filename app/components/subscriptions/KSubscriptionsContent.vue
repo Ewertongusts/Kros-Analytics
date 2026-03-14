@@ -132,6 +132,7 @@
         :history="paymentHistory" 
         @pay="$emit('pay', $event)"
         @reverse="$emit('reverse', $event)"
+        @open-client-details="$emit('open-client-details', $event)"
         @sync="$emit('sync')"
         @config="$emit('config')"
       />
