@@ -3,7 +3,7 @@
     <UiKSkeleton v-if="loading" type="table" :rows="5" />
 
     <div v-else class="space-y-4 mb-20 animate-in fade-in duration-700">
-      <!-- Header com Tabs e Botões -->
+      <!-- Header com Tabs e Botão Nova Venda -->
       <div class="flex items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-2 border-b border-white/10">
           <button
@@ -65,42 +65,110 @@
         <SalesTableKSaleSummaryCards :summary="summary" />
       </div>
 
-      <!-- Filtros em linha única -->
-      <div class="flex items-center gap-3">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Buscar venda..."
-          class="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/20 text-[10px]"
-        />
-        <select
-          v-model="status"
-          class="px-4 py-2.5 bg-[#1a1a1b] border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
-        >
-          <option value="">Todos Status</option>
-          <option value="pending">Pendente</option>
-          <option value="paid">Pago</option>
-        </select>
-        <input
-          v-model="startDate"
-          type="date"
-          class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px]"
-        />
-        <input
-          v-model="endDate"
-          type="date"
-          class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px]"
-        />
-        <button
-          @click="clearFilters"
-          class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/70 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest"
-        >
-          Limpar
-        </button>
-        <UiKExportDropdown 
-          :disabled="filteredSales.length === 0"
-          @export="(format) => handleExport(filteredSales, format)"
-        />
+      <!-- Filtros em linha única com botões de visualização -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Busca -->
+        <div class="flex-1 min-w-[200px] max-w-[300px]">
+          <label class="block text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1.5">Buscar</label>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar venda..."
+            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/20 text-[10px]"
+          />
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="block text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1.5">Status</label>
+          <select
+            v-model="status"
+            class="px-4 py-2.5 bg-[#1a1a1b] border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
+          >
+            <option value="">Todos Status</option>
+            <option value="pending">Pendente</option>
+            <option value="paid">Pago</option>
+          </select>
+        </div>
+
+        <!-- Data Início -->
+        <div>
+          <label class="block text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1.5">Início</label>
+          <input
+            v-model="startDate"
+            type="date"
+            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px]"
+          />
+        </div>
+
+        <!-- Data Fim -->
+        <div>
+          <label class="block text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1.5">Fim</label>
+          <input
+            v-model="endDate"
+            type="date"
+            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px]"
+          />
+        </div>
+
+        <!-- Botão Limpar -->
+        <div class="self-end">
+          <button
+            @click="clearFilters"
+            class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/70 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest"
+          >
+            Limpar
+          </button>
+        </div>
+
+        <!-- Espaçador flexível -->
+        <div class="flex-1"></div>
+
+        <!-- Botões de Ação (alinhados ao final) -->
+        <div class="flex items-center gap-2 self-end">
+          <!-- Toggle View -->
+          <div class="flex items-center gap-1 bg-white/[0.02] border border-white/5 rounded-xl p-1">
+            <button
+              @click="viewMode = 'list'"
+              :class="[
+                'p-2 rounded-lg transition-all',
+                viewMode === 'list' ? 'bg-kros-blue text-white' : 'text-white/40 hover:text-white/60'
+              ]"
+              title="Visualização em Lista"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <button
+              @click="viewMode = 'cards'"
+              :class="[
+                'p-2 rounded-lg transition-all',
+                viewMode === 'cards' ? 'bg-kros-blue text-white' : 'text-white/40 hover:text-white/60'
+              ]"
+              title="Visualização em Cards"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+          </div>
+
+          <!-- Memorizar Preferências -->
+          <button 
+            @click="rememberPreferences = !rememberPreferences"
+            class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-white/10"
+            :class="rememberPreferences ? 'text-kros-blue' : 'text-white/30 hover:text-white'"
+            title="Memorizar Preferências"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+          </button>
+
+          <UiKExportDropdown 
+            :disabled="filteredSales.length === 0"
+            @export="(format) => handleExport(filteredSales, format)"
+          />
+        </div>
       </div>
 
       <!-- Barra de Ações em Massa -->
@@ -112,8 +180,9 @@
         @clear-selection="clearSelection"
       />
 
+      <!-- Tabela ou Cards -->
       <SalesTableKSaleTable
-        v-if="!loading && filteredSales"
+        v-if="viewMode === 'list' && !loading && filteredSales"
         :key="`sales-${filteredSales.length}-${Date.now()}`"
         :sales="filteredSales"
         :is-all-selected="isAllSelected"
@@ -130,6 +199,23 @@
         @open-client-details="handleOpenClientDetails"
         @open-details="handleOpenSaleDetails"
       />
+
+      <!-- Cards -->
+      <div v-else-if="viewMode === 'cards' && !loading && filteredSales" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <SalesKSaleCard
+          v-for="sale in filteredSales"
+          :key="sale.id"
+          :sale="sale"
+          :is-selected="selectedIds.includes(sale.id)"
+          @toggle-select="toggleSelect"
+          @edit="editSale"
+          @mark-paid="handleMarkPaidIndividual"
+          @whatsapp="handleWhatsAppShare"
+          @delete="handleDelete"
+          @open-client-details="handleOpenClientDetails"
+          @open-details="handleOpenSaleDetails"
+        />
+      </div>
 
       <BlocksKGlobalFooter />
     </div>
@@ -194,15 +280,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useSaleFilters } from '~/composables/useSaleFilters'
 import { useSaleCrud } from '~/composables/useSaleCrud'
 import { useSaleModals } from '~/composables/useSaleModals'
 import { useSaleHandlers } from '~/composables/useSaleHandlers'
+import { useSalesViewPreferences } from '~/composables/useSalesViewPreferences'
 
 definePageMeta({ middleware: 'auth' })
 
 const showMetrics = ref(false)
+const { viewMode, rememberPreferences, isLoaded, loadPreferences, savePreferences } = useSalesViewPreferences()
 
 const { loading, salesData, fetchSales, saveSale, deleteSale, computeSummary } = useSaleCrud()
 const {
@@ -394,9 +482,25 @@ const openSalesTimeline = async () => {
 }
 
 onMounted(async () => {
+  loadPreferences()
   await fetchSales()
   await logPageAccess()
 })
+
+// Salvar preferências automaticamente quando mudar
+watch([viewMode, rememberPreferences, searchQuery, status, startDate, endDate, activeFilter], () => {
+  if (rememberPreferences.value && isLoaded.value) {
+    savePreferences({
+      viewMode: viewMode.value,
+      rememberPreferences: rememberPreferences.value,
+      searchQuery: searchQuery.value,
+      status: status.value,
+      startDate: startDate.value,
+      endDate: endDate.value,
+      activeFilter: activeFilter.value
+    })
+  }
+}, { deep: true })
 
 const handleOpenClientDetails = async (sale: any) => {
   try {

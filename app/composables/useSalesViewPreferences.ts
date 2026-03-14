@@ -1,16 +1,16 @@
 import { ref } from 'vue'
 
-export interface HistoryViewPreferences {
+export interface SalesViewPreferences {
   viewMode: 'list' | 'cards'
   rememberPreferences: boolean
   searchQuery: string
-  statusFilter: string
-  planFilter: string
+  status: string
   startDate: string
   endDate: string
+  activeFilter: string
 }
 
-const STORAGE_KEY = 'history-view-preferences'
+const STORAGE_KEY = 'sales-view-preferences'
 
 // Estado global compartilhado
 const globalState = {
@@ -19,26 +19,26 @@ const globalState = {
   isLoaded: ref(false)
 }
 
-export const useHistoryViewPreferences = () => {
+export const useSalesViewPreferences = () => {
   // Carregar preferências do localStorage
   const loadPreferences = () => {
     if (process.client) {
       try {
         const stored = localStorage.getItem(STORAGE_KEY)
         if (stored) {
-          const prefs = JSON.parse(stored) as HistoryViewPreferences
+          const prefs = JSON.parse(stored) as SalesViewPreferences
           globalState.viewMode.value = prefs.viewMode ?? 'list'
           globalState.rememberPreferences.value = prefs.rememberPreferences ?? true
         }
       } catch (error) {
-        console.error('Erro ao carregar preferências de histórico:', error)
+        console.error('Erro ao carregar preferências de vendas:', error)
       }
       globalState.isLoaded.value = true
     }
   }
 
   // Salvar preferências no localStorage
-  const savePreferences = (prefs: Partial<HistoryViewPreferences>) => {
+  const savePreferences = (prefs: Partial<SalesViewPreferences>) => {
     if (process.client && globalState.rememberPreferences.value) {
       try {
         const currentPrefs = localStorage.getItem(STORAGE_KEY)
@@ -49,9 +49,9 @@ export const useHistoryViewPreferences = () => {
           rememberPreferences: globalState.rememberPreferences.value
         }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-        console.log('Preferências de histórico salvas:', merged)
+        console.log('Preferências de vendas salvas:', merged)
       } catch (error) {
-        console.error('Erro ao salvar preferências de histórico:', error)
+        console.error('Erro ao salvar preferências de vendas:', error)
       }
     }
   }

@@ -63,6 +63,21 @@
       :is-compact="isCompact"
       @open-history="$emit('open-history')"
     />
+
+    <!-- Status Assinatura -->
+    <button 
+      @click="$emit('open-subscription-status')"
+      title="Status da Assinatura"
+      :class="[
+        'rounded-xl bg-gray-500/10 text-gray-400 hover:bg-gray-500 hover:text-white transition-all',
+        isCompact ? 'p-1.5' : 'p-2.5'
+      ]"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" :width="isCompact ? 12 : 14" :height="isCompact ? 12 : 14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+    </button>
     
     <!-- Delete -->
     <button 
@@ -92,5 +107,5 @@ defineProps<{
   isCompact: boolean
 }>()
 
-defineEmits(['edit', 'toggle-status', 'toggle-autobilling', 'open-msg-modal', 'open-logs', 'open-history', 'delete'])
+defineEmits(['edit', 'toggle-status', 'toggle-autobilling', 'open-msg-modal', 'open-logs', 'open-history', 'open-subscription-status', 'delete'])
 </script>

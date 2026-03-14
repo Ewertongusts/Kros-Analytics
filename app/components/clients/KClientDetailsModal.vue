@@ -6,12 +6,11 @@
         <div class="absolute inset-0 bg-black/90 backdrop-blur-xl" @click="$emit('close')"></div>
 
         <!-- Modal Premium -->
-        <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[750px] p-8 shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col">
+        <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[750px] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col max-h-[90vh]">
           
-          <!-- Coluna Principal (Conteúdo) -->
-          <div class="flex flex-col">
-            <!-- Header -->
-            <div class="mb-4 flex items-center justify-between">
+          <!-- Header Fixo -->
+          <div class="p-8 pb-4 flex-shrink-0">
+            <div class="flex items-center justify-between">
               <div>
                 <h2 class="text-lg font-bold text-white uppercase tracking-tight">{{ company.representative_name || company.name }}</h2>
                 <p class="text-xs text-white/50 mt-0.5">{{ company.name }}</p>
@@ -64,7 +63,7 @@
             </div>
 
             <!-- Tabs -->
-            <div class="flex items-center gap-0 border-b border-white/10 mb-4 -mx-8 px-8">
+            <div class="flex items-center gap-0 border-b border-white/10 mt-4 -mx-8 px-8">
               <button
                 v-for="tab in tabs"
                 :key="tab.id"
@@ -79,8 +78,10 @@
                 {{ tab.label }}
               </button>
             </div>
+          </div>
 
-            <!-- Conteúdo -->
+          <!-- Conteúdo com Scroll -->
+          <div class="flex-1 overflow-y-auto custom-scrollbar px-8 pb-4">
             <div class="space-y-1.5">
               <!-- Resumo Tab -->
               <div v-if="activeTab === 'resumo'" class="space-y-2">
@@ -108,93 +109,102 @@
                 <div class="pt-2 border-t border-white/10">
                   <p class="text-xs font-bold text-white/60 uppercase tracking-widest mb-3">Resumo Financeiro</p>
                   <div class="grid grid-cols-3 gap-2">
-                    <!-- Pagos - Produtos -->
-                    <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent border border-emerald-500/30 rounded-xl hover:border-emerald-500/50 transition-all duration-300">
-                      <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-emerald-500/0 transition-all duration-300"></div>
-                      <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                          <p class="text-xs font-bold text-emerald-400/80 uppercase tracking-widest">Produtos</p>
-                          <div class="p-1.5 bg-emerald-500/20 rounded-lg group-hover:bg-emerald-500/30 transition-colors">
-                            <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/></svg>
+                    <!-- Coluna 1: Produtos -->
+                    <div class="space-y-2">
+                      <!-- Produtos Pagos -->
+                      <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-orange-500/15 via-orange-500/5 to-transparent border border-orange-500/30 rounded-xl hover:border-orange-500/50 transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-orange-500/0 group-hover:from-orange-500/5 group-hover:to-orange-500/0 transition-all duration-300"></div>
+                        <div class="relative">
+                          <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-orange-400/80 uppercase tracking-widest">Produtos</p>
+                            <div class="p-1.5 bg-orange-500/20 rounded-lg group-hover:bg-orange-500/30 transition-colors">
+                              <svg class="w-3 h-3 text-orange-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/></svg>
+                            </div>
                           </div>
+                          <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.paidProductValue) }}</p>
+                          <p class="text-xs text-orange-400/60 mt-1">Pagos</p>
                         </div>
-                        <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.paidProductValue) }}</p>
-                        <p class="text-xs text-emerald-400/60 mt-1">Pagos</p>
+                      </div>
+
+                      <!-- Produtos Pendentes -->
+                      <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-orange-600/15 via-orange-600/5 to-transparent border border-orange-600/30 rounded-xl hover:border-orange-600/50 transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-600/0 to-orange-600/0 group-hover:from-orange-600/5 group-hover:to-orange-600/0 transition-all duration-300"></div>
+                        <div class="relative">
+                          <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-orange-300/80 uppercase tracking-widest">Produtos</p>
+                            <div class="p-1.5 bg-orange-600/20 rounded-lg group-hover:bg-orange-600/30 transition-colors">
+                              <svg class="w-3 h-3 text-orange-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.5H7a1 1 0 100 2h4a1 1 0 100-2h-1V7z" clip-rule="evenodd"/></svg>
+                            </div>
+                          </div>
+                          <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.pendingProductValue) }}</p>
+                          <p class="text-xs text-orange-300/60 mt-1">Pendentes</p>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- Pagos - Serviços -->
-                    <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent border border-blue-500/30 rounded-xl hover:border-blue-500/50 transition-all duration-300">
-                      <div class="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-blue-500/0 transition-all duration-300"></div>
-                      <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                          <p class="text-xs font-bold text-blue-400/80 uppercase tracking-widest">Serviços</p>
-                          <div class="p-1.5 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
-                            <svg class="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+                    <!-- Coluna 2: Serviços -->
+                    <div class="space-y-2">
+                      <!-- Serviços Pagos -->
+                      <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent border border-blue-500/30 rounded-xl hover:border-blue-500/50 transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-blue-500/0 transition-all duration-300"></div>
+                        <div class="relative">
+                          <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-blue-400/80 uppercase tracking-widest">Serviços</p>
+                            <div class="p-1.5 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
+                              <svg class="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+                            </div>
                           </div>
+                          <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.paidServiceValue) }}</p>
+                          <p class="text-xs text-blue-400/60 mt-1">Pagos</p>
                         </div>
-                        <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.paidServiceValue) }}</p>
-                        <p class="text-xs text-blue-400/60 mt-1">Pagos</p>
+                      </div>
+
+                      <!-- Serviços Pendentes -->
+                      <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-blue-600/15 via-blue-600/5 to-transparent border border-blue-600/30 rounded-xl hover:border-blue-600/50 transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/0 to-blue-600/0 group-hover:from-blue-600/5 group-hover:to-blue-600/0 transition-all duration-300"></div>
+                        <div class="relative">
+                          <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-blue-300/80 uppercase tracking-widest">Serviços</p>
+                            <div class="p-1.5 bg-blue-600/20 rounded-lg group-hover:bg-blue-600/30 transition-colors">
+                              <svg class="w-3 h-3 text-blue-300" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v4h8v-4zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+                            </div>
+                          </div>
+                          <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.pendingServiceValue) }}</p>
+                          <p class="text-xs text-blue-300/60 mt-1">Pendentes</p>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- Pendentes - Produtos -->
-                    <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 rounded-xl hover:border-amber-500/50 transition-all duration-300">
-                      <div class="absolute inset-0 bg-gradient-to-br from-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-amber-500/0 transition-all duration-300"></div>
-                      <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                          <p class="text-xs font-bold text-amber-400/80 uppercase tracking-widest">Produtos</p>
-                          <div class="p-1.5 bg-amber-500/20 rounded-lg group-hover:bg-amber-500/30 transition-colors">
-                            <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.5H7a1 1 0 100 2h4a1 1 0 100-2h-1V7z" clip-rule="evenodd"/></svg>
+                    <!-- Coluna 3: Assinaturas e LTV -->
+                    <div class="space-y-2">
+                      <!-- Assinaturas Ativas -->
+                      <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent border border-emerald-500/30 rounded-xl hover:border-emerald-500/50 transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-emerald-500/0 transition-all duration-300"></div>
+                        <div class="relative">
+                          <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-emerald-400/80 uppercase tracking-widest">Ativas</p>
+                            <div class="p-1.5 bg-emerald-500/20 rounded-lg group-hover:bg-emerald-500/30 transition-colors">
+                              <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2h1a1 1 0 000-2h-.5A2.5 2.5 0 013 7.5V17a2 2 0 002 2h10a2 2 0 002-2v-9.5A2.5 2.5 0 0012.5 5h-.5a1 1 0 000 2h1a2 2 0 012 2v9a1 1 0 11-2 0V7a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 11-2 0V5z" clip-rule="evenodd"/></svg>
+                            </div>
                           </div>
+                          <p class="text-sm font-bold text-white">{{ clientHistory.stats.activeSubscriptions }}</p>
+                          <p class="text-xs text-emerald-400/60 mt-1">Assinaturas</p>
                         </div>
-                        <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.pendingProductValue) }}</p>
-                        <p class="text-xs text-amber-400/60 mt-1">Pendentes</p>
                       </div>
-                    </div>
 
-                    <!-- Pendentes - Serviços -->
-                    <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-orange-500/15 via-orange-500/5 to-transparent border border-orange-500/30 rounded-xl hover:border-orange-500/50 transition-all duration-300">
-                      <div class="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-orange-500/0 group-hover:from-orange-500/5 group-hover:to-orange-500/0 transition-all duration-300"></div>
-                      <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                          <p class="text-xs font-bold text-orange-400/80 uppercase tracking-widest">Serviços</p>
-                          <div class="p-1.5 bg-orange-500/20 rounded-lg group-hover:bg-orange-500/30 transition-colors">
-                            <svg class="w-3 h-3 text-orange-400" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v4h8v-4zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+                      <!-- LTV Total -->
+                      <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-emerald-600/15 via-emerald-600/5 to-transparent border border-emerald-600/30 rounded-xl hover:border-emerald-600/50 transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-br from-emerald-600/0 to-emerald-600/0 group-hover:from-emerald-600/5 group-hover:to-emerald-600/0 transition-all duration-300"></div>
+                        <div class="relative">
+                          <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-emerald-300/80 uppercase tracking-widest">LTV</p>
+                            <div class="p-1.5 bg-emerald-600/20 rounded-lg group-hover:bg-emerald-600/30 transition-colors">
+                              <svg class="w-3 h-3 text-emerald-300" fill="currentColor" viewBox="0 0 20 20"><path d="M8.16 2.75a.75.75 0 00-1.32 0l-3.5 9.5A.75.75 0 004.5 13h11a.75.75 0 00.66-1.25l-3.5-9.5z"/><path d="M12.25 15a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                            </div>
                           </div>
+                          <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.subscriptionLTV) }}</p>
+                          <p class="text-xs text-emerald-300/60 mt-1">Total</p>
                         </div>
-                        <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.pendingServiceValue) }}</p>
-                        <p class="text-xs text-orange-400/60 mt-1">Pendentes</p>
-                      </div>
-                    </div>
-
-                    <!-- Assinaturas Ativas -->
-                    <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-purple-500/15 via-purple-500/5 to-transparent border border-purple-500/30 rounded-xl hover:border-purple-500/50 transition-all duration-300">
-                      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:to-purple-500/0 transition-all duration-300"></div>
-                      <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                          <p class="text-xs font-bold text-purple-400/80 uppercase tracking-widest">Ativas</p>
-                          <div class="p-1.5 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-colors">
-                            <svg class="w-3 h-3 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2h1a1 1 0 000-2h-.5A2.5 2.5 0 013 7.5V17a2 2 0 002 2h10a2 2 0 002-2v-9.5A2.5 2.5 0 0012.5 5h-.5a1 1 0 000 2h1a2 2 0 012 2v9a1 1 0 11-2 0V7a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 11-2 0V5z" clip-rule="evenodd"/></svg>
-                          </div>
-                        </div>
-                        <p class="text-sm font-bold text-white">{{ clientHistory.stats.activeSubscriptions }}</p>
-                        <p class="text-xs text-purple-400/60 mt-1">Assinaturas</p>
-                      </div>
-                    </div>
-
-                    <!-- LTV Total -->
-                    <div class="group relative overflow-hidden p-3 bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-transparent border border-rose-500/30 rounded-xl hover:border-rose-500/50 transition-all duration-300">
-                      <div class="absolute inset-0 bg-gradient-to-br from-rose-500/0 to-rose-500/0 group-hover:from-rose-500/5 group-hover:to-rose-500/0 transition-all duration-300"></div>
-                      <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                          <p class="text-xs font-bold text-rose-400/80 uppercase tracking-widest">LTV</p>
-                          <div class="p-1.5 bg-rose-500/20 rounded-lg group-hover:bg-rose-500/30 transition-colors">
-                            <svg class="w-3 h-3 text-rose-400" fill="currentColor" viewBox="0 0 20 20"><path d="M8.16 2.75a.75.75 0 00-1.32 0l-3.5 9.5A.75.75 0 004.5 13h11a.75.75 0 00.66-1.25l-3.5-9.5z"/><path d="M12.25 15a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
-                          </div>
-                        </div>
-                        <p class="text-sm font-bold text-white">{{ formatCurrency(clientHistory.stats.subscriptionLTV) }}</p>
-                        <p class="text-xs text-rose-400/60 mt-1">Total</p>
                       </div>
                     </div>
                   </div>
@@ -349,8 +359,8 @@
             </div>
           </div>
 
-          <!-- Footer -->
-          <div class="mt-4 pt-3 border-t border-white/10 flex gap-3 justify-end">
+          <!-- Footer Fixo -->
+          <div class="p-8 pt-4 border-t border-white/10 flex gap-3 justify-end flex-shrink-0">
             <button 
               @click="$emit('close')"
               class="px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg border border-white/10 transition-all text-white font-bold uppercase tracking-widest text-sm"
@@ -631,6 +641,8 @@ const exportToPDF = async () => {
 }
 
 const refreshData = async () => {
+  if (!process.client) return
+  
   if (props.company?.id) {
     console.log('🔄 [KClientDetailsModal] Iniciando refresh de dados...')
     
@@ -658,7 +670,7 @@ const refreshData = async () => {
 }
 
 onMounted(async () => {
-  if (props.isOpen && props.company?.id) {
+  if (process.client && props.isOpen && props.company?.id) {
     const result = await fetchClientHistory(props.company.id)
     if (result?.success && 'data' in result) {
       clientHistory.value = (result as any).data
@@ -667,7 +679,7 @@ onMounted(async () => {
 })
 
 watch(() => props.isOpen, async (newVal) => {
-  if (newVal && props.company?.id) {
+  if (process.client && newVal && props.company?.id) {
     const result = await fetchClientHistory(props.company.id)
     if (result?.success && 'data' in result) {
       clientHistory.value = (result as any).data
@@ -676,7 +688,7 @@ watch(() => props.isOpen, async (newVal) => {
 }, { immediate: true })
 
 watch(() => props.company?.id, async (newId) => {
-  if (newId && props.isOpen) {
+  if (process.client && newId && props.isOpen) {
     const result = await fetchClientHistory(newId)
     if (result?.success && 'data' in result) {
       clientHistory.value = (result as any).data
@@ -697,7 +709,7 @@ watch(() => props.company?.id, async (newId) => {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -705,7 +717,11 @@ watch(() => props.company?.id, async (newId) => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 123, 255, 0.1);
+  background: rgba(0, 123, 255, 0.2);
   border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 123, 255, 0.3);
 }
 </style>

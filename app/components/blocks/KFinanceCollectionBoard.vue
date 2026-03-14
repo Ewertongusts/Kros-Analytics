@@ -21,18 +21,43 @@
 
       <!-- BOTÕES DE AÇÃO -->
       <div class="flex items-center gap-2">
-        <button 
-          @click="isCompact = !isCompact"
-          class="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/10"
-          :class="isCompact ? 'text-kros-blue' : 'text-white/30 hover:text-white'"
-          :title="isCompact ? 'Visualização Compacta' : 'Visualização Expandida'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
+        <!-- Toggle View (3 modos) -->
+        <div class="flex items-center gap-1 bg-white/[0.02] border border-white/5 rounded-xl p-1">
+          <button
+            @click="viewMode = 'compact'"
+            :class="[
+              'p-2 rounded-lg transition-all',
+              viewMode === 'compact' ? 'bg-kros-blue text-white' : 'text-white/40 hover:text-white/60'
+            ]"
+            title="Visualização Compacta"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <button
+            @click="viewMode = 'normal'"
+            :class="[
+              'p-2 rounded-lg transition-all',
+              viewMode === 'normal' ? 'bg-kros-blue text-white' : 'text-white/40 hover:text-white/60'
+            ]"
+            title="Visualização Normal"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+          <button
+            @click="viewMode = 'cards'"
+            :class="[
+              'p-2 rounded-lg transition-all',
+              viewMode === 'cards' ? 'bg-kros-blue text-white' : 'text-white/40 hover:text-white/60'
+            ]"
+            title="Visualização em Cards"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </button>
+        </div>
 
         <button 
           @click="rememberPreferences = !rememberPreferences"
@@ -81,10 +106,11 @@
       @clear-selection="clearSelection"
     />
 
-    <div class="overflow-x-auto overflow-y-visible no-scrollbar">
-      <table class="w-full min-w-[1000px] text-left border-separate" :class="isCompact ? 'border-spacing-y-1' : 'border-spacing-y-3'">
+    <!-- Tabela (modos compact e normal) -->
+    <div v-if="viewMode !== 'cards'" class="overflow-x-auto overflow-y-visible no-scrollbar">
+      <table class="w-full min-w-[1000px] text-left border-separate" :class="viewMode === 'compact' ? 'border-spacing-y-1' : 'border-spacing-y-3'">
         <FinanceCollectionKCollectionTableHeader
-          :is-compact="isCompact"
+          :is-compact="viewMode === 'compact'"
           :is-all-selected="isAllSelected"
           :sort-column="sortColumn"
           :sort-direction="sortDirection"
@@ -96,7 +122,7 @@
             v-for="payment in paginatedPayments" 
             :key="payment.id"
             :payment="payment"
-            :is-compact="isCompact"
+            :is-compact="viewMode === 'compact'"
             :is-selected="selectedIds.includes(payment.id)"
             :tag-definitions="tagDefinitions"
             @toggle-select="toggleSelect"
@@ -114,6 +140,27 @@
           />
         </tbody>
       </table>
+    </div>
+
+    <!-- Cards -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <FinanceCollectionKCollectionCard
+        v-for="payment in paginatedPayments"
+        :key="payment.id"
+        :payment="payment"
+        :is-selected="selectedIds.includes(payment.id)"
+        :tag-definitions="tagDefinitions"
+        @toggle-select="toggleSelect"
+        @open-client-details="$emit('open-client-details', $event)"
+        @edit="handleEdit"
+        @open-msg-modal="openMsgModal"
+        @toggle-status="$emit('toggle-status', $event)"
+        @toggle-autobilling="toggleAutoBilling"
+        @open-logs="$emit('open-logs', $event)"
+        @open-history="$emit('open-history', $event)"
+        @update-subscription-status="(data) => handleUpdateSubscriptionStatus(data)"
+        @delete="handleDelete"
+      />
     </div>
 
     <!-- Paginação -->
@@ -274,7 +321,7 @@ const handleExportDebug = (format: any) => {
 const isMsgModalOpen = ref(false)
 const selectedPayment = ref<any>(null)
 const { tags: tagDefinitions, fetchTags } = useTags()
-const { isCompact, rememberPreferences, isLoaded, loadPreferences, searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, savePreferences } = useViewPreferences()
+const { viewMode, rememberPreferences, isLoaded, loadPreferences, searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, savePreferences } = useViewPreferences()
 
 // Computed para nomes das tags
 const tagNames = computed(() => {
@@ -505,7 +552,7 @@ onMounted(async () => {
 })
 
 // Watchers para salvar filtros automaticamente quando rememberPreferences está ativo
-watch([searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, isCompact, rememberPreferences], () => {
+watch([searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, viewMode, rememberPreferences], () => {
   if (rememberPreferences.value && isLoaded.value) {
     const prefs = useViewPreferences()
     prefs.savePreferences()

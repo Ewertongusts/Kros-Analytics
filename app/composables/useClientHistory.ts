@@ -82,6 +82,12 @@ export const useClientHistory = () => {
   }
 
   const fetchClientHistory = async (companyId: string) => {
+    // Verificar se está no cliente
+    if (!process.client) {
+      console.warn('⚠️ [useClientHistory] Tentativa de executar no servidor, abortando')
+      return { success: false, error: 'SSR not supported' }
+    }
+
     loading.value = true
     try {
       console.log('🔍 [useClientHistory] Buscando histórico do cliente:', companyId)
@@ -286,7 +292,7 @@ export const useClientHistory = () => {
       const totalPaid = activeSubscriptions.reduce((sum: number, s: any) => sum + (s.amount || 0), 0)
       const totalPending = suspendedSubscriptions.reduce((sum: number, s: any) => sum + (s.amount || 0), 0)
 
-      // Calcular LTV total das assinaturas
+      // Calcular LTV total das assinaturas (apenas assinaturas pagas)
       const subscriptionLTV = subscriptions?.reduce((sum: number, s: any) => {
         if (s.status === 'active' || s.status === 'suspended') {
           const months = s.end_date ? 
@@ -304,6 +310,22 @@ export const useClientHistory = () => {
       // Calcular total de assinaturas pagas (ativas)
       const totalPaidSubscriptions = activeSubscriptions.reduce((sum: number, s: any) => sum + (s.amount || 0), 0)
 
+      // CALCULAR LTV REAL: Soma de TUDO que foi PAGO (produtos + serviços + assinaturas pagas)
+      // LTV = Produtos Pagos + Serviços Pagos + Total de Pagamentos de Assinaturas Realizados
+      const totalPaidFromHistory = paidPayments.reduce((sum: number, p: any) => {
+        // Extrair valor do metadata ou description
+        const amount = p.metadata?.amount || 0
+        return sum + amount
+      }, 0)
+      
+      const realLTV = paidProductValue + paidServiceValue + totalPaidFromHistory
+      
+      console.log('💰 [useClientHistory] Cálculo do LTV Real:')
+      console.log('   Produtos Pagos:', paidProductValue)
+      console.log('   Serviços Pagos:', paidServiceValue)
+      console.log('   Pagamentos de Assinaturas:', totalPaidFromHistory)
+      console.log('   LTV Total:', realLTV)
+
       const stats = {
         totalSubscriptions: subscriptions?.length || 0,
         activeSubscriptions: activeSubscriptions.length,
@@ -317,7 +339,7 @@ export const useClientHistory = () => {
         totalProductValue,
         totalServiceValue,
         totalPaidSubscriptions,
-        subscriptionLTV,
+        subscriptionLTV: realLTV, // LTV real = soma de tudo pago
         // Vendas pagas por tipo
         paidProductValue,
         paidServiceValue,
@@ -340,7 +362,7 @@ export const useClientHistory = () => {
           company: companyData || {},
           allSales: allSales || [],
           stats,
-          subscriptionLTV
+          subscriptionLTV: realLTV // LTV real
         }
       }
       

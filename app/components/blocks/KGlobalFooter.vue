@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-24 pt-10 border-t border-white/[0.05] flex flex-col md:flex-row justify-between items-center gap-6">
+  <div class="mt-24 pt-10 border-t border-white/[0.05] flex flex-col md:flex-row justify-between items-center gap-6 bg-transparent">
     <div class="flex items-center gap-4">
       <UiKLogo size="sm" :collapsed="false" />
       <p class="text-[10px] font-black italic text-white/20 uppercase tracking-[0.4em]">Kros Analytics Cloud Engine v1.0.4</p>

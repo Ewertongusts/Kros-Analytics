@@ -6,7 +6,7 @@
        
        <!-- Main content with dynamic padding -->
        <div 
-         class="transition-all duration-500 ease-in-out" 
+         class="transition-all duration-500 ease-in-out min-h-screen bg-[#0A0A0B]" 
          :class="isExpanded ? 'pl-64' : 'pl-20'"
          id="main-content"
        >
@@ -110,7 +110,8 @@ onMounted(async () => {
   --kros-gradient: linear-gradient(135deg, #004fcc, #007BFF, #4da6ff);
 }
 
-body {
+html, body {
+  background-color: #0A0A0B !important;
   font-family: 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

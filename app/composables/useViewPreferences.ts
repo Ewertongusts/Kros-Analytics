@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue'
 
 export interface ViewPreferences {
-  isCompact: boolean
+  viewMode: 'compact' | 'normal' | 'cards'
   rememberPreferences: boolean
   searchQuery: string
   selectedTags: string[]
@@ -13,7 +13,7 @@ const STORAGE_KEY = 'collection-view-preferences'
 
 // Estado global compartilhado entre todas as instâncias
 const globalState = {
-  isCompact: ref(false),
+  viewMode: ref<'compact' | 'normal' | 'cards'>('normal'),
   rememberPreferences: ref(true),
   searchQuery: ref(''),
   selectedTags: ref<string[]>([]),
@@ -30,7 +30,7 @@ export const useViewPreferences = () => {
         const stored = localStorage.getItem(STORAGE_KEY)
         if (stored) {
           const prefs = JSON.parse(stored) as ViewPreferences
-          globalState.isCompact.value = prefs.isCompact ?? false
+          globalState.viewMode.value = prefs.viewMode ?? 'normal'
           globalState.rememberPreferences.value = prefs.rememberPreferences ?? true
           globalState.searchQuery.value = prefs.searchQuery ?? ''
           globalState.selectedTags.value = prefs.selectedTags ?? []
@@ -49,7 +49,7 @@ export const useViewPreferences = () => {
     if (process.client && globalState.rememberPreferences.value) {
       try {
         const prefs: ViewPreferences = {
-          isCompact: globalState.isCompact.value,
+          viewMode: globalState.viewMode.value,
           rememberPreferences: globalState.rememberPreferences.value,
           searchQuery: globalState.searchQuery.value,
           selectedTags: globalState.selectedTags.value,
@@ -66,7 +66,7 @@ export const useViewPreferences = () => {
 
   // Resetar preferências
   const resetPreferences = () => {
-    globalState.isCompact.value = false
+    globalState.viewMode.value = 'normal'
     globalState.rememberPreferences.value = true
     globalState.searchQuery.value = ''
     globalState.selectedTags.value = []
@@ -78,7 +78,7 @@ export const useViewPreferences = () => {
   }
 
   return {
-    isCompact: globalState.isCompact,
+    viewMode: globalState.viewMode,
     rememberPreferences: globalState.rememberPreferences,
     searchQuery: globalState.searchQuery,
     selectedTags: globalState.selectedTags,

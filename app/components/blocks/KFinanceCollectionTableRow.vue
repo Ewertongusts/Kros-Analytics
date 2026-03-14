@@ -94,6 +94,7 @@
         @open-msg-modal="$emit('open-msg-modal', payment)"
         @open-logs="$emit('open-logs', payment.id)"
         @open-history="$emit('open-history', payment.company_id)"
+        @open-subscription-status="$emit('open-subscription-status', payment)"
         @delete="$emit('delete', payment)"
       />
     </td>
@@ -121,6 +122,7 @@ const emit = defineEmits([
   'open-msg-modal', 
   'open-logs', 
   'open-history',
+  'open-subscription-status',
   'delete',
   'update-subscription-status',
   'open-client-details',

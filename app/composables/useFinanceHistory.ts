@@ -9,6 +9,7 @@ export const useFinanceHistory = (history: any[]) => {
   const startDate = ref<string>(firstDay)
   const endDate = ref<string>(lastDay)
   const searchQuery = ref('')
+  const statusFilter = ref<string>('all')
   const planFilter = ref<string>('all')
   const currentPage = ref(1)
   const itemsPerPage = 10
@@ -37,6 +38,17 @@ export const useFinanceHistory = (history: any[]) => {
       filtered = filtered.filter(p => 
         p.companies?.name?.toLowerCase().includes(searchQuery.value.toLowerCase())
       )
+    }
+
+    if (statusFilter.value !== 'all') {
+      filtered = filtered.filter(p => {
+        if (statusFilter.value === 'paid') {
+          return p.paid_at !== null
+        } else if (statusFilter.value === 'pending') {
+          return p.paid_at === null
+        }
+        return true
+      })
     }
 
     if (planFilter.value !== 'all') {
@@ -85,7 +97,7 @@ export const useFinanceHistory = (history: any[]) => {
     return searchFilteredHistory.value.reduce((acc, p) => acc + (Number(p.amount) || 0), 0)
   })
 
-  watch([searchQuery, planFilter, startDate, endDate], () => {
+  watch([searchQuery, statusFilter, planFilter, startDate, endDate], () => {
     currentPage.value = 1
   })
 
@@ -93,6 +105,7 @@ export const useFinanceHistory = (history: any[]) => {
     startDate,
     endDate,
     searchQuery,
+    statusFilter,
     planFilter,
     currentPage,
     searchFilteredHistory,
