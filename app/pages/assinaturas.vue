@@ -335,7 +335,7 @@ const adaptedSubscriptions = computed(() => {
       due_day: sub.due_day, // Manter due_day para filtros
       start_date: sub.start_date, // Data de início da assinatura
       subscription_status: sub.status, // Status da assinatura (active, suspended, cancelled, trial)
-      status: sub.status === 'active' ? 'Pendente' : 'Pago', // Status do pagamento
+      status: sub.status, // Manter status original para o modal
       _key: `${sub.id}-${sub.status}-${sub.updated_at || Date.now()}` // Key única para forçar re-render
     }
   })
@@ -416,16 +416,30 @@ const handleOpenPlanDetails = async (payment: any) => {
   try {
     const supabase = useSupabaseClient()
     
+    console.log('📋 [handleOpenPlanDetails] Payment recebido:', {
+      plan_name: payment.plan_name,
+      customer_name: payment.customer_name,
+      amount: payment.amount,
+      status: payment.status,
+      created_at: payment.created_at,
+      notes: payment.notes,
+      id: payment.id
+    })
+    
     // Buscar detalhes do plano
     let planCategory = null
     let planDescription = null
     
     if (payment.plan_name) {
+      console.log('🔍 [handleOpenPlanDetails] Buscando plano:', payment.plan_name)
+      
       const { data: planData } = await supabase
         .from('plans')
         .select('category, description')
         .eq('name', payment.plan_name)
         .limit(1)
+      
+      console.log('📊 [handleOpenPlanDetails] Dados do plano:', planData)
       
       if (planData && planData.length > 0) {
         planCategory = planData[0].category
@@ -434,14 +448,23 @@ const handleOpenPlanDetails = async (payment: any) => {
     }
     
     // Preparar dados para o modal
-    planDetailsModal.payment = {
-      ...payment,
+    const modalData = {
+      plan_name: payment.plan_name,
+      customer_name: payment.customer_name,
+      amount: payment.amount,
+      status: payment.status,
+      created_at: payment.created_at,
+      notes: payment.notes,
       plan_category: planCategory,
       plan_notes: planDescription
     }
+    
+    console.log('✅ [handleOpenPlanDetails] Dados para modal:', modalData)
+    
+    planDetailsModal.payment = modalData
     planDetailsModal.isOpen = true
   } catch (err) {
-    console.error('Erro ao buscar detalhes do plano:', err)
+    console.error('❌ [handleOpenPlanDetails] Erro:', err)
     planDetailsModal.payment = payment
     planDetailsModal.isOpen = true
   }

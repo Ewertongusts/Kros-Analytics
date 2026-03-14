@@ -2,39 +2,39 @@
   <div v-if="isOpen" class="fixed inset-0 z-[10000] flex items-center justify-center px-4">
     <div @click="$emit('close')" class="fixed inset-0 bg-black/90 backdrop-blur-xl"></div>
     
-    <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[600px] p-8 shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-300">
+    <div class="relative bg-[#0D0D0E] border border-white/10 rounded-2xl w-full max-w-[420px] p-6 shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[85vh]">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-white uppercase tracking-widest">{{ headerTitle }}</h2>
+      <div class="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
+        <h2 class="text-lg font-bold text-white uppercase tracking-widest">{{ headerTitle }}</h2>
         <button 
           @click="$emit('close')"
-          class="p-2 hover:bg-white/10 rounded-lg transition-all text-white/50 hover:text-white"
+          class="p-1.5 hover:bg-white/10 rounded-lg transition-all text-white/50 hover:text-white"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <!-- Content -->
-      <div class="space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+      <!-- Content with scroll -->
+      <div class="space-y-4 overflow-y-auto flex-1 pr-2 custom-scrollbar">
         <!-- Informações do Item -->
         <div class="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">{{ itemInfoTitle }}</h3>
+          <h3 class="text-xs font-bold text-white/70 uppercase tracking-widest mb-3">{{ itemInfoTitle }}</h3>
           
-          <div class="space-y-3">
+          <div class="space-y-2">
             <!-- Nome do Item -->
             <div>
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Nome</p>
-              <p class="text-sm font-semibold text-white">{{ itemName }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Nome</p>
+              <p class="text-xs font-semibold text-white">{{ itemName }}</p>
             </div>
 
             <!-- Tipo -->
             <div>
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Tipo</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Tipo</p>
               <div class="flex items-center gap-2">
                 <span :class="[
-                  'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest',
+                  'px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest',
                   itemType === 'Assinatura' ? 'bg-blue-500/20 text-blue-400' :
                   itemType === 'Serviço' ? 'bg-purple-500/20 text-purple-400' :
                   'bg-amber-500/20 text-amber-400'
@@ -46,64 +46,64 @@
 
             <!-- Descrição -->
             <div v-if="itemDescription">
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Descrição</p>
-              <p class="text-sm text-white/80 leading-relaxed">{{ itemDescription }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Descrição</p>
+              <p class="text-xs text-white/80 leading-relaxed">{{ itemDescription }}</p>
             </div>
 
             <!-- Valor Base -->
             <div>
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Valor Base</p>
-              <p class="text-lg font-bold text-white">{{ formatCurrency(itemPrice) }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Valor Base</p>
+              <p class="text-base font-bold text-white">{{ formatCurrency(itemPrice) }}</p>
             </div>
           </div>
         </div>
 
         <!-- Observações da Venda -->
         <div class="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">Observações</h3>
+          <h3 class="text-xs font-bold text-white/70 uppercase tracking-widest mb-2">Observações</h3>
           
-          <div v-if="notes" class="bg-white/5 rounded-lg p-3 border border-white/10">
-            <p class="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{{ notes }}</p>
+          <div v-if="notes" class="bg-white/5 rounded-lg p-2 border border-white/10">
+            <p class="text-xs text-white/80 leading-relaxed whitespace-pre-wrap">{{ notes }}</p>
           </div>
-          <div v-else class="text-sm text-white/50 italic">Nenhuma observação adicionada</div>
+          <div v-else class="text-xs text-white/50 italic">Nenhuma observação</div>
         </div>
 
         <!-- Informações Extras do Plano/Produto/Serviço -->
         <div v-if="planCategory || planNotes" class="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">{{ planInfoTitle }}</h3>
+          <h3 class="text-xs font-bold text-white/70 uppercase tracking-widest mb-2">{{ planInfoTitle }}</h3>
           
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div v-if="planCategory">
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Categoria</p>
-              <p class="text-sm text-white/80">{{ planCategory }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Categoria</p>
+              <p class="text-xs text-white/80">{{ planCategory }}</p>
             </div>
 
             <div v-if="planNotes">
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Anotações</p>
-              <p class="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{{ planNotes }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Anotações</p>
+              <p class="text-xs text-white/80 leading-relaxed whitespace-pre-wrap">{{ planNotes }}</p>
             </div>
           </div>
         </div>
 
         <!-- Informações da Venda/Assinatura -->
         <div class="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">{{ saleInfoTitle }}</h3>
+          <h3 class="text-xs font-bold text-white/70 uppercase tracking-widest mb-3">{{ saleInfoTitle }}</h3>
           
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-3">
             <div>
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Cliente</p>
-              <p class="text-sm font-semibold text-white">{{ clientName }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Cliente</p>
+              <p class="text-xs font-semibold text-white">{{ clientName }}</p>
             </div>
 
             <div>
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Valor Final</p>
-              <p class="text-sm font-semibold text-white">{{ formatCurrency(saleValue) }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Valor Final</p>
+              <p class="text-xs font-semibold text-white">{{ formatCurrency(saleValue) }}</p>
             </div>
 
             <div>
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Status</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Status</p>
               <span :class="[
-                'px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest inline-block',
+                'px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest inline-block',
                 statusColor
               ]">
                 {{ statusLabel }}
@@ -111,18 +111,18 @@
             </div>
 
             <div>
-              <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Data</p>
-              <p class="text-sm font-semibold text-white">{{ formatDate(saleDate) }}</p>
+              <p class="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Data</p>
+              <p class="text-xs font-semibold text-white">{{ formatDate(saleDate) }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="mt-6 flex justify-end">
+      <div class="mt-4 pt-4 border-t border-white/10 flex justify-end">
         <button 
           @click="$emit('close')"
-          class="px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg border border-white/10 transition-all text-white font-bold uppercase tracking-widest text-[10px]"
+          class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg border border-white/10 transition-all text-white font-bold uppercase tracking-widest text-[9px]"
         >
           Fechar
         </button>
@@ -133,7 +133,7 @@
 
 <script setup lang="ts">
 import { useSaleFormatters } from '~/composables/useSaleFormatters'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -153,6 +153,22 @@ const props = defineProps<{
 const emit = defineEmits(['close'])
 
 const { formatCurrency, formatDate } = useSaleFormatters()
+
+// Debug logs
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    console.log('🎯 [KSaleDetailsCard] Modal aberto com props:')
+    console.log('  itemName:', props.itemName)
+    console.log('  itemType:', props.itemType)
+    console.log('  itemDescription:', props.itemDescription)
+    console.log('  itemPrice:', props.itemPrice)
+    console.log('  saleValue:', props.saleValue)
+    console.log('  paymentStatus:', props.paymentStatus)
+    console.log('  clientName:', props.clientName)
+    console.log('  planCategory:', props.planCategory)
+    console.log('  planNotes:', props.planNotes)
+  }
+})
 
 const headerTitle = computed(() => {
   if (props.itemType === 'Assinatura') {

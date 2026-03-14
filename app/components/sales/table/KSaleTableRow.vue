@@ -29,15 +29,9 @@
       </span>
     </td>
 
-    <!-- Plano -->
-    <td class="px-6 py-4">
-      <p class="text-sm font-medium text-white">{{ sale.plan_name || '-' }}</p>
-    </td>
-
     <!-- Item -->
     <td class="px-6 py-4">
-      <p class="text-sm font-medium text-white">{{ sale.custom_name || sale.plan_name || '-' }}</p>
-      <p v-if="sale.custom_description" class="text-[10px] text-white/40 mt-1">{{ sale.custom_description }}</p>
+      <p class="text-sm font-medium text-white cursor-pointer hover:text-blue-400 transition-colors" @click="$emit('open-details', sale)">{{ sale.plan_name || '-' }}</p>
     </td>
 
     <!-- Valor -->
