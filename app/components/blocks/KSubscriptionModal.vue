@@ -131,11 +131,17 @@ const customerPrefilledName = ref('')
 
 const getDefaultDate = () => new Date().toISOString().split('T')[0]
 
+const getDefaultDueDay = () => {
+  const today = new Date()
+  const dueDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 dias a partir de hoje
+  return dueDate.getDate()
+}
+
 const form = reactive({
   customer: null as any,
   plan: null as any,
   start_date: getDefaultDate(),
-  due_day: 10 as number,
+  due_day: getDefaultDueDay() as number,
   status: 'active' as string,
   notes: '' as string
 })
@@ -144,7 +150,7 @@ const resetForm = () => {
   form.customer = null
   form.plan = null
   form.start_date = getDefaultDate()
-  form.due_day = 10
+  form.due_day = getDefaultDueDay()
   form.status = 'active'
   form.notes = ''
 }

@@ -293,6 +293,10 @@ const {
 const onPlanSelect = (item: any) => {
   onPlanSelectBase(item, form)
   selectedCatalogItem.value = item
+  // Armazenar descrição do produto quando selecionado
+  if (item && item.description && !customizeSale.value) {
+    form.custom_description = item.description
+  }
 }
 
 const openDetailsCard = () => {

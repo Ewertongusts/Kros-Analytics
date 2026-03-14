@@ -48,13 +48,17 @@ export const useSaleActions = () => {
       // Gera texto do comprovante
       const saleType = sale.sale_type === 'produto' ? 'PRODUTO' : sale.sale_type === 'servico' ? 'SERVIÇO' : 'PERSONALIZADO'
       const itemName = sale.plan_name || sale.custom_name || 'N/A'
+      const itemDescription = sale.custom_description || ''
       const clientName = sale.representative_name || sale.name || 'N/A'
       
       let text = `🧾 *COMPROVANTE DE VENDA #${sale.id}*\n\n`
       text += `📋 Tipo: ${saleType}\n`
       text += `👤 Cliente: ${clientName}\n`
-      text += `📦 Item: ${itemName}\n\n`
-      text += `💰 Valor: ${formatCurrency(sale.final_value || sale.monthly_price)}\n`
+      text += `📦 Item: ${itemName}\n`
+      if (itemDescription) {
+        text += `📝 Descrição: ${itemDescription}\n`
+      }
+      text += `\n💰 Valor: ${formatCurrency(sale.final_value || sale.monthly_price)}\n`
       
       if (sale.discount_value > 0) {
         text += `🎁 Desconto: ${formatCurrency(sale.discount_value)}\n`

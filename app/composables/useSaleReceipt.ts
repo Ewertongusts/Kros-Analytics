@@ -18,6 +18,7 @@ export const useSaleReceipt = () => {
 
     const saleType = sale.sale_type === 'produto' ? 'PRODUTO' : sale.sale_type === 'servico' ? 'SERVIÇO' : 'PERSONALIZADO'
     const itemName = sale.plan_name || sale.custom_name || 'N/A'
+    const itemDescription = sale.custom_description || ''
     const clientName = sale.representative_name || sale.name || 'N/A'
     const whatsapp = sale.whatsapp || 'N/A'
     const value = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sale.monthly_price || 0)
@@ -61,7 +62,8 @@ export const useSaleReceipt = () => {
         <div style="margin-bottom: 25px;">
           <p style="font-size: 12px; font-weight: 900; margin: 0 0 10px 0; letter-spacing: 1px;">DESCRIÇÃO:</p>
           <div style="border: 1px solid #000; padding: 15px;">
-            <p style="margin: 0; font-size: 14px; font-weight: 700;">${itemName}</p>
+            <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700;">${itemName}</p>
+            ${itemDescription ? `<p style="margin: 0; font-size: 12px; color: #333; line-height: 1.4;">${itemDescription}</p>` : ''}
           </div>
         </div>
 

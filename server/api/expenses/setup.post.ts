@@ -4,12 +4,11 @@ export default defineEventHandler(async (event) => {
   try {
     const serverClient = serverSupabaseClient(event)
     
-    // Adicionar campos à tabela expense_categories
+    // Adicionar campos à tabela categories
     await serverClient.rpc('exec_sql', {
       sql: `
-        ALTER TABLE expense_categories 
-        ADD COLUMN IF NOT EXISTS budget_limit DECIMAL(10, 2),
-        ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+        ALTER TABLE categories 
+        ADD COLUMN IF NOT EXISTS budget_limit DECIMAL(10, 2);
       `
     }).catch(() => {
       // Ignorar erro se as colunas já existem
@@ -34,7 +33,6 @@ export default defineEventHandler(async (event) => {
       sql: `
         CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
         CREATE INDEX IF NOT EXISTS idx_transactions_is_recurring ON transactions(is_recurring);
-        CREATE INDEX IF NOT EXISTS idx_expense_categories_is_active ON expense_categories(is_active);
       `
     }).catch(() => {
       // Ignorar erro se os índices já existem

@@ -61,27 +61,8 @@
       </div>
 
       <!-- Cards de Indicadores -->
-      <div v-if="showMetrics" class="grid grid-cols-4 gap-4">
-        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Total Mês</p>
-          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.monthTotal) }}</p>
-          <p class="text-[10px] text-white/40 mt-2">{{ summary.monthCount }} vendas</p>
-        </div>
-        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Média</p>
-          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.monthTotal / (summary.monthCount || 1)) }}</p>
-          <p class="text-[10px] text-white/40 mt-2">por venda</p>
-        </div>
-        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Maior</p>
-          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.maxValue) }}</p>
-          <p class="text-[10px] text-white/40 mt-2">venda</p>
-        </div>
-        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Total Geral</p>
-          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.totalValue) }}</p>
-          <p class="text-[10px] text-white/40 mt-2">{{ summary.totalCount }} vendas</p>
-        </div>
+      <div v-if="showMetrics" class="mb-6">
+        <SalesTableKSaleSummaryCards :summary="summary" />
       </div>
 
       <!-- Filtros em linha única -->

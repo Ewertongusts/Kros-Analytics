@@ -244,14 +244,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { useExpenseOccurrences, type ExpenseOccurrence } from '~/composables/useExpenseOccurrences'
 import { usePaymentRecords } from '~/composables/usePaymentRecords'
 import { useExpenses, type Category } from '~/composables/useExpenses'
 
-const { occurrences, fetchOccurrences, deleteOccurrence: deleteOccurrenceApi, updateOccurrenceStatus } = useExpenseOccurrences()
-const { createRecord } = usePaymentRecords()
-const { expenses, categories, fetchExpenses, fetchCategories } = useExpenses()
+const occurrencesComposable = useExpenseOccurrences()
+const paymentRecordsComposable = usePaymentRecords()
+const expensesComposable = useExpenses()
+
+const { fetchOccurrences, deleteOccurrence: deleteOccurrenceApi, updateOccurrenceStatus } = occurrencesComposable
+const { createRecord } = paymentRecordsComposable
+const { fetchExpenses, fetchCategories } = expensesComposable
+
+// Use toRef to maintain reactivity
+const occurrences = toRef(occurrencesComposable, 'occurrences')
+const categories = toRef(expensesComposable, 'categories')
+const expenses = toRef(expensesComposable, 'expenses')
 
 const filters = ref({
   search: '',
@@ -411,8 +420,8 @@ const submitPayment = async () => {
     expense_occurrence_id: selectedOccurrence.value.id,
     amount: selectedOccurrence.value.amount,
     payment_date: paymentData.value.payment_date,
-    payment_method: paymentData.value.payment_method || undefined,
-    notes: paymentData.value.notes || undefined
+    payment_method: paymentData.value.payment_method || '',
+    notes: paymentData.value.notes || ''
   })
 
   // Refresh data

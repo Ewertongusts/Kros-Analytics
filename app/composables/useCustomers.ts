@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useWhatsAppConfig } from './useWhatsAppConfig'
 
 export type Customer = {
   id?: string
@@ -95,6 +96,8 @@ export const useCustomers = () => {
   const createCustomer = async (customer: Customer) => {
     loading.value = true
     try {
+      const { normalizeWhatsApp } = useWhatsAppConfig()
+      
       const { data, error: err } = await (supabase
         .from('companies')
         .insert([{
@@ -102,6 +105,7 @@ export const useCustomers = () => {
           representative_name: customer.representative_name || customer.name,
           email: customer.email || null,
           phone: customer.phone || null,
+          whatsapp: customer.whatsapp ? normalizeWhatsApp(customer.whatsapp) : null,
           document: customer.document || null,
           birthday: customer.birthday || null,
           segment: customer.segment || null,
@@ -136,9 +140,17 @@ export const useCustomers = () => {
   const updateCustomer = async (id: string, updates: Partial<Customer>) => {
     loading.value = true
     try {
+      const { normalizeWhatsApp } = useWhatsAppConfig()
+      
+      // Normalizar WhatsApp se estiver sendo atualizado
+      const normalizedUpdates = {
+        ...updates,
+        whatsapp: updates.whatsapp ? normalizeWhatsApp(updates.whatsapp) : updates.whatsapp
+      }
+      
       const { data, error: err } = await (supabase as any)
         .from('companies')
-        .update(updates)
+        .update(normalizedUpdates)
         .eq('id', id)
         .select()
         .single()

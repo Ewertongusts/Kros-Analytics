@@ -11,8 +11,5 @@
 </script>
 
 <style scoped>
-/* Espaçamento padrão entre seções */
-:deep(.space-y-4) {
-  @apply space-y-4;
-}
+/* Layout padrão */
 </style>

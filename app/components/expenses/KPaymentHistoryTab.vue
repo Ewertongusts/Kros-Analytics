@@ -172,14 +172,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { usePaymentRecords, type PaymentRecord } from '~/composables/usePaymentRecords'
 import { useExpenseOccurrences, type ExpenseOccurrence } from '~/composables/useExpenseOccurrences'
 import { useExpenses, type Category } from '~/composables/useExpenses'
 
-const { records, fetchRecords, deleteRecord: deleteRecordApi } = usePaymentRecords()
-const { occurrences, fetchOccurrences } = useExpenseOccurrences()
-const { expenses, categories, fetchExpenses, fetchCategories } = useExpenses()
+const paymentRecordsComposable = usePaymentRecords()
+const occurrencesComposable = useExpenseOccurrences()
+const expensesComposable = useExpenses()
+
+const { fetchRecords, deleteRecord: deleteRecordApi } = paymentRecordsComposable
+const { fetchOccurrences } = occurrencesComposable
+const { fetchExpenses, fetchCategories } = expensesComposable
+
+// Use toRef to maintain reactivity
+const records = toRef(paymentRecordsComposable, 'records')
+const occurrences = toRef(occurrencesComposable, 'occurrences')
+const categories = toRef(expensesComposable, 'categories')
+const expenses = toRef(expensesComposable, 'expenses')
 
 const filters = ref({
   search: '',

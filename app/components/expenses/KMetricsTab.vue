@@ -139,14 +139,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { usePaymentRecords } from '~/composables/usePaymentRecords'
 import { useExpenseOccurrences } from '~/composables/useExpenseOccurrences'
 import { useExpenses } from '~/composables/useExpenses'
 
-const { records, fetchRecords } = usePaymentRecords()
-const { occurrences, fetchOccurrences } = useExpenseOccurrences()
-const { expenses, categories, fetchExpenses, fetchCategories } = useExpenses()
+const paymentRecordsComposable = usePaymentRecords()
+const occurrencesComposable = useExpenseOccurrences()
+const expensesComposable = useExpenses()
+
+const { fetchRecords } = paymentRecordsComposable
+const { fetchOccurrences } = occurrencesComposable
+const { fetchExpenses, fetchCategories } = expensesComposable
+
+// Use toRef to maintain reactivity
+const records = toRef(paymentRecordsComposable, 'records')
+const occurrences = toRef(occurrencesComposable, 'occurrences')
+const categories = toRef(expensesComposable, 'categories')
+const expenses = toRef(expensesComposable, 'expenses')
 
 const filters = ref({
   category: '',
@@ -219,7 +229,7 @@ const totalByCategory = computed(() => {
   filteredRecords.value.forEach(r => {
     const occurrence = occurrences.value.find(o => o.id === r.expense_occurrence_id)
     const expense = expenses.value.find(e => e.id === occurrence?.expense_id)
-    if (expense) {
+    if (expense && expense.category_id) {
       if (!totals[expense.category_id]) {
         totals[expense.category_id] = 0
       }
@@ -254,7 +264,8 @@ const totalByMethod = computed(() => {
   return totals
 })
 
-const getCategoryName = (categoryId: string) => {
+const getCategoryName = (categoryId: string | undefined) => {
+  if (!categoryId) return 'Sem categoria'
   return categories.value.find(c => c.id === categoryId)?.name || 'Sem categoria'
 }
 

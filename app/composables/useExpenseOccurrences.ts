@@ -34,8 +34,8 @@ export const useExpenseOccurrences = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
 
-      let query = supabase
-        .from('expense_occurrences')
+      let query = (supabase
+        .from('expense_occurrences') as any)
         .select('*')
         .eq('user_id', user.id)
 
@@ -79,14 +79,14 @@ export const useExpenseOccurrences = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
 
-      const payload = {
+      const payload: any = {
         ...occurrence,
         user_id: user.id,
         status: 'pending'
       }
 
-      const { data, error: createError } = await supabase
-        .from('expense_occurrences')
+      const { data, error: createError } = await (supabase
+        .from('expense_occurrences') as any)
         .insert([payload])
         .select()
         .single()
@@ -120,15 +120,15 @@ export const useExpenseOccurrences = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
 
-      const { data: expense, error: fetchError } = await supabase
-        .from('expenses')
+      const { data: expenseData, error: fetchError } = await (supabase
+        .from('expenses') as any)
         .select('*')
         .eq('id', expenseId)
         .single()
 
       if (fetchError) throw fetchError
 
-      const occurrencesToCreate: Omit<ExpenseOccurrence, 'id' | 'created_at' | 'updated_at'>[] = []
+      const occurrencesToCreate: any[] = []
       const baseDate = new Date(startDate)
 
       for (let i = 0; i < monthsAhead; i++) {
@@ -168,13 +168,13 @@ export const useExpenseOccurrences = () => {
           user_id: user.id,
           occurrence_date: occurrenceDate.toISOString().split('T')[0],
           due_date: dueDate.toISOString().split('T')[0],
-          amount: expense.amount,
+          amount: expenseData.amount,
           status: 'pending'
         })
       }
 
-      const { data, error: createError } = await supabase
-        .from('expense_occurrences')
+      const { data, error: createError } = await (supabase
+        .from('expense_occurrences') as any)
         .insert(occurrencesToCreate)
         .select()
 
@@ -201,8 +201,8 @@ export const useExpenseOccurrences = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
 
-      const { data, error: updateError } = await supabase
-        .from('expense_occurrences')
+      const { data, error: updateError } = await (supabase
+        .from('expense_occurrences') as any)
         .update({ status })
         .eq('id', id)
         .eq('user_id', user.id)
@@ -232,8 +232,8 @@ export const useExpenseOccurrences = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
 
-      const { error: deleteError } = await supabase
-        .from('expense_occurrences')
+      const { error: deleteError } = await (supabase
+        .from('expense_occurrences') as any)
         .delete()
         .eq('id', id)
         .eq('user_id', user.id)

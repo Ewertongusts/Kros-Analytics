@@ -52,11 +52,13 @@
           </div>
 
           <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Segmento/Ramo</label>
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">WhatsApp *</label>
             <input 
-              v-model="form.segment"
-              type="text"
-              placeholder="Ex: Tecnologia, Varejo, Serviços"
+              v-model="form.whatsapp"
+              type="tel"
+              required
+              autocomplete="tel"
+              placeholder="(00) 00000-0000"
               class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
             />
           </div>
@@ -66,6 +68,7 @@
             <input 
               v-model="form.sales_rep"
               type="text"
+              autocomplete="off"
               placeholder="Nome do vendedor"
               class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
             />
@@ -89,35 +92,32 @@
           </div>
 
           <div class="space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Telefone Fixo</label>
+            <input 
+              v-model="form.phone"
+              type="tel"
+              autocomplete="tel-national"
+              placeholder="(00) 0000-0000"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="col-span-2 space-y-2">
+            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Segmento/Ramo</label>
+            <input 
+              v-model="form.segment"
+              type="text"
+              placeholder="Ex: Tecnologia, Varejo, Serviços"
+              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
+            />
+          </div>
+
+          <div class="col-span-2 space-y-2">
             <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Site</label>
             <input 
               v-model="form.website"
               type="url"
               placeholder="https://www.empresa.com"
-              class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
-            />
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">WhatsApp *</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-kros-blue/60">+55</span>
-              <input 
-                v-model="form.whatsapp"
-                type="text"
-                required
-                placeholder="(00) 00000-0000"
-                class="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
-              />
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Telefone Fixo</label>
-            <input 
-              v-model="form.phone"
-              type="text"
-              placeholder="(00) 0000-0000"
               class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
             />
           </div>
@@ -271,6 +271,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, computed } from 'vue'
 import { useTags } from '~/composables/useTags'
+import { useWhatsAppConfig } from '~/composables/useWhatsAppConfig'
 
 const props = defineProps<{
   isOpen: boolean

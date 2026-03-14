@@ -44,8 +44,9 @@
           :value="modelValue.whatsapp"
           @input="updateField('whatsapp', ($event.target as HTMLInputElement).value)"
           :disabled="isEditing"
-          type="text"
+          type="tel"
           required
+          autocomplete="tel"
           placeholder="(00) 00000-0000"
           class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
         />

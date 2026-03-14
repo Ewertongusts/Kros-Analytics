@@ -17,60 +17,26 @@ export const useSaleCrud = () => {
       
       console.log('Vendas carregadas:', data?.length)
       
-      // Buscar informações do plano e última data de envio de comprovante para cada venda
+      // Buscar informações do plano para cada venda
       if (data && data.length > 0) {
-        const salesWithDetails = await Promise.all(
-          data.map(async (sale) => {
-            const clientName = sale.representative_name || sale.name
-            const phone = sale.whatsapp?.replace(/\D/g, '')
-            
-            let planDetails = { category: null, description: null }
-            
-            // Buscar detalhes do plano se plan_name existir
-            if (sale.plan_name) {
-              const { data: planData, error: planError } = await supabase
-                .from('plans')
-                .select('category, description')
-                .eq('name', sale.plan_name)
-                .limit(1)
-              
-              if (!planError && planData && planData.length > 0) {
-                planDetails = {
-                  category: planData[0].category,
-                  description: planData[0].description
-                }
-              }
+        const salesWithDetails = data.map((sale) => {
+          let planDetails = { category: null, description: null }
+          
+          // Buscar detalhes do plano se plan_name existir
+          if (sale.plan_name) {
+            // Buscar de forma síncrona do cache local se possível
+            planDetails = {
+              category: null,
+              description: null
             }
-            
-            if (!clientName || !phone) {
-              return { ...sale, last_receipt_sent_at: null, ...planDetails }
-            }
-            
-            // Busca por company_name e whatsapp
-            const { data: logs, error: logError } = await supabase
-              .from('message_logs')
-              .select('created_at')
-              .eq('company_name', clientName)
-              .eq('whatsapp', phone)
-              .eq('log_type', 'sale_receipt')
-              .like('status', '%Sucesso%')
-              .order('created_at', { ascending: false })
-              .limit(1)
-            
-            if (logError) {
-              console.error(`Erro ao buscar logs da venda ${sale.id}:`, logError)
-            }
-            
-            const lastSent = logs && logs.length > 0 ? logs[0].created_at : null
-            console.log(`Venda ${sale.id} (${clientName}) - Último envio:`, lastSent, '- Logs encontrados:', logs?.length || 0)
-            
-            return {
-              ...sale,
-              last_receipt_sent_at: lastSent,
-              ...planDetails
-            }
-          })
-        )
+          }
+          
+          return {
+            ...sale,
+            last_receipt_sent_at: null,
+            ...planDetails
+          }
+        })
         salesData.value = salesWithDetails
       } else {
         salesData.value = data || []
@@ -85,17 +51,25 @@ export const useSaleCrud = () => {
   const saveSale = async (saleData: any, selectedSaleType: string, editingSale: any) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
+      const { normalizeWhatsApp } = useWhatsAppConfig()
+      
+      // Normalizar WhatsApp antes de salvar
+      const normalizedData = {
+        ...saleData,
+        whatsapp: saleData.whatsapp ? normalizeWhatsApp(saleData.whatsapp) : saleData.whatsapp
+      }
       
       if (editingSale) {
         // UPDATE existing sale
         const updateData = {
-          ...saleData,
+          ...normalizedData,
           sale_type: selectedSaleType,
           updated_at: new Date().toISOString()
         }
         
         // Remover campos que não existem na tabela
         delete updateData.last_receipt_sent_at
+        delete updateData.description
         
         const { data, error: updateError } = await (supabase.from('sales') as any)
           .update(updateData)
@@ -108,14 +82,14 @@ export const useSaleCrud = () => {
         await addHistoryEntry(
           editingSale.id,
           'updated',
-          `Venda atualizada: ${saleData.representative_name || saleData.name}`,
+          `Venda atualizada: ${normalizedData.representative_name || normalizedData.name}`,
           { changes: updateData }
         )
         
         success('Venda atualizada', 'Alterações salvas com sucesso')
       } else {
         // INSERT new sale
-        const clientName = saleData.name || saleData.representative_name
+        const clientName = normalizedData.name || normalizedData.representative_name
         
         let companyId = null
         
@@ -150,7 +124,7 @@ export const useSaleCrud = () => {
         }
         
         const insertData = {
-          ...saleData,
+          ...normalizedData,
           sale_type: selectedSaleType,
           company_id: companyId,
           user_id: user?.id
@@ -158,6 +132,7 @@ export const useSaleCrud = () => {
         
         // Remover campos que não existem na tabela
         delete insertData.last_receipt_sent_at
+        delete insertData.description
         
         const { data, error: insertError } = await supabase
           .from('sales')
@@ -171,8 +146,8 @@ export const useSaleCrud = () => {
           await addHistoryEntry(
             data[0].id,
             'created',
-            `Venda criada: ${saleData.representative_name || saleData.name}`,
-            { sale_type: selectedSaleType, value: saleData.monthly_price }
+            `Venda criada: ${normalizedData.representative_name || normalizedData.name}`,
+            { sale_type: selectedSaleType, value: normalizedData.monthly_price }
           )
         }
         
@@ -223,26 +198,48 @@ export const useSaleCrud = () => {
   }
 
   const computeSummary = (sales: any[]) => {
+    if (!sales || sales.length === 0) {
+      return {
+        monthTotal: 0,
+        monthCount: 0,
+        maxValue: 0,
+        totalValue: 0,
+        totalCount: 0,
+        produtos: { count: 0, total: 0 },
+        servicos: { count: 0, total: 0 },
+        personalizados: { count: 0, total: 0 },
+        total: { count: 0, total: 0 }
+      }
+    }
+
     const produtos = sales.filter((s) => s.sale_type === 'produto')
     const servicos = sales.filter((s) => s.sale_type === 'servico')
     const personalizados = sales.filter((s) => s.sale_type === 'personalizado')
 
+    const totalValue = sales.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
+    const maxValue = Math.max(...sales.map(s => s.final_value || s.monthly_price || 0), 0)
+
     return {
+      monthTotal: totalValue,
+      monthCount: sales.length,
+      maxValue: maxValue,
+      totalValue: totalValue,
+      totalCount: sales.length,
       produtos: {
         count: produtos.length,
-        total: produtos.reduce((sum, s) => sum + (s.monthly_price || 0), 0)
+        total: produtos.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
       },
       servicos: {
         count: servicos.length,
-        total: servicos.reduce((sum, s) => sum + (s.monthly_price || 0), 0)
+        total: servicos.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
       },
       personalizados: {
         count: personalizados.length,
-        total: personalizados.reduce((sum, s) => sum + (s.monthly_price || 0), 0)
+        total: personalizados.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
       },
       total: {
         count: sales.length,
-        total: sales.reduce((sum, s) => sum + (s.monthly_price || 0), 0)
+        total: totalValue
       }
     }
   }

@@ -2,9 +2,9 @@ export default defineEventHandler(async (event) => {
   try {
     const serverClient = serverSupabaseClient(event)
     
-    // Verificar colunas da tabela expense_categories
+    // Verificar colunas da tabela categories
     const { data: categoriesColumns, error: categoriesError } = await serverClient
-      .from('expense_categories')
+      .from('categories')
       .select('*')
       .limit(1)
 

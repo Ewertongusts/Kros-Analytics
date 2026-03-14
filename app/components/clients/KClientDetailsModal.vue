@@ -13,15 +13,27 @@
               <h2 class="text-xl font-bold text-white uppercase tracking-tight">{{ company.representative_name || company.name }}</h2>
               <p class="text-xs text-white/50 mt-1">{{ company.name }}</p>
             </div>
-            <button 
-              @click="$emit('close')"
-              class="p-2 rounded-lg hover:bg-white/10 transition-all"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/70 hover:text-white">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
+            <div class="flex items-center gap-2">
+              <button 
+                v-if="company.whatsapp"
+                @click="openWhatsApp"
+                class="p-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 transition-all"
+                title="Abrir WhatsApp Web"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 448 512" fill="currentColor">
+                  <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l115.3-30.2c32.4 17.7 68.8 27 108.6 27 122.4 0 222-99.6 222-222 0-59.3-23-115.1-65-157.1zM223.9 446.7c-33.1 0-65.6-8.9-93.9-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 54 81.2 54.1 130.5 0 101.7-82.8 184.5-184.6 184.5zm100.5-137c-5.5-2.8-32.6-16.1-37.7-17.9-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.2-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.5-11.3 2.5-2.5 5.5-6.5 8.3-9.7 2.8-3.2 3.7-5.5 5.6-9.2 1.9-3.7 1-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.6-13.3 37.2-26.2 4.6-12.9 4.6-24 3.2-26.2-1.4-2.3-5.1-3.7-10.6-6.5z"/>
+                </svg>
+              </button>
+              <button 
+                @click="$emit('close')"
+                class="p-2 rounded-lg hover:bg-white/10 transition-all"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/70 hover:text-white">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Tabs -->
@@ -74,6 +86,22 @@
                   <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Empresa</p>
                   <p class="text-sm font-semibold text-white">{{ company.name }}</p>
                 </div>
+                <div>
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">CNPJ/CPF</p>
+                  <p class="text-sm text-white/70">{{ company.document || '-' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Segmento/Ramo</p>
+                  <p class="text-sm text-white/70">{{ company.segment || '-' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Responsável/Vendedor</p>
+                  <p class="text-sm text-white/70">{{ company.sales_rep || '-' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Data de Aniversário</p>
+                  <p class="text-sm text-white/70">{{ company.birthday ? formatDate(company.birthday) : '-' }}</p>
+                </div>
               </div>
 
               <!-- Contato -->
@@ -86,23 +114,16 @@
                   <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Telefone</p>
                   <p class="text-sm text-white/70">{{ company.phone || '-' }}</p>
                 </div>
-              </div>
-
-              <!-- WhatsApp -->
-              <div>
-                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">WhatsApp</p>
-                <p class="text-sm text-white/70">{{ company.whatsapp || '-' }}</p>
-              </div>
-
-              <!-- Datas -->
-              <div class="grid grid-cols-2 gap-6 pt-4 border-t border-white/10">
                 <div>
-                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Data de Cadastro</p>
-                  <p class="text-sm text-white/70">{{ formatDate(company.created_at) }}</p>
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">WhatsApp</p>
+                  <p class="text-sm text-white/70">{{ company.whatsapp || '-' }}</p>
                 </div>
                 <div>
-                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Última Atualização</p>
-                  <p class="text-sm text-white/70">{{ formatDate(company.updated_at) }}</p>
+                  <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Site</p>
+                  <p class="text-sm text-white/70 break-all">
+                    <a v-if="company.website" :href="company.website" target="_blank" class="text-kros-blue hover:underline">{{ company.website }}</a>
+                    <span v-else>-</span>
+                  </p>
                 </div>
               </div>
 
@@ -110,6 +131,41 @@
               <div v-if="company.notes">
                 <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Notas</p>
                 <p class="text-sm text-white/70 bg-white/5 p-3 rounded-lg">{{ company.notes }}</p>
+              </div>
+
+              <!-- Endereço -->
+              <div v-if="company.address_street || company.address_city" class="pt-4 border-t border-white/10">
+                <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-3">Endereço</p>
+                <div class="grid grid-cols-2 gap-6">
+                  <div>
+                    <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Rua/Avenida</p>
+                    <p class="text-sm text-white/70">{{ company.address_street || '-' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Número</p>
+                    <p class="text-sm text-white/70">{{ company.address_number || '-' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Bairro</p>
+                    <p class="text-sm text-white/70">{{ company.address_neighborhood || '-' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Cidade</p>
+                    <p class="text-sm text-white/70">{{ company.address_city || '-' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Estado</p>
+                    <p class="text-sm text-white/70">{{ company.address_state || '-' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">CEP</p>
+                    <p class="text-sm text-white/70">{{ company.address_zipcode || '-' }}</p>
+                  </div>
+                  <div v-if="company.address_complement" class="col-span-2">
+                    <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Complemento</p>
+                    <p class="text-sm text-white/70">{{ company.address_complement }}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -428,6 +484,19 @@ const calculateLTV = (subscription: any) => {
     return subscription.amount * Math.max(months, 1)
   }
   return subscription.amount * 12
+}
+
+const openWhatsApp = () => {
+  if (!props.company.whatsapp) {
+    alert('WhatsApp não informado para este contato')
+    return
+  }
+  
+  // Remove tudo que não é número
+  const phoneNumber = props.company.whatsapp.replace(/\D/g, '')
+  
+  // Abre o WhatsApp Web
+  window.open(`https://web.whatsapp.com/send?phone=${phoneNumber}`, '_blank')
 }
 
 onMounted(async () => {

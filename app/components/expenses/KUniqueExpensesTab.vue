@@ -110,11 +110,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, toRef } from 'vue'
 import KExpenseModal from './KExpenseModal.vue'
 import { useExpenses, type Expense, type Category } from '~/composables/useExpenses'
 
-const { expenses, categories, loading, deleteExpense: deleteExpenseApi, upsertExpense } = useExpenses()
+const expensesComposable = useExpenses()
+const { loading, fetchExpenses, fetchCategories, deleteExpense: deleteExpenseApi, upsertExpense } = expensesComposable
+
+// Use toRef to maintain reactivity
+const expenses = toRef(expensesComposable, 'expenses')
+const categories = toRef(expensesComposable, 'categories')
+
+onMounted(async () => {
+  await fetchExpenses()
+  await fetchCategories()
+})
 
 const isModalOpen = ref(false)
 const selectedExpense = ref<Expense | undefined>()
