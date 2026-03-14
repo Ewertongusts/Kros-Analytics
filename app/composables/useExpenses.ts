@@ -31,6 +31,7 @@ export const useExpenses = () => {
   const categories = ref<Category[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const refreshKey = ref(0)
 
   const fetchExpenses = async () => {
     loading.value = true
@@ -206,33 +207,72 @@ export const useExpenses = () => {
   }
 
   const deleteCategory = async (id: string) => {
-    loading.value = true
-    error.value = null
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      let query = (supabase.from('expense_categories') as any)
-        .update({ is_active: false })
-        .eq('id', id)
-      
-      if (user) {
-        query = query.eq('user_id', user.id)
+      loading.value = true
+      error.value = null
+      try {
+        console.log('🗑️ [deleteCategory] Starting delete for category:', id)
+
+        // Check if category has expenses
+        console.log('📝 [deleteCategory] Checking for expenses in this category...')
+        const { data: expensesInCategory, error: checkError } = await (supabase.from('transactions') as any)
+          .select('id')
+          .eq('category_id', id)
+          .eq('type', 'expense')
+          .limit(1)
+
+        if (checkError) {
+          console.error('❌ [deleteCategory] Error checking expenses:', checkError)
+          throw checkError
+        }
+
+        console.log('📊 [deleteCategory] Expenses check result:', expensesInCategory?.length || 0, 'expenses found')
+
+        if (expensesInCategory && expensesInCategory.length > 0) {
+          console.warn('⚠️ [deleteCategory] Category has expenses, cannot delete')
+          return { success: false, error: 'Categorias com despesas não podem ser deletadas' }
+        }
+
+        console.log('✅ [deleteCategory] No expenses found, proceeding with delete...')
+
+        // Delete without user_id filter - categories can be shared
+        console.log('🔥 [deleteCategory] Executing DELETE query for id:', id)
+        const { error: deleteError, data: deleteData } = await (supabase.from('expense_categories') as any)
+          .delete()
+          .eq('id', id)
+
+        console.log('📊 [deleteCategory] Delete response - Error:', deleteError, 'Data:', deleteData)
+
+        if (deleteError) {
+          console.error('❌ [deleteCategory] Delete error:', deleteError)
+          throw deleteError
+        }
+
+        console.log('✅ [deleteCategory] Delete successful, fetching categories...')
+        await fetchCategories()
+        console.log('✅ [deleteCategory] Categories refreshed, new count:', categories.value.length)
+        
+        // Verify the category was actually deleted
+        const { data: verifyData } = await (supabase.from('expense_categories') as any)
+          .select('id')
+          .eq('id', id)
+          .limit(1)
+        
+        if (verifyData && verifyData.length > 0) {
+          console.error('❌ [deleteCategory] VERIFICATION FAILED: Category still exists in database!')
+          return { success: false, error: 'Falha ao deletar categoria - verifique as permissões' }
+        }
+        
+        console.log('✅ [deleteCategory] VERIFICATION PASSED: Category successfully deleted from database')
+        return { success: true }
+      } catch (e: any) {
+        error.value = e.message
+        console.error('❌ [deleteCategory] Exception:', e)
+        return { success: false, error: e.message }
+      } finally {
+        loading.value = false
+        console.log('✓ [deleteCategory] Delete complete')
       }
-
-      const { error: deleteError } = await query
-
-      if (deleteError) throw deleteError
-
-      await fetchCategories()
-      return { success: true }
-    } catch (e: any) {
-      error.value = e.message
-      console.error('Erro ao deletar categoria:', e)
-      return { success: false, error: e.message }
-    } finally {
-      loading.value = false
     }
-  }
 
   const markExpenseAsPaid = async (id: string) => {
     loading.value = true

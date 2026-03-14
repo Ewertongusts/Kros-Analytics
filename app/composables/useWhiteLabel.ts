@@ -16,6 +16,25 @@ const settings = ref<WhiteLabelSettings>({
 })
 const loading = ref(true)
 
+// Initialize colors from localStorage on module load
+const initializeColorsFromStorage = () => {
+  if (process.client) {
+    const stored = localStorage.getItem('kros-white-label-settings')
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        console.log('📦 [init] Loaded settings from localStorage:', parsed)
+        settings.value = parsed
+        if (parsed.primary_color) {
+          applyColors(parsed.primary_color)
+        }
+      } catch (err) {
+        console.error('❌ [init] Error parsing localStorage:', err)
+      }
+    }
+  }
+}
+
 export const useWhiteLabel = () => {
   const supabase = useSupabaseClient()
 
@@ -38,6 +57,9 @@ export const useWhiteLabel = () => {
       if (data && data.length > 0) {
         console.log('✅ [fetchSettings] Found settings, updating state:', data[0])
         settings.value = data[0] as WhiteLabelSettings
+        // Save to localStorage for persistence
+        localStorage.setItem('kros-white-label-settings', JSON.stringify(settings.value))
+        console.log('💾 [fetchSettings] Saved settings to localStorage')
         if (settings.value.primary_color) {
           console.log('🎨 [fetchSettings] Applying color:', settings.value.primary_color)
           applyColors(settings.value.primary_color)
@@ -138,6 +160,9 @@ export const useWhiteLabel = () => {
 
       console.log('✅ [saveSettings] Settings saved successfully')
       settings.value = { ...settings.value, ...formData }
+      // Save to localStorage for persistence
+      localStorage.setItem('kros-white-label-settings', JSON.stringify(settings.value))
+      console.log('💾 [saveSettings] Saved settings to localStorage')
       console.log('🎨 [saveSettings] Applying color:', formData.primary_color)
       applyColors(formData.primary_color)
       return { success: true }
@@ -187,6 +212,7 @@ export const useWhiteLabel = () => {
     fetchSettings,
     saveSettings,
     applyColors,
-    uploadImage
+    uploadImage,
+    initializeColorsFromStorage
   }
 }

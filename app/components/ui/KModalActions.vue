@@ -10,7 +10,7 @@
     <button 
       :type="submitType"
       :disabled="disabled || loading"
-      @click="submitType === 'button' ? $emit('confirm') : undefined"
+      @click="handleClick"
       class="flex-1 btn-primary py-3.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
       <svg 
@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   cancelText?: string
   confirmText?: string
   loadingText?: string
@@ -43,8 +43,18 @@ defineProps<{
   submitType?: 'submit' | 'button'
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   cancel: []
   confirm: []
 }>()
+
+const handleClick = () => {
+  console.log('🔘 [KModalActions] Button clicked, submitType:', props.submitType)
+  if (props.submitType === 'button') {
+    console.log('📤 [KModalActions] Emitting confirm event')
+    emit('confirm')
+  } else {
+    console.log('📝 [KModalActions] submitType is submit, form will handle it')
+  }
+}
 </script>

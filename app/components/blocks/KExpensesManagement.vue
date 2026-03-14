@@ -305,6 +305,7 @@
         confirm-text="Deletar"
         cancel-text="Cancelar"
         :loading="loading"
+        submit-type="button"
         @confirm="performDelete"
         @cancel="showDeleteConfirm = false"
       />
@@ -492,20 +493,27 @@ const editExpense = (expense: any) => {
 }
 
 const confirmDelete = (id: string, type: 'expense' | 'category') => {
+  console.log('🗑️ [confirmDelete] Opening delete confirmation modal for:', type, id)
   deleteConfirmId.value = id
   deleteConfirmType.value = type
   showDeleteConfirm.value = true
 }
 
 const performDelete = async () => {
-  if (!deleteConfirmId.value || !deleteConfirmType.value) return
+  console.log('⚡ [performDelete] Delete confirmed! Type:', deleteConfirmType.value, 'ID:', deleteConfirmId.value)
+  if (!deleteConfirmId.value || !deleteConfirmType.value) {
+    console.warn('⚠️ [performDelete] Missing deleteConfirmId or deleteConfirmType')
+    return
+  }
 
   if (deleteConfirmType.value === 'expense') {
+    console.log('🗑️ [performDelete] Deleting expense:', deleteConfirmId.value)
     const result = await deleteExpenseFromComposable(deleteConfirmId.value)
     if (!result.success) {
       alert('Erro: ' + result.error)
     }
   } else {
+    console.log('🗑️ [performDelete] Deleting category:', deleteConfirmId.value)
     const result = await deleteCategoryFromComposable(deleteConfirmId.value)
     if (!result.success) {
       alert('Erro: ' + result.error)

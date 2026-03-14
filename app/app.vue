@@ -37,7 +37,7 @@ import { useToast } from '~/composables/useToast'
 
 const user = useSupabaseUser()
 const { isExpanded } = useSidebar()
-const { settings, fetchSettings, applyColors } = useWhiteLabel()
+const { settings, fetchSettings, applyColors, initializeColorsFromStorage } = useWhiteLabel()
 const { setToastInstance, setConfirmInstance } = useToast()
 const toastRef = ref()
 const toastContainerRef = ref()
@@ -82,6 +82,10 @@ watch(() => user.value, async (newUser) => {
 }, { immediate: true })
 
 onMounted(async () => {
+  // Initialize colors from localStorage immediately
+  console.log('🚀 [onMounted] Initializing colors from localStorage...')
+  initializeColorsFromStorage()
+  
   // Registrar instância do Toast
   if (toastRef.value) {
     setToastInstance(toastRef.value)
