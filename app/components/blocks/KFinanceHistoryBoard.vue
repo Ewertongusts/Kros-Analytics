@@ -1,6 +1,7 @@
 <template>
   <div class="p-6 rounded-3xl bg-kros-surface dark:bg-[#111112] border border-kros-outline dark:border-[#1F1F21] group transition-all">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 lg:justify-end">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+      <!-- FILTROS -->
       <FinanceHistoryKHistoryFilters
         v-model:search-query="searchQuery"
         v-model:plan-filter="planFilter"
@@ -9,9 +10,48 @@
         :available-plans="availablePlans"
         :total-records="searchFilteredHistory.length"
         :total-received="totalReceived"
-        @config="$emit('config')"
-        @sync="$emit('sync')"
       />
+      
+      <!-- BOTÕES DE AÇÃO -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <!-- Toggle View -->
+        <div class="flex items-center gap-1 bg-white/[0.02] border border-white/5 rounded-xl p-1">
+          <button
+            @click="viewMode = 'list'"
+            :class="[
+              'p-2 rounded-lg transition-all',
+              viewMode === 'list' ? 'bg-kros-blue text-white' : 'text-white/40 hover:text-white/60'
+            ]"
+            title="Visualização em Lista"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+          <button
+            @click="viewMode = 'cards'"
+            :class="[
+              'p-2 rounded-lg transition-all',
+              viewMode === 'cards' ? 'bg-kros-blue text-white' : 'text-white/40 hover:text-white/60'
+            ]"
+            title="Visualização em Cards"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </button>
+        </div>
+
+        <!-- Memorizar Preferências -->
+        <button 
+          @click="rememberPreferences = !rememberPreferences"
+          class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-white/10"
+          :class="rememberPreferences ? 'text-kros-blue' : 'text-white/30 hover:text-white'"
+          title="Memorizar Preferências"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Barra de Ações em Massa -->
@@ -59,7 +99,9 @@
       </div>
     </div>
 
+    <!-- Lista -->
     <FinanceHistoryKHistoryTable 
+      v-if="viewMode === 'list'"
       :payments="paginatedHistory"
       :selected-ids="selectedIds"
       @pay="$emit('pay', $event)"
@@ -67,6 +109,20 @@
       @open-client-details="$emit('open-client-details', $event)"
       @toggle-select="$emit('toggle-select', $event)"
     />
+
+    <!-- Cards -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+      <FinanceHistoryKHistoryCard
+        v-for="payment in paginatedHistory"
+        :key="payment.id"
+        :payment="payment"
+        :selected-ids="selectedIds"
+        @pay="$emit('pay', $event)"
+        @reverse="$emit('reverse', $event)"
+        @open-client-details="$emit('open-client-details', $event)"
+        @toggle-select="$emit('toggle-select', $event)"
+      />
+    </div>
 
     <FinanceLogsKLogsPagination
       v-if="totalPages > 1"
@@ -83,7 +139,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import { useHistoryViewPreferences } from '~/composables/useHistoryViewPreferences'
 
 const props = defineProps<{
   history: any[]
@@ -92,6 +149,8 @@ const props = defineProps<{
 }>()
 
 defineEmits(['update:activeSubTab', 'sync', 'config', 'pay', 'reverse', 'open-client-details', 'toggle-select', 'batch-pay', 'batch-reverse', 'clear-selection'])
+
+const { viewMode, rememberPreferences, isLoaded, loadPreferences, savePreferences } = useHistoryViewPreferences()
 
 const {
   startDate,
@@ -116,6 +175,24 @@ const selectedTotal = computed(() => {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 }
+
+onMounted(() => {
+  loadPreferences()
+})
+
+// Salvar preferências automaticamente quando mudar
+watch([viewMode, rememberPreferences, searchQuery, planFilter, startDate, endDate], () => {
+  if (rememberPreferences.value && isLoaded.value) {
+    savePreferences({
+      viewMode: viewMode.value,
+      rememberPreferences: rememberPreferences.value,
+      searchQuery: searchQuery.value,
+      planFilter: planFilter.value,
+      startDate: startDate.value,
+      endDate: endDate.value
+    })
+  }
+}, { deep: true })
 </script>
 
 <style scoped>
