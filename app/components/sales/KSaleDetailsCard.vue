@@ -135,20 +135,25 @@
 import { useSaleFormatters } from '~/composables/useSaleFormatters'
 import { computed, watch } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   isOpen: boolean
-  itemName: string
+  itemName?: string
   itemType: string
   itemDescription?: string
   itemPrice: number
   notes?: string
-  clientName: string
+  clientName?: string
   saleValue: number
-  paymentStatus: string
-  saleDate: string
+  paymentStatus?: string
+  saleDate?: string
   planCategory?: string
   planNotes?: string
-}>()
+}>(), {
+  itemName: '',
+  clientName: '',
+  paymentStatus: '',
+  saleDate: ''
+})
 
 const emit = defineEmits(['close'])
 

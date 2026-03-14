@@ -15,10 +15,19 @@ export const useFinanceHistory = (history: any[]) => {
 
   const filteredHistory = computed(() => {
     return history.filter(p => {
-      if (!p.paid_at) return false
-      const payDate = p.paid_at.split('T')[0]
-      return payDate >= startDate.value && payDate <= endDate.value
-    }).sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime())
+      // Mostrar TODAS as faturas (pendentes e pagas)
+      // Para faturas pendentes, usar due_date; para pagas, usar paid_at
+      const dateToCheck = p.paid_at || p.due_date
+      if (!dateToCheck) return false
+      
+      const checkDate = dateToCheck.split('T')[0]
+      return checkDate >= startDate.value && checkDate <= endDate.value
+    }).sort((a, b) => {
+      // Ordenar por data de pagamento (se pago) ou vencimento (se pendente)
+      const dateA = a.paid_at || a.due_date
+      const dateB = b.paid_at || b.due_date
+      return new Date(dateB).getTime() - new Date(dateA).getTime()
+    })
   })
 
   const searchFilteredHistory = computed(() => {

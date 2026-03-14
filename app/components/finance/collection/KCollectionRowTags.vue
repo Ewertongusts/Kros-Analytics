@@ -86,6 +86,10 @@ const emit = defineEmits(['remove-tag', 'add-tag', 'toggle-picker'])
 
 const activeTooltip = ref<string | null>(null)
 
+// Log para debug do WhatsApp
+console.log(`📱 [KCollectionRowTags] WhatsApp recebido: "${props.whatsapp}"`)
+console.log(`📱 [KCollectionRowTags] hasValidWhatsApp será calculado...`)
+
 // Watcher para reagir a mudanças nas tags
 watch(() => props.tags, (newTags) => {
   console.log('👀 [KCollectionRowTags] tags mudou:', newTags?.length || 0)
@@ -93,7 +97,9 @@ watch(() => props.tags, (newTags) => {
 
 const hasValidWhatsApp = computed(() => {
   const rawNum = props.whatsapp?.replace(/\D/g, '') || ''
-  return rawNum && rawNum.length >= 10
+  const isValid = rawNum && rawNum.length >= 10
+  console.log(`📱 [KCollectionRowTags] hasValidWhatsApp = ${isValid} (rawNum: "${rawNum}", length: ${rawNum.length})`)
+  return isValid
 })
 
 const availableTags = computed(() => {

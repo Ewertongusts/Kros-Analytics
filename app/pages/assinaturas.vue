@@ -5,7 +5,7 @@
     <div v-else class="space-y-4 mb-20 animate-in fade-in duration-700">
       <SubscriptionsKSubscriptionsContent
         v-model:active-tab="activeSubTab"
-        :key="`content-${refreshKey}`"
+        :key="`content-${refreshKey}-${subscriptions.length}-${subscriptions.map(s => s.status).join(',')}`"
         :financial-records="adaptedSubscriptions"
         :payment-history="paymentHistory"
         :show-charts="showCharts"
@@ -27,6 +27,8 @@
         @create-subscription="subscriptionModal.isOpen = true"
         @open-timeline="handleOpenTimeline"
         @toggle-charts="showCharts = !showCharts"
+        @pay="handlePayInvoice"
+        @reverse="handleReverseInvoice"
         @sync="handleSync"
         @config="navigateTo('/clientes')"
         @open-client-details="handleOpenClientDetails"
@@ -56,6 +58,14 @@
       @close-history="historyModal.isOpen = false"
       @close-timeline="timelineModal.isOpen = false"
       @refresh-timeline="handleOpenTimeline"
+    />
+    
+    <!-- Modal de Gerar Fatura -->
+    <BlocksKGenerateInvoiceModal
+      :is-open="generateInvoiceModal.isOpen"
+      :payment="generateInvoiceModal.payment"
+      @close="generateInvoiceModal.isOpen = false"
+      @confirm="handleGenerateInvoice"
     />
     
     <!-- Modal de Nova/Editar Assinatura -->
@@ -122,6 +132,7 @@ const { stats, loading: loadingAnalytics } = useAnalytics()
 const { loading: loadingFinance } = useFinance()
 const { success } = useToast()
 const { exportPayments } = useExport()
+const { calculatePaymentStatus, getStatusLabel, getStatusClass, getStatusIcon } = useSubscriptionStatus()
 
 const { subscriptions, fetchSubscriptions } = useSubscriptionsManager()
 const { 
@@ -161,6 +172,7 @@ const {
   batchAutoBillingModal,
   logsModal,
   paymentModal,
+  generateInvoiceModal,
   historyModal,
   timelineModal,
   financialRecords,
@@ -168,13 +180,14 @@ const {
   fetchStats,
   handleOpenIndividualHistory,
   handleTogglePaymentStatus,
+  handleGenerateInvoice,
   handleConfirmPayment,
   handleOpenLogs,
   handleToggleAutoBilling,
   handleConfirmAutoBilling,
   handleBatchAutoBilling,
   handleOpenTimeline
-} = useSubscriptions()
+} = useSubscriptions(fetchSubscriptions)
 
 const handleSubscriptionCreated = async () => {
   subscriptionModal.isOpen = false
@@ -290,6 +303,22 @@ watch(() => subscriptions.value.map(s => s.tags?.length || 0).join(','), () => {
   refreshKey.value++
 }, { deep: true })
 
+// Watcher para forçar re-render quando stats.paymentsList muda (pagamentos atualizados)
+watch(() => stats.value.paymentsList?.length || 0, (newLength, oldLength) => {
+  if (newLength !== oldLength) {
+    console.log('🔄 [assinaturas.vue] Pagamentos atualizados, forçando re-render:', { oldLength, newLength })
+    refreshKey.value++
+  }
+})
+
+// Watcher adicional para mudanças nos status dos pagamentos
+watch(() => stats.value.paymentsList?.map(p => `${p.id}-${p.status}`).join(','), (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    console.log('🔄 [assinaturas.vue] Status de pagamentos mudou, forçando re-render')
+    refreshKey.value++
+  }
+}, { deep: true })
+
 const handleDeleteSuccess = (id: string) => {
   console.log('handleDeleteSuccess chamado para ID:', id)
   // Remover do array local usando o composable
@@ -308,6 +337,10 @@ const handleEditSubscription = (subscription: any) => {
 
 // Adaptar dados de subscriptions para o formato esperado pelo componente
 const adaptedSubscriptions = computed(() => {
+  console.log('🔄 [adaptedSubscriptions] Recalculando...')
+  console.log('📊 [adaptedSubscriptions] Subscriptions:', subscriptions.value.length)
+  console.log('📊 [adaptedSubscriptions] PaymentHistory:', paymentHistory.value.length)
+  
   const adapted = subscriptions.value.map(sub => {
     // Calcular próximo vencimento baseado no due_day
     const today = new Date()
@@ -324,22 +357,34 @@ const adaptedSubscriptions = computed(() => {
       nextDueDate = new Date(currentYear, currentMonth + 1, sub.due_day)
     }
     
+    // Calcular status de pagamento baseado nas faturas
+    const paymentStatus = calculatePaymentStatus(sub, paymentHistory.value)
+    
+    console.log(`💳 [adaptedSubscriptions] ${sub.customer_name}: payment_status = ${paymentStatus}`)
+    console.log(`📱 [adaptedSubscriptions] ${sub.customer_name}: WhatsApp = "${sub.customer_whatsapp}"`)
+    
     return {
       ...sub,
       company_name: sub.customer_name || 'Cliente não vinculado',
       company_actual_name: sub.customer_actual_name || 'Empresa não vinculada',
       company_id: sub.customer_id,
+      company_whatsapp: sub.customer_whatsapp || '', // WhatsApp do cliente
       plan_name: sub.plan_name || 'Plano não vinculado',
       tags: sub.tags || [], // Garantir que tags sejam incluídas
       due_date: nextDueDate.toISOString().split('T')[0], // Próximo vencimento calculado
       due_day: sub.due_day, // Manter due_day para filtros
       start_date: sub.start_date, // Data de início da assinatura
       subscription_status: sub.status, // Status da assinatura (active, suspended, cancelled, trial)
+      payment_status: paymentStatus, // Status de pagamento calculado (paid_up, pending, overdue, etc)
+      payment_status_label: getStatusLabel(paymentStatus), // Label em português
+      payment_status_class: getStatusClass(paymentStatus), // Classes CSS
+      payment_status_icon: getStatusIcon(paymentStatus), // Ícone
       status: sub.status, // Manter status original para o modal
-      _key: `${sub.id}-${sub.status}-${sub.updated_at || Date.now()}` // Key única para forçar re-render
+      _key: `${sub.id}-${sub.status}-${paymentStatus}-${sub.updated_at || Date.now()}` // Key única para forçar re-render
     }
   })
   
+  console.log('✅ [adaptedSubscriptions] Adaptados:', adapted.length)
   return adapted
 })
 
@@ -351,6 +396,12 @@ onMounted(async () => {
   // Log das assinaturas carregadas
   console.log('✅ [assinaturas.vue] Assinaturas carregadas:', subscriptions.value?.length || 0)
   console.log('📋 [assinaturas.vue] Dados das assinaturas:', subscriptions.value)
+  
+  // Log específico do WhatsApp
+  console.log('📱 [assinaturas.vue] WhatsApp por assinatura:')
+  subscriptions.value.forEach((sub: any) => {
+    console.log(`  - ${sub.customer_name}: WhatsApp = "${sub.customer_whatsapp}"`)
+  })
   
   // Registrar acesso à página
   try {
@@ -479,4 +530,73 @@ const handleToggleClientStatus = async () => {
   // Implementar toggle de status do cliente se necessário
   clientDetailsModal.isOpen = false
 }
+
+const handlePayInvoice = (payment: any) => {
+  // Abrir modal de receber pagamento
+  paymentModal.value.payment = payment
+  paymentModal.value.isOpen = true
+}
+
+const handleReverseInvoice = async (payment: any) => {
+  const { confirm, success, error } = useToast()
+  
+  const confirmed = await confirm(
+    `Deseja estornar o pagamento de ${payment.companies?.name}? O status voltará para PENDENTE.`,
+    'Estornar Pagamento'
+  )
+  
+  if (!confirmed) return
+  
+  try {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    console.log('↺ [handleReverseInvoice] Estornando pagamento:', payment.id)
+    
+    // 1. Atualizar status para pending e limpar paid_at
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update({ 
+        status: 'pending',
+        paid_at: null
+      })
+      .eq('id', payment.id)
+    
+    if (updateError) throw updateError
+    
+    console.log('✅ [handleReverseInvoice] Status atualizado para pending')
+    
+    // 2. Registrar em payment_history com action_type='reversed'
+    const { error: histError } = await supabase.from('payment_history').insert({
+      company_id: payment.company_id,
+      payment_id: payment.id,
+      action_type: 'reversed',
+      description: `Pagamento de ${payment.companies?.name} foi estornado - R$ ${payment.amount}`,
+      user_id: user.value?.id,
+      user_name: user.value?.user_metadata?.name || 'Sistema',
+      metadata: {
+        amount: payment.amount,
+        plan_name: payment.plan_name,
+        reversed_at: new Date().toISOString()
+      }
+    })
+    
+    if (histError) {
+      console.error('❌ [handleReverseInvoice] Erro ao registrar em payment_history:', histError)
+    }
+    
+    success('Pagamento estornado', `${payment.companies?.name} voltou para PENDENTE`)
+    
+    // 3. Atualizar dados
+    await new Promise(resolve => setTimeout(resolve, 300))
+    await fetchStats(true, false)
+    await fetchSubscriptions()
+    
+    console.log('✅ [handleReverseInvoice] Dados atualizados')
+  } catch (err: any) {
+    console.error('❌ [handleReverseInvoice] Erro ao estornar:', err)
+    error('Erro ao estornar', err.message)
+  }
+}
+
 </script>

@@ -36,30 +36,58 @@ export default defineEventHandler(async (event) => {
       })
     })
 
+    // Tentar ler o corpo da resposta para verificar se a mensagem foi enviada
+    let responseBody: any = null
+    try {
+      responseBody = await response.json()
+    } catch {
+      // Se não conseguir parsear JSON, ignorar
+    }
+
     const responseText = `Status: ${response.status} ${response.statusText}`
-    const resultStatus = response.ok ? 'success' : 'error'
+    
+    // Considerar sucesso se:
+    // 1. response.ok (200-299) OU
+    // 2. Status 401 mas corpo da resposta indica sucesso (mensagem enviada)
+    const isActualSuccess = response.ok || 
+      (response.status === 401 && responseBody?.success) ||
+      (response.status === 401 && responseBody?.message?.toLowerCase().includes('enviada'))
+    
+    const resultStatus = isActualSuccess ? 'success' : 'error'
+
+    console.log('📊 [API test.post] Response:', { 
+      status: response.status, 
+      ok: response.ok, 
+      body: responseBody,
+      isActualSuccess,
+      resultStatus 
+    })
 
     // 2. Log in database (Server side logic)
     await supabase.from('message_logs').insert({
       company_name: 'SISTEMA (TESTE API)',
       whatsapp: cleanNumber,
       message_body: testMessage,
-      status: response.ok ? 'Sucesso - Teste OK (Server)' : `Erro - ${responseText}`,
+      status: isActualSuccess ? 'Sucesso - Teste OK (Server)' : `Erro - ${responseText}`,
       is_cron: false,
       log_type: 'test'
     })
 
     // 3. Update CrmSettings with last test result
-    await supabase.from('crm_settings').update({
+    const { error: updateError } = await supabase.from('crm_settings').update({
       last_test_status: resultStatus,
       last_test_at: new Date().toISOString(),
-      last_test_response: responseText
+      last_test_response: responseText,
+      updated_at: new Date().toISOString() // Atualizar timestamp para ordenação
     }).eq('id', crmSettings.id)
+    
+    console.log('📊 [API test.post] Update settings:', { resultStatus, updateError })
 
     return {
-      success: response.ok,
+      success: isActualSuccess,
       status: response.status,
-      message: responseText
+      message: responseText,
+      responseBody // Incluir corpo da resposta para debug
     }
   } catch (err: any) {
     const errorMsg = err.message || 'Falha na conexão com a API'

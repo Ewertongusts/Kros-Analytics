@@ -1,4 +1,4 @@
-export const useSubscriptions = () => {
+export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
   const { stats, fetchStats } = useAnalytics()
   const { confirmPayment, toggleAutoBilling, processRecords } = useFinance()
   const { upsertCompany } = useCompanies()
@@ -23,8 +23,8 @@ export const useSubscriptions = () => {
   })
 
   const paymentHistory = computed(() => {
-    const history = stats.value.paymentsList.filter(p => p.status === 'Pago')
-    return history.filter(record => (record as any).sale_type === 'plano' || !(record as any).sale_type)
+    // Mostrar TODAS as faturas (pendentes e pagas) na aba Faturas
+    return stats.value.paymentsList.filter(record => (record as any).sale_type === 'plano' || !(record as any).sale_type)
   })
 
   // Handlers
@@ -35,57 +35,178 @@ export const useSubscriptions = () => {
     historyModal.value.isOpen = true
   }
 
+  const generateInvoiceModal = ref({ isOpen: false, payment: null as any })
+
   const handleTogglePaymentStatus = async (payment: any) => {
-    const isPaid = payment.status === 'Pago'
+    console.log('💵 [handleTogglePaymentStatus] Botão $ clicado')
+    console.log('💵 [handleTogglePaymentStatus] Payment:', payment)
+    console.log('💵 [handleTogglePaymentStatus] Abrindo modal de gerar fatura')
     
-    if (isPaid) {
-      if (!confirm(`Deseja estornar o pagamento de ${payment.company_name} para PENDENTE?`)) return
-      const res = await confirmPayment(payment.id, 'Pago')
-      if (!res.success) {
-        error('Erro ao processar', res.error)
-      } else {
-        success('Pagamento estornado', `${payment.company_name} marcado como pendente`)
-        // Registrar no histórico
-        await addHistoryEntry({
-          payment_id: payment.id,
-          company_id: payment.company_id,
-          action_type: 'reversed',
-          description: `Pagamento de ${payment.company_name} foi estornado para PENDENTE`,
-          metadata: { amount: payment.amount, plan_name: payment.plan_name }
-        })
+    // Abre modal de gerar fatura
+    generateInvoiceModal.value.payment = payment
+    generateInvoiceModal.value.isOpen = true
+    
+    console.log('💵 [handleTogglePaymentStatus] Modal state:', generateInvoiceModal.value)
+  }
+
+  const handleGenerateInvoice = async () => {
+    if (!generateInvoiceModal.value.payment) return
+    
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    try {
+      const subscription = generateInvoiceModal.value.payment
+      console.log('💰 [handleGenerateInvoice] Gerando fatura para:', subscription.company_name)
+      console.log('💰 [handleGenerateInvoice] Dados da assinatura:', {
+        customer_id: subscription.customer_id,
+        company_id: subscription.company_id,
+        plan_name: subscription.plan_name,
+        amount: subscription.amount
+      })
+      
+      // Usar customer_id (da assinatura) ou company_id (se vier de outro lugar)
+      const companyId = subscription.customer_id || subscription.company_id
+      
+      if (!companyId) {
+        throw new Error('ID da empresa não encontrado na assinatura')
       }
-    } else {
-      paymentModal.value.payment = payment
-      paymentModal.value.isOpen = true
+      
+      // 1. Criar fatura na tabela payments com status='pending'
+      const { data: newInvoice, error: invoiceError } = await supabase
+        .from('payments')
+        .insert({
+          company_id: companyId,
+          plan_name: subscription.plan_name,
+          amount: subscription.amount,
+          due_date: new Date().toISOString(),
+          status: 'pending',
+          sale_type: 'plano',
+          notes: `Fatura gerada automaticamente para ${subscription.company_name}`
+        } as any)
+        .select()
+        .single()
+      
+      if (invoiceError) {
+        console.error('❌ [handleGenerateInvoice] Erro ao criar fatura:', invoiceError)
+        throw invoiceError
+      }
+      
+      console.log('✅ [handleGenerateInvoice] Fatura criada:', (newInvoice as any)?.id)
+      
+      // 2. Registrar em payment_history com action_type='invoice_generated'
+      const { error: histError } = await supabase.from('payment_history').insert({
+        company_id: companyId,
+        payment_id: (newInvoice as any).id,
+        action_type: 'invoice_generated',
+        description: `Fatura gerada para ${subscription.company_name} (${subscription.plan_name}) - R$ ${subscription.amount}`,
+        user_id: user.value?.id,
+        user_name: user.value?.user_metadata?.name || 'Sistema',
+        metadata: {
+          amount: subscription.amount,
+          plan_name: subscription.plan_name,
+          company_name: subscription.company_name,
+          generated_at: new Date().toISOString()
+        }
+      } as any)
+      
+      if (histError) {
+        console.error('❌ [handleGenerateInvoice] Erro ao registrar em payment_history:', histError)
+      }
+      
+      console.log('✅ [handleGenerateInvoice] Registro criado em payment_history')
+      
+      // 3. Fechar modal e atualizar UI
+      generateInvoiceModal.value.isOpen = false
+      generateInvoiceModal.value.payment = null
+      success('Fatura gerada', `Fatura criada para ${subscription.company_name}`)
+      
+      // 4. Atualizar dados
+      await new Promise(resolve => setTimeout(resolve, 300))
+      await fetchStats(true, false)
+      
+      if (fetchSubscriptionsFn) {
+        await fetchSubscriptionsFn()
+      }
+      
+      console.log('✅ [handleGenerateInvoice] Dados atualizados')
+    } catch (err: any) {
+      console.error('❌ [handleGenerateInvoice] Erro ao gerar fatura:', err)
+      error('Erro ao gerar fatura', err.message)
     }
   }
 
   const handleConfirmPayment = async (data: any) => {
     if (!paymentModal.value.payment) return
     
-    const res = await confirmPayment(paymentModal.value.payment.id, 'Pendente', {
-      amount: data.amount,
-      notes: data.notes
-    })
-
-    if (res.success) {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    try {
       const payment = paymentModal.value.payment
+      console.log('💳 [handleConfirmPayment] Iniciando pagamento:', payment.company_name)
+      
+      // 1. Atualizar status do pagamento em 'payments'
+      const res = await confirmPayment(payment.id, 'Pendente', {
+        amount: data.amount,
+        notes: data.notes
+      })
+
+      if (!res.success) {
+        error('Erro ao confirmar pagamento', res.error)
+        return
+      }
+      
+      console.log('✅ [handleConfirmPayment] Pagamento confirmado em payments')
+
+      // 2. Registrar em payment_history com action_type='paid'
+      const { error: histError } = await supabase.from('payment_history').insert({
+        company_id: payment.company_id,
+        action_type: 'paid',
+        description: `Pagamento de ${payment.company_name} (${payment.plan_name}) foi confirmado - R$ ${data.amount}`,
+        user_id: user.value?.id,
+        user_name: user.value?.user_metadata?.name || 'Sistema',
+        metadata: {
+          amount: data.amount,
+          notes: data.notes,
+          plan_name: payment.plan_name,
+          payment_type: data.type,
+          paid_at: new Date().toISOString()
+        }
+      } as any)
+
+      if (histError) {
+        console.error('❌ [handleConfirmPayment] Erro ao registrar em payment_history:', histError)
+        error('Erro ao registrar pagamento no histórico', histError.message)
+        return
+      }
+      
+      console.log('✅ [handleConfirmPayment] Registro criado em payment_history')
+
+      // 3. Fechar modal e atualizar UI
       paymentModal.value.isOpen = false
       paymentModal.value.payment = null
       success('Pagamento confirmado', `${payment?.company_name || 'Empresa'} marcado como pago`)
       
-      // Registrar no histórico
-      await addHistoryEntry({
-        payment_id: payment.id,
-        company_id: payment.company_id,
-        action_type: 'paid',
-        description: `Pagamento de ${payment.company_name} foi confirmado`,
-        metadata: { amount: data.amount, notes: data.notes, plan_name: payment.plan_name }
-      })
+      console.log('🔄 [handleConfirmPayment] Atualizando dados...')
       
-      await fetchStats(true, true)
-    } else {
-      error('Erro ao confirmar pagamento', res.error)
+      // Aguardar um pouco para garantir que o banco processou
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      // 4. Atualizar dados - forçar refresh completo (SEM silent mode para garantir reatividade)
+      console.log('🔄 [handleConfirmPayment] Chamando fetchStats com force=true, silent=false')
+      await fetchStats(true, false)
+      
+      // 5. Atualizar subscriptions se a função foi fornecida (DEPOIS de fetchStats)
+      if (fetchSubscriptionsFn) {
+        console.log('🔄 [handleConfirmPayment] Atualizando subscriptions...')
+        await fetchSubscriptionsFn()
+      }
+      
+      console.log('✅ [handleConfirmPayment] Dados atualizados')
+    } catch (err: any) {
+      console.error('❌ [handleConfirmPayment] Erro ao confirmar pagamento:', err)
+      error('Erro ao confirmar pagamento', err.message)
     }
   }
 
@@ -104,8 +225,8 @@ export const useSubscriptions = () => {
     console.log('Payment encontrado:', payment.company_name)
 
     const oldTags = payment.tags || []
-    const addedTags = tags.filter(t => !oldTags.includes(t))
-    const removedTags = oldTags.filter(t => !tags.includes(t))
+    const addedTags = tags.filter((t: string) => !oldTags.includes(t))
+    const removedTags = oldTags.filter((t: string) => !tags.includes(t))
 
     const res = await upsertCompany({
       id: companyId,
@@ -158,6 +279,7 @@ export const useSubscriptions = () => {
         error('Erro ao desativar', res.error)
       } else {
         success('Automação desativada', `Cobrança automática de ${payment.company_name} foi desativada`)
+        // Registrar no histórico
         await addHistoryEntry({
           payment_id: payment.id,
           company_id: payment.company_id,
@@ -165,6 +287,8 @@ export const useSubscriptions = () => {
           description: `Cobrança automática desativada para ${payment.company_name}`,
           metadata: { plan_name: payment.plan_name }
         })
+        // Atualizar dados
+        await fetchStats(true, false)
       }
     } else {
       autoBillingModal.value.payment = payment
@@ -189,6 +313,8 @@ export const useSubscriptions = () => {
         description: `Cobrança automática ativada para ${payment.company_name}`,
         metadata: { plan_name: payment.plan_name, custom_message: customMessage }
       })
+      // Atualizar dados
+      await fetchStats(true, false)
     }
   }
 
@@ -259,7 +385,16 @@ export const useSubscriptions = () => {
       success('Automação ativada', `Cobrança automática ativada para ${payments.length} empresas`)
     }
     
-    await fetchStats(true, true)
+    // Aguardar um pouco para garantir que o banco processou
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // Atualizar dados - forçar refresh completo (SEM silent mode)
+    await fetchStats(true, false)
+    
+    // Atualizar subscriptions se a função foi fornecida
+    if (fetchSubscriptionsFn) {
+      await fetchSubscriptionsFn()
+    }
   }
 
   const handleBatchMarkPaid = async (payments: any[]) => {
@@ -294,7 +429,16 @@ export const useSubscriptions = () => {
       metadata: { batch_count: successes, errors }
     })
     
+    // Aguardar um pouco para garantir que o banco processou
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // Atualizar dados - forçar refresh completo (SEM silent mode)
     await fetchStats(true, false)
+    
+    // Atualizar subscriptions se a função foi fornecida
+    if (fetchSubscriptionsFn) {
+      await fetchSubscriptionsFn()
+    }
   }
 
   const handleBatchMarkPending = async (payments: any[]) => {
@@ -326,7 +470,16 @@ export const useSubscriptions = () => {
       metadata: { batch_count: successes, errors }
     })
     
+    // Aguardar um pouco para garantir que o banco processou
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // Atualizar dados - forçar refresh completo (SEM silent mode)
     await fetchStats(true, false)
+    
+    // Atualizar subscriptions se a função foi fornecida
+    if (fetchSubscriptionsFn) {
+      await fetchSubscriptionsFn()
+    }
   }
 
   const handleOpenTimeline = async () => {
@@ -352,7 +505,7 @@ export const useSubscriptions = () => {
           record_count: timelineModal.value.history.length,
           viewed_at: new Date().toISOString()
         }
-      })
+      } as any)
     } catch (err) {
       console.error('Erro ao registrar visualização:', err)
     }
@@ -366,6 +519,7 @@ export const useSubscriptions = () => {
     batchAutoBillingModal,
     logsModal,
     paymentModal,
+    generateInvoiceModal,
     historyModal,
     timelineModal,
     
@@ -377,6 +531,7 @@ export const useSubscriptions = () => {
     fetchStats,
     handleOpenIndividualHistory,
     handleTogglePaymentStatus,
+    handleGenerateInvoice,
     handleConfirmPayment,
     handleUpdateCompanyTags,
     handleOpenLogs,

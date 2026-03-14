@@ -32,12 +32,20 @@ export const useAnalytics = () => {
         try {
             // 1. EMPRESAS (fonte principal de dados)
             // Agora buscando também os pagamentos para calcular o LTV individual
+            console.log('🔍 [fetchStats] Buscando empresas...')
             const { data: companiesData } = await (supabase.from('companies') as any)
                 .select(`
                     id, is_active, created_at, monthly_price, whatsapp, name, email, 
                     representative_name, tags, plan_name, billing_cycle, billing_day,
                     payments (amount, status)
                 `)
+
+            console.log('📊 [fetchStats] Empresas encontradas:', companiesData?.length || 0)
+            if (companiesData && companiesData.length > 0) {
+                console.log('📋 [fetchStats] Primeira empresa:', companiesData[0])
+                console.log('📋 [fetchStats] Empresas ativas:', companiesData.filter((c: any) => c.is_active).length)
+                console.log('📋 [fetchStats] Empresas inativas:', companiesData.filter((c: any) => !c.is_active).length)
+            }
 
             const companiesMap = new Map()
 
@@ -75,12 +83,32 @@ export const useAnalytics = () => {
             }
 
             // 2. PAGAMENTOS - só de empresas ATIVAS
+            console.log('🔍 [fetchStats] Iniciando busca de pagamentos...')
+            console.log('🔍 [fetchStats] Filtros: companies.is_active = true')
+            
             const { data: paymentsData, error: paymentsError } = await (supabase.from('payments') as any)
-                .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags)')
+                .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags, billing_cycle)')
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 
+            console.log('📊 [fetchStats] Query executada')
+            console.log('📊 [fetchStats] Erro:', paymentsError)
+            console.log('📊 [fetchStats] Dados recebidos:', paymentsData)
+            console.log(`📊 [fetchStats] Pagamentos retornados: ${paymentsData?.length || 0}`)
+            
+            if (paymentsData && paymentsData.length > 0) {
+                console.log('📋 [fetchStats] Primeiros 3 pagamentos:', paymentsData.slice(0, 3))
+                console.log('📋 [fetchStats] Company IDs:', paymentsData.map((p: any) => p.company_id))
+            } else {
+                console.warn('⚠️ [fetchStats] NENHUM PAGAMENTO ENCONTRADO!')
+                console.warn('⚠️ [fetchStats] Possíveis causas:')
+                console.warn('   1. Tabela payments está vazia')
+                console.warn('   2. Nenhuma empresa está ativa (is_active = true)')
+                console.warn('   3. Erro na query')
+            }
+
             if (paymentsData) {
+                
                 // 2.1 Buscar últimos logs para identificar o último alerta
                 const { data: logsData } = await supabase
                     .from('message_logs')
@@ -96,13 +124,104 @@ export const useAnalytics = () => {
                     })
                 }
 
+                // 2.2 Buscar payment_history para verificar pagamentos do ciclo atual
+                const { data: paymentHistoryData } = await supabase
+                    .from('payment_history')
+                    .select('company_id, action_type, created_at')
+                    .in('action_type', ['paid', 'payment_received'])
+
+                console.log(`📋 [fetchStats] payment_history records encontrados: ${paymentHistoryData?.length || 0}`)
+                if (paymentHistoryData && paymentHistoryData.length > 0) {
+                    console.log(`📋 [fetchStats] Primeiros registros:`, paymentHistoryData.slice(0, 3))
+                    console.log(`📋 [fetchStats] Company IDs encontrados:`, [...new Set(paymentHistoryData.map((ph: any) => ph.company_id))])
+                }
+
+                // Mapear payment_history por company_id e ciclo
+                const paymentHistoryMap = new Map()
+                if (paymentHistoryData) {
+                    (paymentHistoryData as any[]).forEach(ph => {
+                        const key = `${ph.company_id}-${new Date(ph.created_at).toISOString().split('T')[0]}`
+                        if (!paymentHistoryMap.has(ph.company_id)) {
+                            paymentHistoryMap.set(ph.company_id, [])
+                        }
+                        paymentHistoryMap.get(ph.company_id).push(ph)
+                    })
+                }
+                console.log(`📊 [fetchStats] paymentHistoryMap size: ${paymentHistoryMap.size}`)
+                console.log(`📊 [fetchStats] paymentHistoryMap keys:`, Array.from(paymentHistoryMap.keys()))
+
+                // Função para calcular período de cobrança
+                const calculateBillingPeriod = (billingCycle: string) => {
+                    const today = new Date()
+                    const currentDay = today.getDate()
+                    const currentMonth = today.getMonth()
+                    const currentYear = today.getFullYear()
+                    
+                    let cycleStart: Date
+                    let cycleEnd: Date
+                    
+                    switch (billingCycle?.toLowerCase()) {
+                        case 'mensal':
+                            cycleStart = new Date(currentYear, currentMonth, 1)
+                            cycleEnd = new Date(currentYear, currentMonth + 1, 1)
+                            break
+                        case 'trimestral':
+                            const quarterMonth = Math.floor(currentMonth / 3) * 3
+                            cycleStart = new Date(currentYear, quarterMonth, 1)
+                            cycleEnd = new Date(currentYear, quarterMonth + 3, 1)
+                            break
+                        case 'semestral':
+                            const semiMonth = Math.floor(currentMonth / 6) * 6
+                            cycleStart = new Date(currentYear, semiMonth, 1)
+                            cycleEnd = new Date(currentYear, semiMonth + 6, 1)
+                            break
+                        case 'anual':
+                            cycleStart = new Date(currentYear, 0, 1)
+                            cycleEnd = new Date(currentYear + 1, 0, 1)
+                            break
+                        default:
+                            cycleStart = new Date(currentYear, currentMonth, 1)
+                            cycleEnd = new Date(currentYear, currentMonth + 1, 1)
+                    }
+                    
+                    return { cycleStart, cycleEnd }
+                }
+
                 const payments = (paymentsData as any[]).map(p => {
                     const companyInfo = companiesMap.get(p.company_id)
                     let enrichedStatus = p.status
 
-                    // IMPORTANTE: Só enriquecer status se NÃO for 'paid'
-                    // Se já está pago, manter como 'Pago' independente da data
-                    if (p.status === 'paid') {
+                    // Verificar se há pagamento neste ciclo
+                    const billingCycle = p.companies?.billing_cycle || companyInfo?.billing_cycle || 'Mensal'
+                    const { cycleStart, cycleEnd } = calculateBillingPeriod(billingCycle)
+                    
+                    const companyPaymentHistory = paymentHistoryMap.get(p.company_id) || []
+                    console.log(`🔍 [fetchStats] Verificando ${p.plan_name} (company_id: ${p.company_id}):`)
+                    console.log(`   - Ciclo: ${billingCycle} (${cycleStart.toISOString().split('T')[0]} até ${cycleEnd.toISOString().split('T')[0]})`)
+                    console.log(`   - Registros de pagamento encontrados: ${companyPaymentHistory.length}`)
+                    if (companyPaymentHistory.length > 0) {
+                        console.log(`   - Detalhes:`, companyPaymentHistory.map((ph: any) => ({
+                            action_type: ph.action_type,
+                            created_at: ph.created_at
+                        })))
+                    }
+                    
+                    const paidThisCycle = companyPaymentHistory.some((ph: any) => {
+                        const phDate = new Date(ph.created_at)
+                        return phDate >= cycleStart && phDate < cycleEnd && ph.action_type === 'paid'
+                    })
+
+                    console.log(`📊 [fetchStats] ${p.plan_name} - Status DB: ${p.status}, Pago este ciclo: ${paidThisCycle}, Ciclo: ${billingCycle}`)
+                    if (paidThisCycle) {
+                        console.log(`✅ [fetchStats] Pagamento encontrado para ${p.plan_name} - Ciclo: ${billingCycle}`)
+                    }
+
+                    // IMPORTANTE: Priorizar o status do banco quando paid_at é null (indica estorno)
+                    // Se paid_at é null E status é pending, significa que foi estornado
+                    if (p.status === 'pending' && !p.paid_at) {
+                        // Foi estornado - usar status do banco
+                        enrichedStatus = 'Pendente'
+                    } else if (p.status === 'paid' || paidThisCycle) {
                         enrichedStatus = 'Pago'
                     } else if (p.due_date) {
                         const dueDateString = p.due_date.includes('T') ? p.due_date : `${p.due_date}T12:00:00`

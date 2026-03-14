@@ -408,25 +408,51 @@ const confirmBatchPending = () => {
 }
 
 const handleDelete = async (payment: any) => {
+  console.log('🗑️ [handleDelete] Payment recebido:', payment)
+  console.log('🗑️ [handleDelete] Payment ID:', payment.id)
+  console.log('🗑️ [handleDelete] Payment company_name:', payment.company_name)
+  
   const confirmed = await confirm(
     `Deseja excluir a assinatura de ${payment.company_name}? Esta ação não pode ser desfeita.`,
     'Excluir Assinatura'
   )
-  if (!confirmed) return
+  if (!confirmed) {
+    console.log('🗑️ [handleDelete] Exclusão cancelada pelo usuário')
+    return
+  }
   
   try {
     const supabase = useSupabaseClient()
     const user = useSupabaseUser()
     
-    console.log('Apagando assinatura individual:', payment.id)
+    console.log('🗑️ [handleDelete] Iniciando exclusão da assinatura:', payment.id)
     
-    // Excluir assinatura da tabela subscriptions
+    // 1. Deletar pagamentos relacionados PRIMEIRO
+    console.log('🗑️ [handleDelete] Deletando pagamentos relacionados...')
+    const { error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .eq('company_id', payment.company_id)
+    
+    if (paymentsError) {
+      console.error('❌ [handleDelete] Erro ao deletar pagamentos:', paymentsError)
+      throw paymentsError
+    }
+    
+    console.log('✅ [handleDelete] Pagamentos deletados')
+    
+    // 2. Excluir assinatura da tabela subscriptions
     const { error } = await supabase
       .from('subscriptions')
       .delete()
       .eq('id', payment.id)
     
-    if (error) throw error
+    if (error) {
+      console.error('❌ [handleDelete] Erro ao excluir:', error)
+      throw error
+    }
+    
+    console.log('✅ [handleDelete] Assinatura excluída com sucesso')
     
     // Registrar no histórico
     const { error: historyError } = await supabase.from('payment_history').insert({
@@ -446,16 +472,17 @@ const handleDelete = async (payment: any) => {
     })
     
     if (historyError) {
-      console.error('Erro ao registrar no histórico:', historyError)
+      console.error('⚠️ [handleDelete] Erro ao registrar no histórico:', historyError)
     }
     
     const { success } = useToast()
     success('Assinatura excluída', `Assinatura de ${payment.company_name} foi removida`)
     
+    console.log('🔄 [handleDelete] Emitindo evento delete-success com ID:', payment.id)
     // Emitir evento com o ID para remover do array local
     emit('delete-success', payment.id)
   } catch (err: any) {
-    console.error('Erro ao excluir assinatura:', err)
+    console.error('❌ [handleDelete] Erro ao excluir assinatura:', err)
     const { error: errorToast } = useToast()
     errorToast('Erro ao excluir', err.message)
   }
@@ -486,10 +513,16 @@ watch([searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, isComp
 }, { deep: true })
 
 const openMsgModal = (payment: any) => {
+  console.log(`📱 [KFinanceCollectionBoard.openMsgModal] Payment:`, payment)
+  console.log(`📱 [KFinanceCollectionBoard.openMsgModal] WhatsApp: "${payment.company_whatsapp}"`)
+  
   if (!isValidWhatsApp(payment.company_whatsapp)) {
+    console.log(`❌ [KFinanceCollectionBoard.openMsgModal] WhatsApp inválido!`)
     alert('Empresa sem WhatsApp válido cadastrado. Não será possível enviar mensagem.')
     return
   }
+  
+  console.log(`✅ [KFinanceCollectionBoard.openMsgModal] WhatsApp válido, abrindo modal`)
   selectedPayment.value = payment
   isMsgModalOpen.value = true
 }

@@ -18,11 +18,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 const props = defineProps<{
   status?: string
 }>()
+
+// Log para debug
+watch(() => props.status, (newStatus) => {
+  console.log('🎯 [KCrmStatusIndicator] Status mudou para:', newStatus)
+}, { immediate: true })
 
 const statusClass = computed(() => {
   if (props.status === 'success') return 'bg-emerald-500'

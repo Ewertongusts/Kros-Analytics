@@ -15,20 +15,19 @@
       </svg>
     </button>
 
-    <!-- Toggle Status -->
+    <!-- Registrar Fatura -->
     <button 
       @click="$emit('toggle-status')"
-      :title="status === 'Pago' ? 'Desfazer Pagamento (Estornar)' : 'Marcar como Pago'"
+      title="Registrar Fatura"
       :class="[
-        'rounded-xl transition-all',
-        isCompact ? 'p-1.5' : 'p-2.5',
-        status === 'Pago' 
-          ? 'bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white' 
-          : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white'
+        'rounded-xl transition-all bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white',
+        isCompact ? 'p-1.5' : 'p-2.5'
       ]"
     >
-      <svg v-if="status !== 'Pago'" xmlns="http://www.w3.org/2000/svg" :width="isCompact ? 12 : 14" :height="isCompact ? 12 : 14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      <svg v-else xmlns="http://www.w3.org/2000/svg" :width="isCompact ? 12 : 14" :height="isCompact ? 12 : 14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" :width="isCompact ? 12 : 14" :height="isCompact ? 12 : 14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+      </svg>
     </button>
 
     <!-- Auto Billing -->

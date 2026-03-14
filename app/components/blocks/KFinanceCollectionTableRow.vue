@@ -62,7 +62,7 @@
     <td :class="['text-center', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
       <div class="flex items-center justify-center">
         <FinanceSubscriptionKPaymentStatusBadge 
-          :status="mapPaymentStatus(payment.status)" 
+          :status="payment.payment_status || 'active'" 
           :size="isCompact ? 'sm' : 'md'"
         />
       </div>
@@ -109,6 +109,9 @@ const props = defineProps<{
   isCompact: boolean
   tagDefinitions: any[]
 }>()
+
+// Log para debug do WhatsApp
+console.log(`📱 [KFinanceCollectionTableRow] ${props.payment.company_name}: WhatsApp = "${props.payment.company_whatsapp}"`)
 
 const emit = defineEmits([
   'toggle-select', 

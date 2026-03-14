@@ -26,7 +26,7 @@
           ]"
           :style="activeTabModel === 'history' ? { color: `var(--kros-blue, #007BFF)`, borderColor: `var(--kros-blue, #007BFF)` } : {}"
         >
-          Histórico de Pagamentos
+          Faturas
         </button>
         <button
           @click="activeTabModel = 'logs'"
@@ -130,6 +130,8 @@
         :active-sub-tab="activeTabModel"
         @update:active-sub-tab="handleTabUpdate"
         :history="paymentHistory" 
+        @pay="$emit('pay', $event)"
+        @reverse="$emit('reverse', $event)"
         @sync="$emit('sync')"
         @config="$emit('config')"
       />
@@ -174,6 +176,8 @@ const emit = defineEmits<{
   'open-client-details': [payment: any]
   'open-plan-details': [payment: any]
   'update-payments': [payments: any[]]
+  'pay': [payment: any]
+  'reverse': [payment: any]
   sync: []
   config: []
   export: [format: string]

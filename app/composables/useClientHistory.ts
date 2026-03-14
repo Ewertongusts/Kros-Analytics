@@ -35,6 +35,52 @@ export const useClientHistory = () => {
     return `${year}-${month}-${day}`
   }
 
+  // Função para calcular o período de cobrança baseado no billing_cycle
+  const calculateBillingPeriod = (billingCycle: string) => {
+    const today = new Date()
+    const currentDay = today.getDate()
+    const currentMonth = today.getMonth()
+    const currentYear = today.getFullYear()
+    
+    let cycleStart: Date
+    let cycleEnd: Date
+    
+    switch (billingCycle?.toLowerCase()) {
+      case 'mensal':
+        // Ciclo mensal: dia 1 até dia 1 do próximo mês
+        cycleStart = new Date(currentYear, currentMonth, 1)
+        cycleEnd = new Date(currentYear, currentMonth + 1, 1)
+        break
+      
+      case 'trimestral':
+        // Ciclo trimestral: a cada 3 meses
+        const quarterMonth = Math.floor(currentMonth / 3) * 3
+        cycleStart = new Date(currentYear, quarterMonth, 1)
+        cycleEnd = new Date(currentYear, quarterMonth + 3, 1)
+        break
+      
+      case 'semestral':
+        // Ciclo semestral: a cada 6 meses
+        const semiMonth = Math.floor(currentMonth / 6) * 6
+        cycleStart = new Date(currentYear, semiMonth, 1)
+        cycleEnd = new Date(currentYear, semiMonth + 6, 1)
+        break
+      
+      case 'anual':
+        // Ciclo anual: janeiro até janeiro do próximo ano
+        cycleStart = new Date(currentYear, 0, 1)
+        cycleEnd = new Date(currentYear + 1, 0, 1)
+        break
+      
+      default:
+        // Padrão: mensal
+        cycleStart = new Date(currentYear, currentMonth, 1)
+        cycleEnd = new Date(currentYear, currentMonth + 1, 1)
+    }
+    
+    return { cycleStart, cycleEnd }
+  }
+
   const fetchClientHistory = async (companyId: string) => {
     loading.value = true
     try {
@@ -191,22 +237,41 @@ export const useClientHistory = () => {
       const activeSubscriptions = subscriptions?.filter((s: any) => s.status === 'active') || []
       const suspendedSubscriptions = subscriptions?.filter((s: any) => s.status === 'suspended') || []
       
-      // Adicionar payment_status e próximo vencimento às assinaturas baseado nas vendas
+      // Adicionar payment_status e próximo vencimento às assinaturas
+      // O payment_status deve ser calculado baseado em payment_history do ciclo atual
       const subscriptionsWithPaymentStatus = subscriptions?.map((sub: any) => {
-        // Procurar venda associada a esta assinatura usando o nome do plano
         const planName = sub.plan?.name || sub.plan_name
-        const associatedSale = allSales?.find((sale: any) => 
-          sale.plan_name === planName || 
-          (sale.custom_name && sale.custom_name === planName)
-        )
+        const billingCycle = sub.plan?.billing_cycle || 'Mensal'
         
         // Calcular próximo vencimento
         const nextBillingDate = calculateNextBillingDate(sub.start_date, sub.due_day)
         
+        // Calcular período de cobrança baseado no billing_cycle
+        const { cycleStart, cycleEnd } = calculateBillingPeriod(billingCycle)
+        
+        // Procurar por payment_history com action_type='paid' neste ciclo
+        const paidThisCycle = paymentHistory?.some((ph: any) => {
+          const phDate = new Date(ph.created_at)
+          return phDate >= cycleStart && 
+                 phDate < cycleEnd && 
+                 (ph.action_type === 'paid' || ph.description?.includes('confirmado'))
+        })
+        
+        // Determinar status
+        let paymentStatus = 'pending'
+        
+        if (paidThisCycle) {
+          paymentStatus = 'paid'
+        } else if (new Date() > new Date(cycleStart.getFullYear(), cycleStart.getMonth(), sub.due_day || 10)) {
+          // Passou do dia de vencimento sem pagar
+          paymentStatus = 'overdue'
+        }
+        
         return {
           ...sub,
           plan_name: planName,
-          payment_status: associatedSale?.payment_status || 'pending',
+          billing_cycle: billingCycle,
+          payment_status: paymentStatus,
           next_billing_date: nextBillingDate
         }
       }) || []

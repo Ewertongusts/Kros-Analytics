@@ -30,7 +30,7 @@
       <div class="space-y-3">
         <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-kros-blue">Cobrança</h3>
         
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 gap-3">
           <div class="space-y-2">
             <label class="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50">
               Início *
@@ -56,21 +56,6 @@
               placeholder="10"
               class="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-kros-blue transition-all font-medium placeholder:text-white/20"
             />
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50">
-              Status *
-            </label>
-            <select 
-              v-model="form.status"
-              class="w-full bg-[#111112] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none"
-            >
-              <option value="active">Ativa</option>
-              <option value="suspended">Suspensa</option>
-              <option value="cancelled">Cancelada</option>
-              <option value="trial">Trial</option>
-            </select>
           </div>
         </div>
       </div>

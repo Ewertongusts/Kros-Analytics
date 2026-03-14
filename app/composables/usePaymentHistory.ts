@@ -144,6 +144,53 @@ export const usePaymentHistory = () => {
     }
   })
 
+  const addHistoryEntry = async (entry: {
+    payment_id?: string
+    company_id?: string
+    action_type: string
+    description: string
+    metadata?: any
+  }) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      const payload = {
+        ...entry,
+        user_id: user?.id,
+        user_name: user?.email?.split('@')[0] || 'Sistema',
+        created_at: new Date().toISOString()
+      }
+
+      const { error: insertError } = await supabase.from('payment_history').insert(payload)
+      
+      if (insertError) throw insertError
+      
+      console.log('✅ History entry added:', entry.action_type)
+      return { success: true }
+    } catch (e: any) {
+      console.error('❌ Erro ao adicionar entrada no histórico:', e)
+      return { success: false, error: e.message }
+    }
+  }
+
+  const fetchAllHistory = async (limit = 100) => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('payment_history')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (fetchError) throw fetchError
+      
+      console.log('✅ All history fetched:', data?.length || 0, 'records')
+      return { success: true, data: data || [] }
+    } catch (e: any) {
+      console.error('❌ Erro ao buscar histórico completo:', e)
+      return { success: false, error: e.message, data: [] }
+    }
+  }
+
   return {
     payments,
     loading,
@@ -151,6 +198,8 @@ export const usePaymentHistory = () => {
     fetchPaymentHistory,
     recordPayment,
     deletePaymentRecord,
-    getPaymentSummary
+    getPaymentSummary,
+    addHistoryEntry,
+    fetchAllHistory
   }
 }

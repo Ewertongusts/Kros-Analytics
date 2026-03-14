@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-type PaymentStatus = 'paid' | 'pending' | 'overdue'
+type PaymentStatus = 'paid_up' | 'pending' | 'overdue' | 'active' | 'paid'
 type BadgeSize = 'sm' | 'md' | 'lg'
 
 const props = withDefaults(defineProps<{
@@ -45,9 +45,11 @@ const props = withDefaults(defineProps<{
 
 const label = computed(() => {
   const labels: Record<PaymentStatus, string> = {
+    paid_up: 'Em Dia',
     paid: 'Pago',
     pending: 'Pendente',
-    overdue: 'Atrasado'
+    overdue: 'Atrasado',
+    active: 'Ativa'
   }
   return labels[props.status] || 'N/A'
 })
@@ -72,15 +74,18 @@ const iconSize = computed(() => {
 
 const variantClasses = computed(() => {
   const variants: Record<PaymentStatus, string> = {
+    paid_up: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
     paid: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
     pending: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
-    overdue: 'bg-red-500/10 text-red-500 border border-red-500/20'
+    overdue: 'bg-red-500/10 text-red-500 border border-red-500/20',
+    active: 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
   }
   return variants[props.status] || 'bg-white/5 text-white/40 border border-white/10'
 })
 
 const iconPath = computed(() => {
   const icons: Record<PaymentStatus, any> = {
+    paid_up: () => h('polyline', { points: '20 6 9 17 4 12' }),
     paid: () => h('polyline', { points: '20 6 9 17 4 12' }),
     pending: () => [
       h('circle', { cx: '12', cy: '12', r: '10' }),
@@ -90,7 +95,8 @@ const iconPath = computed(() => {
       h('path', { d: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z' }),
       h('path', { d: 'M12 9v4' }),
       h('path', { d: 'M12 17h.01' })
-    ]
+    ],
+    active: () => h('circle', { cx: '12', cy: '12', r: '10', fill: 'currentColor' })
   }
   return icons[props.status]
 })

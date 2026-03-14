@@ -96,15 +96,6 @@
           <span class="text-xs font-bold text-white uppercase tracking-tight truncate">
             {{ user?.user_metadata?.full_name || 'Gestor Kros' }}
           </span>
-          <div class="flex items-center gap-1.5 mt-0.5">
-             <div :class="[
-               'w-1.5 h-1.5 rounded-full',
-               crmSettings?.last_test_status === 'success' ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : (crmSettings?.last_test_status === 'error' ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 'bg-white/20')
-             ]"></div>
-             <span class="text-[8px] font-bold uppercase tracking-widest truncate" :class="crmSettings?.api_token ? 'text-white/60' : 'text-orange-400/60'">
-               {{ crmSettings?.api_token ? 'WhatsApp ON' : 'WhatsApp OFF' }}
-             </span>
-          </div>
         </div>
       </div>
 

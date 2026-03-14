@@ -45,7 +45,7 @@ export const useSubscriptionsManager = () => {
         .from('subscriptions')
         .select(`
           *,
-          customer:companies!customer_id(id, name, email, tags, representative_name),
+          customer:companies!customer_id(id, name, email, tags, representative_name, whatsapp),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
       
@@ -75,6 +75,7 @@ export const useSubscriptionsManager = () => {
         customer_name: sub.customer?.representative_name || sub.customer?.name,
         customer_actual_name: sub.customer?.name,
         customer_email: sub.customer?.email,
+        customer_whatsapp: sub.customer?.whatsapp || '',
         tags: sub.customer?.tags || [],
         plan_name: sub.plan?.name,
         plan_billing_cycle: sub.plan?.billing_cycle
@@ -85,6 +86,10 @@ export const useSubscriptionsManager = () => {
       console.log('🏷️ [useSubscriptionsManager] Tags por assinatura:')
       subscriptions.value.forEach((sub, idx) => {
         console.log(`  [${idx}] ${sub.customer_name}: ${sub.tags?.length || 0} tags -`, sub.tags)
+      })
+      console.log('📱 [useSubscriptionsManager] WhatsApp por assinatura:')
+      subscriptions.value.forEach((sub, idx) => {
+        console.log(`  [${idx}] ${sub.customer_name}: WhatsApp = "${sub.customer_whatsapp}"`)
       })
       
       return { success: true, data: subscriptions.value }

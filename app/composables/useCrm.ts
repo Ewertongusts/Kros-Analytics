@@ -58,16 +58,16 @@ export const useCrm = () => {
     try {
       const user = useSupabaseUser()
       
-      // Fetch Configurações
+      // Fetch Configurações - pegar a mais recente (última atualizada)
       let configQuery = supabase
         .from('crm_settings')
         .select('*')
-      
-      if (user.value) {
-        configQuery = configQuery.eq('user_id', user.value.id)
-      }
+        .order('updated_at', { ascending: false })
       
       const { data: configData, error: configErr } = await configQuery.limit(1).single()
+      
+      console.log('⚙️ [useCrm] Configurações carregadas:', configData)
+      console.log('📊 [useCrm] last_test_status:', configData?.last_test_status)
       
       if (configData) {
         settings.value = configData
@@ -89,11 +89,16 @@ export const useCrm = () => {
         .select('*')
         .in('log_type', ['test', 'test_image', 'test_file'])
       
-      if (user.value) {
-        logsQuery = logsQuery.eq('user_id', user.value.id)
-      }
+      // Remover filtro por user_id temporariamente para debug
+      // if (user.value) {
+      //   logsQuery = logsQuery.eq('user_id', user.value.id)
+      // }
       
-      const { data: logsData } = await logsQuery.order('created_at', { ascending: false }).limit(20)
+      const { data: logsData, error: logsError } = await logsQuery.order('created_at', { ascending: false }).limit(20)
+      
+      console.log('📊 [useCrm] Logs carregados:', logsData?.length || 0)
+      console.log('📋 [useCrm] Dados dos logs:', logsData)
+      console.log('❌ [useCrm] Erro ao carregar logs:', logsError)
       
       testLogs.value = (logsData || []) as ApiTestLog[]
 
@@ -144,6 +149,12 @@ export const useCrm = () => {
         body: { phoneNumber }
       }) as any
 
+      // Aguardar um pouco para garantir que o banco foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Recarregar dados para atualizar o histórico
+      await fetchCrmData()
+
       if (response.success) {
         return { success: true, message: response.message }
       } else {
@@ -151,10 +162,14 @@ export const useCrm = () => {
       }
     } catch (err: any) {
       const errorMsg = err.data?.message || err.message || 'Erro ao processar teste no servidor'
+      
+      // Aguardar e recarregar mesmo em caso de erro
+      await new Promise(resolve => setTimeout(resolve, 500))
+      await fetchCrmData()
+      
       return { success: false, message: errorMsg }
     } finally {
       testing.value = false
-      await fetchCrmData() // Refresh logs and settings
     }
   }
 

@@ -97,10 +97,8 @@ export const useFinance = () => {
         }
       }
       
-      // Aguardar um pouco para garantir que o banco processou
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      await fetchStats(true)
+      // NÃO chamar fetchStats aqui - deixar para o caller (handleConfirmPayment)
+      // para evitar race conditions e conflitos de reatividade
       return { success: true, isPaid: !isPaid }
     } catch (err: any) {
       console.error('Erro ao processar pagamento:', err)
@@ -123,7 +121,7 @@ export const useFinance = () => {
         .eq('id', paymentId)
 
       if (error) throw error
-      await fetchStats(true)
+      // NÃO chamar fetchStats aqui - deixar para o caller para evitar race conditions
       return { success: true }
     } catch (err: any) {
       console.error('Erro ao alternar automação de cobrança:', err)
@@ -137,7 +135,18 @@ export const useFinance = () => {
     return paymentsList.map(payment => {
       // Usar o status já enriquecido que vem do fetchStats
       // O fetchStats já faz toda a lógica de verificar paid_at, datas, etc
-      const currentStatus = payment.status as 'Pago' | 'Pendente' | 'Atrasado' | 'Churn'
+      let currentStatus = payment.status as 'Pago' | 'Pendente' | 'Atrasado' | 'Churn'
+      
+      // Fallback: se status vier undefined ou em inglês, converter
+      if (!currentStatus || currentStatus === 'paid' as any) {
+        currentStatus = 'Pago'
+      } else if (currentStatus === 'pending' as any) {
+        currentStatus = 'Pendente'
+      } else if (currentStatus === 'overdue' as any) {
+        currentStatus = 'Atrasado'
+      } else if (currentStatus === 'churned' as any) {
+        currentStatus = 'Churn'
+      }
 
       return {
         id: payment.id,

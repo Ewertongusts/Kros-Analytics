@@ -15,7 +15,11 @@
 
     </div>
 
-    <FinanceHistoryKHistoryTable :payments="paginatedHistory" />
+    <FinanceHistoryKHistoryTable 
+      :payments="paginatedHistory" 
+      @pay="$emit('pay', $event)"
+      @reverse="$emit('reverse', $event)"
+    />
 
     <FinanceLogsKLogsPagination
       v-if="totalPages > 1"
@@ -37,7 +41,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-defineEmits(['update:activeSubTab', 'sync', 'config'])
+defineEmits(['update:activeSubTab', 'sync', 'config', 'pay', 'reverse'])
 
 const {
   startDate,
