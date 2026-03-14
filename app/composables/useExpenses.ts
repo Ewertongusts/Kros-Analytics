@@ -1,16 +1,21 @@
 import { ref, computed } from 'vue'
 
+/**
+ * Expense interface - Represents a registered expense (recurring or unique)
+ * NOT an occurrence or payment record
+ */
 export interface Expense {
   id: string
+  user_id: string
   description: string
   category_id: string
   amount: number
-  status: 'pending' | 'paid'
-  notes?: string
-  receipt_url?: string
   is_recurring: boolean
-  recurring_frequency?: string
-  due_date?: string
+  recurring_frequency?: string // 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly'
+  start_date: string // DATE format: YYYY-MM-DD
+  end_date?: string // DATE format: YYYY-MM-DD (null = no end date)
+  is_active: boolean
+  notes?: string
   created_at: string
   updated_at: string
 }
@@ -32,22 +37,27 @@ export const useExpenses = () => {
   const categories = ref<Category[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const refreshKey = ref(0)
 
-  const fetchExpenses = async () => {
+  /**
+   * Fetch all expenses for the current user
+   * Filters by is_active status
+   */
+  const fetchExpenses = async (includeInactive: boolean = false) => {
     loading.value = true
     error.value = null
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
-      let query = (supabase.from('transactions') as any)
+      if (!user) throw new Error('Usuário não autenticado')
+
+      let query = supabase
+        .from('expenses')
         .select('*')
-        .eq('type', 'expense')
-      
-      if (user) {
-        query = query.eq('user_id', user.id)
+        .eq('user_id', user.id)
+
+      if (!includeInactive) {
+        query = query.eq('is_active', true)
       }
-      
+
       query = query.order('created_at', { ascending: false })
 
       const { data, error: fetchError } = await query
@@ -66,25 +76,20 @@ export const useExpenses = () => {
     loading.value = true
     error.value = null
     try {
-      // Fetch all active categories (not filtered by user_id since old categories don't have it)
-      const { data, error: fetchError } = await (supabase.from('expense_categories') as any)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuário não autenticado')
+
+      const { data, error: fetchError } = await supabase
+        .from('expense_categories')
         .select('*')
+        .eq('user_id', user.id)
         .eq('is_active', true)
         .order('name', { ascending: true })
 
-      if (fetchError) {
-        console.error('fetchCategories error details:', fetchError)
-        throw fetchError
-      }
-      
-      // Force reactivity by creating a new array reference
+      if (fetchError) throw fetchError
+
       categories.value = data ? [...data] : []
       console.log('fetchCategories: categories.value updated:', categories.value.length, 'items')
-      
-      // Log each category
-      categories.value.forEach((cat, idx) => {
-        console.log(`  [${idx}] id=${cat.id}, name=${cat.name}, user_id=${cat.user_id}, is_active=${cat.is_active}`)
-      })
     } catch (e: any) {
       error.value = e.message
       console.error('Erro ao buscar categorias:', e)
@@ -93,34 +98,36 @@ export const useExpenses = () => {
     }
   }
 
+  /**
+   * Create or update an expense
+   * If is_recurring, automatically generates occurrences
+   */
   const upsertExpense = async (expense: Partial<Expense>) => {
     loading.value = true
     error.value = null
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
+      if (!user) throw new Error('Usuário não autenticado')
+
       const payload: any = {
         description: expense.description,
         category_id: expense.category_id,
         amount: expense.amount,
-        status: expense.status || 'pending',
-        notes: expense.notes || null,
-        receipt_url: expense.receipt_url || null,
         is_recurring: expense.is_recurring || false,
         recurring_frequency: expense.recurring_frequency || null,
-        due_date: expense.due_date || null,
-        type: 'expense'
-      }
-
-      if (user) {
-        payload.user_id = user.id
+        start_date: expense.start_date,
+        end_date: expense.end_date || null,
+        is_active: expense.is_active !== false,
+        notes: expense.notes || null,
+        user_id: user.id
       }
 
       if (expense.id) {
         payload.id = expense.id
       }
 
-      const { data, error: upsertError } = await (supabase.from('transactions') as any)
+      const { data, error: upsertError } = await supabase
+        .from('expenses')
         .upsert(payload, { onConflict: 'id' })
         .select()
         .single()
@@ -138,21 +145,21 @@ export const useExpenses = () => {
     }
   }
 
+  /**
+   * Delete an expense and all its occurrences
+   */
   const deleteExpense = async (id: string) => {
     loading.value = true
     error.value = null
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
-      let query = (supabase.from('transactions') as any)
+      if (!user) throw new Error('Usuário não autenticado')
+
+      const { error: deleteError } = await supabase
+        .from('expenses')
         .delete()
         .eq('id', id)
-      
-      if (user) {
-        query = query.eq('user_id', user.id)
-      }
-
-      const { error: deleteError } = await query
+        .eq('user_id', user.id)
 
       if (deleteError) throw deleteError
 
@@ -276,102 +283,63 @@ export const useExpenses = () => {
       }
     }
 
-  const markExpenseAsPaid = async (id: string) => {
+  /**
+   * Pause/resume an expense (toggle is_active)
+   */
+  const toggleExpenseActive = async (id: string, isActive: boolean) => {
     loading.value = true
     error.value = null
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
-      let query = (supabase.from('transactions') as any)
-        .update({ status: 'paid' })
-        .eq('id', id)
-      
-      if (user) {
-        query = query.eq('user_id', user.id)
-      }
+      if (!user) throw new Error('Usuário não autenticado')
 
-      const { error: updateError } = await query
+      const { data, error: updateError } = await supabase
+        .from('expenses')
+        .update({ is_active: isActive })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
 
       if (updateError) throw updateError
 
       await fetchExpenses()
-      return { success: true }
+      return { success: true, data }
     } catch (e: any) {
       error.value = e.message
-      console.error('Erro ao marcar como pago:', e)
+      console.error('Erro ao atualizar status da despesa:', e)
       return { success: false, error: e.message }
     } finally {
       loading.value = false
     }
   }
 
-  const getExpensesByCategory = computed(() => {
-    const grouped: Record<string, Expense[]> = {}
-    expenses.value.forEach((expense: Expense) => {
-      if (!grouped[expense.category_id]) {
-        grouped[expense.category_id] = []
-      }
-      grouped[expense.category_id]!.push(expense)
-    })
-    return grouped
+  /**
+   * Get recurring expenses only
+   */
+  const getRecurringExpenses = computed(() => {
+    return expenses.value.filter(e => e.is_recurring && e.is_active)
   })
 
-  const getExpensesByMonth = computed(() => {
-    const grouped: Record<string, Expense[]> = {}
-    expenses.value.forEach((expense: Expense) => {
-      const date = new Date(expense.created_at)
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-      if (!grouped[key]) {
-        grouped[key] = []
-      }
-      grouped[key].push(expense)
-    })
-    return grouped
+  /**
+   * Get unique (non-recurring) expenses only
+   */
+  const getUniqueExpenses = computed(() => {
+    return expenses.value.filter(e => !e.is_recurring && e.is_active)
   })
 
-  const getTotalByCategory = computed(() => {
-    const totals: Record<string, number> = {}
-    expenses.value.forEach((expense: Expense) => {
-      if (!totals[expense.category_id]) {
-        totals[expense.category_id] = 0
-      }
-      totals[expense.category_id]! += expense.amount
-    })
-    return totals
+  /**
+   * Get active expenses only
+   */
+  const getActiveExpenses = computed(() => {
+    return expenses.value.filter(e => e.is_active)
   })
 
-  const getTotalByMonth = computed(() => {
-    const totals: Record<string, number> = {}
-    expenses.value.forEach((expense: Expense) => {
-      const date = new Date(expense.created_at)
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-      if (!totals[key]) {
-        totals[key] = 0
-      }
-      totals[key] += expense.amount
-    })
-    return totals
-  })
-
-  const getCurrentMonthTotal = computed(() => {
-    const now = new Date()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
-
-    return expenses.value
-      .filter(e => {
-        const date = new Date(e.created_at)
-        return date.getMonth() === currentMonth && date.getFullYear() === currentYear
-      })
-      .reduce((sum, e) => sum + e.amount, 0)
-  })
-
-  const getPendingExpenses = computed(() => {
-    return expenses.value.filter(e => e.status === 'pending')
-  })
-
-  const getPaidExpenses = computed(() => {
-    return expenses.value.filter(e => e.status === 'paid')
+  /**
+   * Get inactive expenses only
+   */
+  const getInactiveExpenses = computed(() => {
+    return expenses.value.filter(e => !e.is_active)
   })
 
   return {
@@ -383,15 +351,12 @@ export const useExpenses = () => {
     fetchCategories,
     upsertExpense,
     deleteExpense,
+    toggleExpenseActive,
     upsertCategory,
     deleteCategory,
-    markExpenseAsPaid,
-    getExpensesByCategory,
-    getExpensesByMonth,
-    getTotalByCategory,
-    getTotalByMonth,
-    getCurrentMonthTotal,
-    getPendingExpenses,
-    getPaidExpenses
+    getRecurringExpenses,
+    getUniqueExpenses,
+    getActiveExpenses,
+    getInactiveExpenses
   }
 }
