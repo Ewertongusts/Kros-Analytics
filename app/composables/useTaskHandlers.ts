@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import type { Task } from '~/composables/useTasks'
 
 export const useTaskHandlers = () => {
-  const { tasks, createTask, updateTask, deleteTask: removeTask, moveTask: moveTaskStatus } = useTasks()
+  const { tasks, loading, createTask, updateTask, deleteTask: removeTask, moveTask: moveTaskStatus, fetchTasks } = useTasks()
 
   const isTaskModalOpen = ref(false)
   const selectedTask = ref<Task | null>(null)
@@ -49,6 +49,9 @@ export const useTaskHandlers = () => {
   }
 
   return {
+    tasks,
+    loading,
+    fetchTasks,
     isTaskModalOpen,
     selectedTask,
     loadingAction,

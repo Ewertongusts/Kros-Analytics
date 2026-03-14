@@ -1,42 +1,30 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 export interface Task {
   id?: string
   title: string
   description?: string
   status: 'todo' | 'in_progress' | 'done'
-  priority: 'low' | 'medium' | 'high'
+  priority: 'alta' | 'media' | 'baixa'
   due_date?: string
   company_id?: string
-  payment_id?: string
   assigned_to?: string
-  tags?: string[]
   created_at?: string
   updated_at?: string
 }
 
 export const useTasks = () => {
   const supabase = useSupabaseClient()
+  const user = useSupabaseUser()
   const tasks = ref<Task[]>([])
   const loading = ref(false)
 
   const fetchTasks = async () => {
     loading.value = true
     try {
-      const user = useSupabaseUser()
-      
-      let query = (supabase.from('tasks') as any)
-        .select(`
-          *,
-          companies (name),
-          payments (amount, due_date)
-        `)
-      
-      if (user.value) {
-        query = query.eq('user_id', user.value.id)
-      }
-      
-      query = query.order('created_at', { ascending: false })
+      const query = (supabase.from('tasks') as any)
+        .select('*')
+        .order('created_at', { ascending: false })
 
       const { data, error } = await query
 
@@ -52,13 +40,24 @@ export const useTasks = () => {
   const createTask = async (task: Task) => {
     loading.value = true
     try {
-      const user = useSupabaseUser()
+      if (!user.value?.id) {
+        throw new Error('Usuário não autenticado')
+      }
+
+      const taskData = {
+        title: task.title,
+        description: task.description || null,
+        status: task.status || 'todo',
+        priority: task.priority || 'media',
+        due_date: task.due_date ? new Date(task.due_date).toISOString() : null,
+        company_id: task.company_id || null,
+        assigned_to: task.assigned_to || null,
+        created_by: user.value.id,
+        created_at: new Date().toISOString()
+      }
+
       const { data, error } = await (supabase.from('tasks') as any)
-        .insert([{
-          ...task,
-          user_id: user.value?.id,
-          created_at: new Date().toISOString()
-        }])
+        .insert([taskData])
         .select()
         .single()
 
@@ -76,11 +75,20 @@ export const useTasks = () => {
   const updateTask = async (id: string, updates: Partial<Task>) => {
     loading.value = true
     try {
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      }
+
+      if (updates.title !== undefined) updateData.title = updates.title
+      if (updates.description !== undefined) updateData.description = updates.description || null
+      if (updates.status !== undefined) updateData.status = updates.status
+      if (updates.priority !== undefined) updateData.priority = updates.priority
+      if (updates.due_date !== undefined) updateData.due_date = updates.due_date ? new Date(updates.due_date).toISOString() : null
+      if (updates.company_id !== undefined) updateData.company_id = updates.company_id || null
+      if (updates.assigned_to !== undefined) updateData.assigned_to = updates.assigned_to || null
+
       const { error } = await (supabase.from('tasks') as any)
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id)
 
       if (error) throw error
