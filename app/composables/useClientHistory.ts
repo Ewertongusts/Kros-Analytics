@@ -4,16 +4,50 @@ export const useClientHistory = () => {
   const supabase = useSupabaseClient()
   const loading = ref(false)
 
+  // Função para calcular próximo vencimento baseado em start_date e due_day
+  const calculateNextBillingDate = (startDate: string, dueDay: number): string => {
+    if (!startDate || !dueDay) return ''
+    
+    const start = new Date(startDate)
+    const today = new Date()
+    
+    // Começar do mês atual
+    let nextBilling = new Date(today.getFullYear(), today.getMonth(), dueDay)
+    
+    // Se o dia de vencimento já passou este mês, ir para o próximo mês
+    if (nextBilling < today) {
+      nextBilling = new Date(today.getFullYear(), today.getMonth() + 1, dueDay)
+    }
+    
+    // Garantir que não seja antes da data de início
+    if (nextBilling < start) {
+      nextBilling = new Date(start.getFullYear(), start.getMonth(), dueDay)
+      if (nextBilling < start) {
+        nextBilling = new Date(start.getFullYear(), start.getMonth() + 1, dueDay)
+      }
+    }
+    
+    // Formatar como YYYY-MM-DD
+    const year = nextBilling.getFullYear()
+    const month = String(nextBilling.getMonth() + 1).padStart(2, '0')
+    const day = String(nextBilling.getDate()).padStart(2, '0')
+    
+    return `${year}-${month}-${day}`
+  }
+
   const fetchClientHistory = async (companyId: string) => {
     loading.value = true
     try {
       console.log('🔍 [useClientHistory] Buscando histórico do cliente:', companyId)
 
-      // 1. Buscar assinaturas
+      // 1. Buscar assinaturas com dados do plano
       console.log('📋 [useClientHistory] Iniciando busca de assinaturas...')
       const { data: subscriptions, error: subError } = await supabase
         .from('subscriptions')
-        .select('*')
+        .select(`
+          *,
+          plan:plan_id(id, name)
+        `)
         .eq('customer_id', companyId)
         .order('created_at', { ascending: false })
 
@@ -21,7 +55,26 @@ export const useClientHistory = () => {
         console.error('❌ [useClientHistory] Erro ao buscar assinaturas:', subError)
       } else {
         console.log('✅ [useClientHistory] Assinaturas encontradas:', subscriptions?.length || 0)
-        console.log('📊 [useClientHistory] Dados das assinaturas:', subscriptions)
+        // Debug: mostrar todos os campos de cada assinatura
+        subscriptions?.forEach((sub: any) => {
+          console.log(`📌 [useClientHistory] Assinatura: ${sub.plan?.name || 'N/A'}`)
+          console.log('   Campos:', Object.keys(sub).join(', '))
+          console.log('   Valores:', {
+            id: sub.id,
+            customer_id: sub.customer_id,
+            plan_id: sub.plan_id,
+            status: sub.status,
+            amount: sub.amount,
+            start_date: sub.start_date,
+            end_date: sub.end_date,
+            next_billing_date: sub.next_billing_date,
+            renewal_date: sub.renewal_date,
+            billing_date: sub.billing_date,
+            created_at: sub.created_at,
+            updated_at: sub.updated_at,
+            plan: sub.plan
+          })
+        })
       }
 
       // 2. Buscar a empresa principal
@@ -138,6 +191,26 @@ export const useClientHistory = () => {
       const activeSubscriptions = subscriptions?.filter((s: any) => s.status === 'active') || []
       const suspendedSubscriptions = subscriptions?.filter((s: any) => s.status === 'suspended') || []
       
+      // Adicionar payment_status e próximo vencimento às assinaturas baseado nas vendas
+      const subscriptionsWithPaymentStatus = subscriptions?.map((sub: any) => {
+        // Procurar venda associada a esta assinatura usando o nome do plano
+        const planName = sub.plan?.name || sub.plan_name
+        const associatedSale = allSales?.find((sale: any) => 
+          sale.plan_name === planName || 
+          (sale.custom_name && sale.custom_name === planName)
+        )
+        
+        // Calcular próximo vencimento
+        const nextBillingDate = calculateNextBillingDate(sub.start_date, sub.due_day)
+        
+        return {
+          ...sub,
+          plan_name: planName,
+          payment_status: associatedSale?.payment_status || 'pending',
+          next_billing_date: nextBillingDate
+        }
+      }) || []
+      
       console.log('📊 [useClientHistory] Assinaturas ativas:', activeSubscriptions.length)
       console.log('📊 [useClientHistory] Assinaturas suspensas:', suspendedSubscriptions.length)
       
@@ -195,8 +268,8 @@ export const useClientHistory = () => {
       const result = {
         success: true,
         data: {
-          subscriptions: subscriptions || [],
-          payments: subscriptions || [],
+          subscriptions: subscriptionsWithPaymentStatus,
+          payments: subscriptionsWithPaymentStatus,
           paymentHistory: paymentHistory || [],
           tasks: tasks || [],
           company: companyData || {},
