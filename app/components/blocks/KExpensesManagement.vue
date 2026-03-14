@@ -167,13 +167,24 @@
 
       <!-- Aba de Histórico de Pagamentos -->
       <div v-if="activeTab === 'historico'" class="space-y-4">
-        <KPaymentHistory
-          :payments="paidExpenses"
-          :categories="categories"
-          :loading="loading"
-          @edit="editExpense"
-          @delete="confirmDelete($event, 'expense')"
-        />
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+          <p class="text-white/60 text-[10px]">DEBUG: paidExpenses.length = {{ paidExpenses.length }}</p>
+          <p class="text-white/60 text-[10px]">DEBUG: expenses.length = {{ expenses.length }}</p>
+          <p class="text-white/60 text-[10px]">DEBUG: getPaidExpenses.length = {{ getPaidExpenses.length }}</p>
+        </div>
+        
+        <div v-if="paidExpenses.length === 0" class="text-center py-20">
+          <p class="text-white/40 text-sm">Nenhum pagamento registrado</p>
+        </div>
+        <div v-else>
+          <KPaymentHistory
+            :payments="paidExpenses"
+            :categories="categories"
+            :loading="loading"
+            @edit="editExpense"
+            @delete="confirmDelete($event, 'expense')"
+          />
+        </div>
       </div>
 
       <!-- Aba de Categorias -->
@@ -333,6 +344,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import KPaymentHistory from '~/components/blocks/KPaymentHistory.vue'
 
 definePageMeta({
   middleware: 'auth'
@@ -443,7 +455,10 @@ const filteredExpenses = computed(() => {
 })
 
 const paidExpenses = computed(() => {
-  return getPaidExpenses.value.sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+  const paid = getPaidExpenses.value.sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+  console.log('🔍 [KExpensesManagement] paidExpenses computed:', paid.length, 'items')
+  console.log('🔍 [KExpensesManagement] getPaidExpenses.value:', getPaidExpenses.value)
+  return paid
 })
 
 const getCategoryName = (categoryId: string) => {
