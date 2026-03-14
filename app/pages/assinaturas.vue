@@ -2,7 +2,7 @@
   <LayoutsKPageLayout>
     <UiKSkeleton v-if="loadingAnalytics || loadingFinance" type="table" :rows="5" />
 
-    <div v-else class="space-y-0 mb-20 animate-in fade-in duration-700">
+    <div v-else class="space-y-4 mb-20 animate-in fade-in duration-700">
       <SubscriptionsKSubscriptionsContent
         v-model:active-tab="activeSubTab"
         :key="`content-${refreshKey}`"

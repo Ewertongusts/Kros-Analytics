@@ -16,6 +16,45 @@ const settings = ref<WhiteLabelSettings>({
 })
 const loading = ref(true)
 
+// Apply colors to CSS variables
+const applyColorsToDOM = (color: string) => {
+  console.log('🎨 [applyColors] Applying color:', color)
+  if (process.client && color) {
+    console.log('🎨 [applyColors] Setting CSS variable --kros-blue to:', color)
+    document.documentElement.style.setProperty('--kros-blue', color)
+
+    // Extract RGB for translucent effects
+    const hex = color.replace('#', '')
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+
+    console.log('🎨 [applyColors] RGB values:', { r, g, b })
+
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      document.documentElement.style.setProperty('--kros-blue-rgb', `${r}, ${g}, ${b}`)
+
+      // Gerar 3 tons para o gradiente
+      const clamp = (v: number) => Math.max(0, Math.min(255, v))
+      const toHex = (v: number) => clamp(v).toString(16).padStart(2, '0')
+
+      // Tom escuro (-40)
+      const darkColor = `#${toHex(r - 40)}${toHex(g - 40)}${toHex(b - 40)}`
+      // Tom claro (+50)
+      const lightColor = `#${toHex(r + 50)}${toHex(g + 50)}${toHex(b + 50)}`
+
+      const gradient = `linear-gradient(135deg, ${darkColor}, ${color}, ${lightColor})`
+      console.log('🎨 [applyColors] Setting gradient:', gradient)
+      document.documentElement.style.setProperty('--kros-gradient', gradient)
+      console.log('✅ [applyColors] Colors applied successfully')
+    } else {
+      console.error('❌ [applyColors] Invalid RGB values')
+    }
+  } else {
+    console.warn('⚠️ [applyColors] Not on client or no color provided')
+  }
+}
+
 // Initialize colors from localStorage on module load
 const initializeColorsFromStorage = () => {
   if (process.client) {
@@ -26,7 +65,7 @@ const initializeColorsFromStorage = () => {
         console.log('📦 [init] Loaded settings from localStorage:', parsed)
         settings.value = parsed
         if (parsed.primary_color) {
-          applyColors(parsed.primary_color)
+          applyColorsToDOM(parsed.primary_color)
         }
       } catch (err) {
         console.error('❌ [init] Error parsing localStorage:', err)
@@ -62,7 +101,7 @@ export const useWhiteLabel = () => {
         console.log('💾 [fetchSettings] Saved settings to localStorage')
         if (settings.value.primary_color) {
           console.log('🎨 [fetchSettings] Applying color:', settings.value.primary_color)
-          applyColors(settings.value.primary_color)
+          applyColorsToDOM(settings.value.primary_color)
         }
         console.log('✅ [fetchSettings] White label settings loaded successfully')
       } else {
@@ -164,7 +203,7 @@ export const useWhiteLabel = () => {
       localStorage.setItem('kros-white-label-settings', JSON.stringify(settings.value))
       console.log('💾 [saveSettings] Saved settings to localStorage')
       console.log('🎨 [saveSettings] Applying color:', formData.primary_color)
-      applyColors(formData.primary_color)
+      applyColorsToDOM(formData.primary_color)
       return { success: true }
     } catch (err: any) {
       console.error('❌ [saveSettings] Exception:', err)
@@ -211,7 +250,7 @@ export const useWhiteLabel = () => {
     loading,
     fetchSettings,
     saveSettings,
-    applyColors,
+    applyColors: applyColorsToDOM,
     uploadImage,
     initializeColorsFromStorage
   }

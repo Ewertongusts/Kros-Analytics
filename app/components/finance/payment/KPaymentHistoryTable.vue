@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import KPaymentHistoryRow from './KPaymentHistoryRow.vue'
 import type { Expense, Category } from '~/composables/useExpenses'
 
 interface Props {

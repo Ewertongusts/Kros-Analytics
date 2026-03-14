@@ -74,7 +74,14 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 }
 
-const formatDate = (date: string) => {
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(date))
+const formatDate = (date: string | null | undefined) => {
+  if (!date) return 'N/A'
+  try {
+    const dateObj = new Date(date)
+    if (isNaN(dateObj.getTime())) return 'N/A'
+    return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(dateObj)
+  } catch {
+    return 'N/A'
+  }
 }
 </script>

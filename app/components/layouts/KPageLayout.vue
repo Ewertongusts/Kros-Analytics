@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen p-8 md:p-12">
-    <div :class="['mx-auto space-y-8', maxWidthClass]">
+  <div class="min-h-screen pt-6 px-8 md:px-12">
+    <div :class="['mx-auto space-y-4', maxWidthClass]">
       <slot />
     </div>
   </div>

@@ -4,7 +4,7 @@
 
     <div v-else class="space-y-4 mb-20 animate-in fade-in duration-700">
       <!-- Header com Tabs e Botões -->
-      <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-2 border-b border-white/10">
           <button
             v-for="tab in tabs"
@@ -13,35 +13,16 @@
             :class="[
               'px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all border-b-2',
               activeTab === tab.id
-                ? 'text-red-500 border-red-500'
+                ? 'border-b-2 transition-colors'
                 : 'text-white/50 border-transparent hover:text-white'
             ]"
+            :style="activeTab === tab.id ? { color: `var(--kros-blue, #FF0000)`, borderColor: `var(--kros-blue, #FF0000)` } : {}"
           >
             {{ tab.label }}
           </button>
         </div>
 
         <div class="flex items-center gap-2">
-          <button 
-            @click="showMetrics = !showMetrics"
-            :class="[
-              'px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2',
-              showMetrics
-                ? 'bg-white/10 border-white/20 text-white'
-                : 'bg-white/5 border-white/5 text-white/70 hover:text-white hover:border-white/10'
-            ]"
-            title="Mostrar/Ocultar Indicadores"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="2" x2="12" y2="22"></line>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
-            <span class="text-[10px] font-bold uppercase tracking-widest">Indicadores</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'rotate-180': showMetrics }" class="transition-transform">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-
           <UiKButtonPrimary icon="plus" @click="() => { resetForm(); showCreateModal = true }">
             Nova Despesa
           </UiKButtonPrimary>
@@ -49,7 +30,7 @@
       </div>
 
       <!-- Cards de Indicadores -->
-      <div v-if="showMetrics" class="grid grid-cols-4 gap-4">
+      <div v-if="showMetrics && activeTab !== 'historico' && activeTab !== 'categorias' && activeTab !== 'metricas'" class="grid grid-cols-4 gap-4">
         <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
           <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Total Mês</p>
           <p class="text-2xl font-black text-white">{{ formatCurrency(stats.totalMonth) }}</p>
@@ -73,32 +54,121 @@
       </div>
 
       <!-- Filtros -->
-      <div v-if="activeTab !== 'categorias' && activeTab !== 'historico'" class="flex items-start gap-4">
-        <div class="flex-1 flex gap-3">
+      <div v-if="activeTab !== 'categorias' && activeTab !== 'historico' && activeTab !== 'metricas'">
+        <!-- Linha 1: Search (flex-1), Category, Month, Spacer, Botão Data, Clear Button -->
+        <div class="flex items-center gap-3">
+          <!-- Search (expande para ocupar espaço) -->
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Buscar despesa..."
-            class="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/20 text-[10px]"
+            class="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[var(--kros-blue)] text-[10px] transition-colors"
           />
+          <!-- Category -->
           <select
             v-model="selectedCategory"
-            class="px-4 py-2.5 bg-[#1a1a1b] border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
+            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[var(--kros-blue)] text-[10px] font-bold uppercase tracking-widest transition-colors"
           >
             <option value="">Todas Categorias</option>
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
+          <!-- Status -->
+          <select
+            v-model="selectedStatus"
+            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[var(--kros-blue)] text-[10px] font-bold uppercase tracking-widest transition-colors"
+          >
+            <option value="">Todos Status</option>
+            <option value="paid">Pago</option>
+            <option value="pending">Pendente</option>
+            <option value="overdue">Vencida</option>
+          </select>
+          <!-- Month -->
+          <select
+            v-model="selectedMonth"
+            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[var(--kros-blue)] text-[10px] font-bold uppercase tracking-widest transition-colors"
+          >
+            <option value="">Todos Meses</option>
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+          <!-- Spacer invisível -->
+          <div class="flex-1"></div>
+          <!-- Botão Expandir/Recolher Filtros de Data -->
+          <button
+            @click="showDateFilters = !showDateFilters"
+            :class="[
+              'px-3 py-2.5 rounded-xl border transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest',
+              showDateFilters
+                ? 'bg-white/10 border-[var(--kros-blue)] text-[var(--kros-blue)]'
+                : 'bg-white/5 border-white/10 text-white/70 hover:border-[var(--kros-blue)] hover:text-[var(--kros-blue)]'
+            ]"
+            title="Expandir/Recolher filtros de data"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>{{ showDateFilters ? 'Ocultar' : 'Data' }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'rotate-180': showDateFilters }" class="transition-transform">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <!-- Clear Button (à direita) -->
           <button
             @click="clearFilters"
-            class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/70 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest"
+            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 transition-all text-[10px] font-bold uppercase tracking-widest hover:border-[var(--kros-blue)] hover:text-[var(--kros-blue)]"
           >
             Limpar
           </button>
         </div>
+
+        <!-- Linha 2: Year, Date Range, Spacer (Expansível) -->
+        <div v-if="showDateFilters" class="flex items-center gap-3 animate-in fade-in duration-200">
+          <!-- Year -->
+          <select
+            v-model="selectedYear"
+            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[var(--kros-blue)] text-[10px] font-bold uppercase tracking-widest transition-colors"
+          >
+            <option value="">Todos Anos</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+          </select>
+          <!-- Date Range -->
+          <div class="flex items-center gap-2">
+            <input
+              v-model="startDate"
+              type="date"
+              class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[var(--kros-blue)] text-[10px] transition-colors"
+              title="Data Início"
+            />
+            <span class="text-white/50 text-[10px] font-bold">a</span>
+            <input
+              v-model="endDate"
+              type="date"
+              class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[var(--kros-blue)] text-[10px] transition-colors"
+              title="Data Fim"
+            />
+          </div>
+          <!-- Spacer invisível (ocupa espaço vazio à direita) -->
+          <div class="flex-1"></div>
+        </div>
       </div>
 
       <!-- Tabela de Despesas -->
-      <div v-if="activeTab !== 'categorias' && activeTab !== 'historico'" class="space-y-4">
+      <div v-if="activeTab !== 'categorias' && activeTab !== 'historico' && activeTab !== 'metricas'" class="space-y-4">
         <div v-if="filteredExpenses.length === 0" class="text-center py-20">
           <p class="text-white/40 text-sm">Nenhuma despesa encontrada</p>
         </div>
@@ -167,12 +237,6 @@
 
       <!-- Aba de Histórico de Pagamentos -->
       <div v-if="activeTab === 'historico'" class="space-y-4">
-        <div class="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
-          <p class="text-white/60 text-[10px]">DEBUG: paidExpenses.length = {{ paidExpenses.length }}</p>
-          <p class="text-white/60 text-[10px]">DEBUG: expenses.length = {{ expenses.length }}</p>
-          <p class="text-white/60 text-[10px]">DEBUG: getPaidExpenses.length = {{ getPaidExpenses.length }}</p>
-        </div>
-        
         <div v-if="paidExpenses.length === 0" class="text-center py-20">
           <p class="text-white/40 text-sm">Nenhum pagamento registrado</p>
         </div>
@@ -184,6 +248,82 @@
             @edit="editExpense"
             @delete="confirmDelete($event, 'expense')"
           />
+        </div>
+      </div>
+
+      <!-- Aba de Métricas de Pagamentos -->
+      <div v-if="activeTab === 'metricas'" class="space-y-4">
+        <div v-if="paidExpenses.length === 0" class="text-center py-20">
+          <p class="text-white/40 text-sm">Nenhum pagamento registrado para exibir métricas</p>
+        </div>
+        <div v-else>
+          <!-- Cards de Métricas do Histórico de Pagamentos -->
+          <div class="grid grid-cols-4 gap-4">
+            <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Total Pago</p>
+              <p class="text-2xl font-black text-green-400">{{ formatCurrency(paymentMetrics.totalPaid) }}</p>
+              <p class="text-[10px] text-white/40 mt-2">{{ paymentMetrics.count }} pagamentos</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Média por Pagamento</p>
+              <p class="text-2xl font-black text-white">{{ formatCurrency(paymentMetrics.average) }}</p>
+              <p class="text-[10px] text-white/40 mt-2">valor médio</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Período</p>
+              <p class="text-2xl font-black text-white">{{ paymentMetrics.dateRange.split(' ')[0] }}</p>
+              <p class="text-[10px] text-white/40 mt-2">últimos pagamentos</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Status</p>
+              <p class="text-2xl font-black text-blue-400">{{ paymentMetrics.count }}</p>
+              <p class="text-[10px] text-white/40 mt-2">registros</p>
+            </div>
+          </div>
+
+          <!-- Métricas Adicionais -->
+          <div class="mt-6 space-y-4">
+            <!-- Maior e Menor Pagamento -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Maior Pagamento</p>
+                <p class="text-2xl font-black text-white">{{ formatCurrency(paymentMetrics.maxPayment) }}</p>
+                <p class="text-[10px] text-white/40 mt-2">valor máximo</p>
+              </div>
+              <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Menor Pagamento</p>
+                <p class="text-2xl font-black text-white">{{ formatCurrency(paymentMetrics.minPayment) }}</p>
+                <p class="text-[10px] text-white/40 mt-2">valor mínimo</p>
+              </div>
+            </div>
+
+            <!-- Métricas por Categoria -->
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-widest text-white mb-4">Pagamentos por Categoria</h3>
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div v-for="(amount, categoryId) in paymentMetrics.byCategory" :key="categoryId" class="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">{{ getCategoryName(categoryId) }}</p>
+                  <p class="text-xl font-black text-white">{{ formatCurrency(amount) }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estatísticas Adicionais -->
+            <div class="grid grid-cols-3 gap-4">
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Despesas Recorrentes Pagas</p>
+                <p class="text-2xl font-black text-blue-400">{{ paymentMetrics.recurringPaid }}</p>
+              </div>
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Despesas Únicas Pagas</p>
+                <p class="text-2xl font-black text-purple-400">{{ paymentMetrics.uniquePaid }}</p>
+              </div>
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Período Completo</p>
+                <p class="text-sm font-black text-white">{{ paymentMetrics.dateRange }}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -274,9 +414,10 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Status</label>
-              <select v-model="formData.status" class="w-full bg-[#1a1a1b] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-[#222223] transition-all text-sm appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;">
+              <select v-model="formData.status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--kros-blue)] focus:bg-white/10 transition-all text-sm appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;">
                 <option value="pending">Pendente</option>
                 <option value="paid">Pago</option>
+                <option value="overdue">Vencida</option>
               </select>
             </div>
           </div>
@@ -375,14 +516,20 @@ const showCreateModal = ref(false)
 const editingExpense = ref<any>(null)
 const searchQuery = ref('')
 const selectedCategory = ref('')
-const showMetrics = ref(false)
 const activeTab = ref('todos')
 const newCategoryName = ref('')
 const showDeleteConfirm = ref(false)
 const deleteConfirmId = ref<string | null>(null)
 const deleteConfirmType = ref<'expense' | 'category' | null>(null)
+const selectedMonth = ref('')
+const selectedYear = ref('')
+const startDate = ref('')
+const endDate = ref('')
+const showDateFilters = ref(false)
+const selectedStatus = ref('')
 
 const tabs = [
+  { id: 'metricas', label: 'Métricas' },
   { id: 'todos', label: 'Todos' },
   { id: 'recorrentes', label: 'Recorrentes' },
   { id: 'unicos', label: 'Únicos' },
@@ -451,6 +598,60 @@ const filteredExpenses = computed(() => {
     filtered = filtered.filter((e: any) => e.category_id === selectedCategory.value)
   }
 
+  if (selectedStatus.value) {
+    filtered = filtered.filter((e: any) => {
+      if (selectedStatus.value === 'paid') {
+        return e.status === 'paid'
+      } else if (selectedStatus.value === 'pending') {
+        return e.status === 'pending'
+      } else if (selectedStatus.value === 'overdue') {
+        // Vencida: data de vencimento passou e ainda não foi paga
+        if (e.status === 'paid') return false
+        if (!e.due_date) return false
+        const dueDate = new Date(e.due_date)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        return dueDate < today
+      }
+      return true
+    })
+  }
+
+  if (selectedMonth.value || selectedYear.value) {
+    filtered = filtered.filter((e: any) => {
+      const date = new Date(e.created_at)
+      const month = date.getMonth() + 1
+      const year = date.getFullYear()
+      
+      if (selectedMonth.value && selectedYear.value) {
+        return month === parseInt(selectedMonth.value) && year === parseInt(selectedYear.value)
+      } else if (selectedMonth.value) {
+        return month === parseInt(selectedMonth.value)
+      } else if (selectedYear.value) {
+        return year === parseInt(selectedYear.value)
+      }
+      return true
+    })
+  }
+
+  if (startDate.value || endDate.value) {
+    filtered = filtered.filter((e: any) => {
+      const expenseDate = new Date(e.created_at)
+      if (startDate.value && endDate.value) {
+        const start = new Date(startDate.value)
+        const end = new Date(endDate.value)
+        return expenseDate >= start && expenseDate <= end
+      } else if (startDate.value) {
+        const start = new Date(startDate.value)
+        return expenseDate >= start
+      } else if (endDate.value) {
+        const end = new Date(endDate.value)
+        return expenseDate <= end
+      }
+      return true
+    })
+  }
+
   return filtered.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 })
 
@@ -459,6 +660,59 @@ const paidExpenses = computed(() => {
   console.log('🔍 [KExpensesManagement] paidExpenses computed:', paid.length, 'items')
   console.log('🔍 [KExpensesManagement] getPaidExpenses.value:', getPaidExpenses.value)
   return paid
+})
+
+const paymentMetrics = computed(() => {
+  const paid = paidExpenses.value
+  
+  if (paid.length === 0) {
+    return {
+      totalPaid: 0,
+      count: 0,
+      average: 0,
+      maxPayment: 0,
+      minPayment: 0,
+      byCategory: {},
+      recurringPaid: 0,
+      uniquePaid: 0,
+      dateRange: 'N/A'
+    }
+  }
+
+  const amounts = paid.map((e: any) => e.amount)
+  const totalPaid = amounts.reduce((a: number, b: number) => a + b, 0)
+  const average = totalPaid / paid.length
+  const maxPayment = Math.max(...amounts)
+  const minPayment = Math.min(...amounts)
+  
+  // Agrupar por categoria
+  const byCategory: Record<string, number> = {}
+  paid.forEach((e: any) => {
+    const catId = e.category_id
+    byCategory[catId] = (byCategory[catId] || 0) + e.amount
+  })
+  
+  // Contar recorrentes e únicos
+  const recurringPaid = paid.filter((e: any) => e.is_recurring).length
+  const uniquePaid = paid.filter((e: any) => !e.is_recurring).length
+  
+  // Calcular período
+  const dates = paid.map((e: any) => new Date(e.updated_at))
+  const minDate = new Date(Math.min(...dates.map(d => d.getTime())))
+  const maxDate = new Date(Math.max(...dates.map(d => d.getTime())))
+  const dateRange = minDate.toLocaleDateString('pt-BR') + ' a ' + maxDate.toLocaleDateString('pt-BR')
+
+  return {
+    totalPaid,
+    count: paid.length,
+    average,
+    maxPayment,
+    minPayment,
+    byCategory,
+    recurringPaid,
+    uniquePaid,
+    dateRange
+  }
 })
 
 const getCategoryName = (categoryId: string) => {
@@ -611,6 +865,11 @@ const resetForm = () => {
 const clearFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = ''
+  selectedStatus.value = ''
+  selectedMonth.value = ''
+  selectedYear.value = ''
+  startDate.value = ''
+  endDate.value = ''
 }
 
 onMounted(async () => {

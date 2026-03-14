@@ -1,39 +1,42 @@
 <template>
   <div class="space-y-4">
     <!-- Tabs + Filtros + Botões -->
-    <div class="flex items-center justify-between gap-4 px-6 border-b border-white/5 pb-4">
+    <div class="flex items-center justify-between gap-4 mb-6 border-b border-white/10 pb-4">
       <!-- Abas -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
         <button
           @click="activeTabModel = 'operational'"
           :class="[
-            'px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2',
+            'px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2',
             activeTabModel === 'operational'
-              ? 'text-kros-blue border-kros-blue'
-              : 'text-white/50 border-transparent hover:text-white/70'
+              ? 'border-b-2 transition-colors'
+              : 'text-white/50 border-transparent hover:text-white'
           ]"
+          :style="activeTabModel === 'operational' ? { color: `var(--kros-blue, #007BFF)`, borderColor: `var(--kros-blue, #007BFF)` } : {}"
         >
           Gestão
         </button>
         <button
           @click="activeTabModel = 'history'"
           :class="[
-            'px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2',
+            'px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2',
             activeTabModel === 'history'
-              ? 'text-kros-blue border-kros-blue'
-              : 'text-white/50 border-transparent hover:text-white/70'
+              ? 'border-b-2 transition-colors'
+              : 'text-white/50 border-transparent hover:text-white'
           ]"
+          :style="activeTabModel === 'history' ? { color: `var(--kros-blue, #007BFF)`, borderColor: `var(--kros-blue, #007BFF)` } : {}"
         >
           Histórico de Pagamentos
         </button>
         <button
           @click="activeTabModel = 'logs'"
           :class="[
-            'px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2',
+            'px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2',
             activeTabModel === 'logs'
-              ? 'text-kros-blue border-kros-blue'
-              : 'text-white/50 border-transparent hover:text-white/70'
+              ? 'border-b-2 transition-colors'
+              : 'text-white/50 border-transparent hover:text-white'
           ]"
+          :style="activeTabModel === 'logs' ? { color: `var(--kros-blue, #007BFF)`, borderColor: `var(--kros-blue, #007BFF)` } : {}"
         >
           Cobranças
         </button>
@@ -43,7 +46,7 @@
       <div class="flex items-center gap-2">
         <button 
           @click="$emit('toggle-charts')"
-          class="px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 hover:border-white/10 transition-all flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-bold uppercase tracking-widest"
+          class="px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-bold uppercase tracking-widest"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="20" x2="12" y2="10"></line>
@@ -58,7 +61,7 @@
         
         <button 
           @click="$emit('open-timeline')"
-          class="px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 hover:border-white/10 transition-all flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-bold uppercase tracking-widest"
+          class="px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-bold uppercase tracking-widest"
           title="Ver histórico de ações"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -69,7 +72,8 @@
         
         <button 
           @click="$emit('create-subscription')"
-          class="px-4 py-2.5 bg-kros-blue hover:bg-kros-blue/80 rounded-lg transition-all flex items-center gap-2 text-white text-[10px] font-bold uppercase tracking-widest"
+          class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-white text-[10px] font-bold uppercase tracking-widest"
+          :style="{ backgroundColor: `var(--kros-blue, #007BFF)` }"
           title="Criar nova assinatura"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -81,7 +85,7 @@
     </div>
 
     <!-- Indicadores (Gráficos) - Colapsável -->
-    <div v-if="showCharts" class="px-6 animate-in fade-in duration-500">
+    <div v-if="showCharts" class="animate-in fade-in duration-500">
       <BlocksKFinanceCollectionSummary :payments="financialRecords" />
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">

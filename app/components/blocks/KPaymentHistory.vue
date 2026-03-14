@@ -1,8 +1,5 @@
 <template>
-  <div class="space-y-6">
-    <!-- Resumo -->
-    <KPaymentHistorySummary :summary="paymentSummary" />
-
+  <div class="space-y-4">
     <!-- Filtros -->
     <KPaymentHistoryFilters
       :filters="filters"
@@ -24,6 +21,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import KPaymentHistoryFilters from '~/components/finance/payment/KPaymentHistoryFilters.vue'
+import KPaymentHistoryTable from '~/components/finance/payment/KPaymentHistoryTable.vue'
 import type { Expense, Category } from '~/composables/useExpenses'
 
 interface Filters {
@@ -31,6 +30,8 @@ interface Filters {
   category: string
   expenseType: 'all' | 'unique' | 'recurring'
   dateRange: { start: string; end: string } | null
+  month?: number
+  year?: number
 }
 
 interface Props {
@@ -77,7 +78,25 @@ const filteredPayments = computed(() => {
     filtered = filtered.filter((p: any) => p.is_recurring)
   }
 
-  // Filtro por período
+  // Filtro por mês e ano
+  if (filters.value.month || filters.value.year) {
+    filtered = filtered.filter((p: any) => {
+      const paymentDate = new Date(p.updated_at)
+      const paymentMonth = paymentDate.getMonth() + 1
+      const paymentYear = paymentDate.getFullYear()
+      
+      if (filters.value.month && filters.value.year) {
+        return paymentMonth === filters.value.month && paymentYear === filters.value.year
+      } else if (filters.value.month) {
+        return paymentMonth === filters.value.month
+      } else if (filters.value.year) {
+        return paymentYear === filters.value.year
+      }
+      return true
+    })
+  }
+
+  // Filtro por período (mantido para compatibilidade)
   if (filters.value.dateRange?.start && filters.value.dateRange?.end) {
     const startDate = new Date(filters.value.dateRange.start)
     const endDate = new Date(filters.value.dateRange.end)
@@ -121,7 +140,9 @@ const clearFilters = () => {
     search: '',
     category: '',
     expenseType: 'all',
-    dateRange: null
+    dateRange: null,
+    month: undefined,
+    year: undefined
   }
 }
 </script>

@@ -3,9 +3,25 @@
     <UiKSkeleton v-if="loading" type="table" :rows="5" />
 
     <div v-else class="space-y-4 mb-20 animate-in fade-in duration-700">
-      <div class="flex items-center justify-between gap-4">
-        <SalesTableKSaleFilterTabs v-model="activeFilter" />
-        
+      <!-- Header com Tabs e Botões -->
+      <div class="flex items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-2 border-b border-white/10">
+          <button
+            v-for="tab in ['todos', 'produto', 'servico']"
+            :key="tab"
+            @click="activeFilter = tab"
+            :class="[
+              'px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all border-b-2',
+              activeFilter === tab
+                ? 'border-b-2 transition-colors'
+                : 'text-white/50 border-transparent hover:text-white'
+            ]"
+            :style="activeFilter === tab ? { color: `var(--kros-blue, #FF0000)`, borderColor: `var(--kros-blue, #FF0000)` } : {}"
+          >
+            {{ tab === 'todos' ? 'Todos' : tab === 'produto' ? 'Produtos' : 'Serviços' }}
+          </button>
+        </div>
+
         <div class="flex items-center gap-2">
           <button 
             @click="showMetrics = !showMetrics"
@@ -44,20 +60,62 @@
         </div>
       </div>
 
-      <SalesTableKSaleSummaryCards v-if="!loading && showMetrics" :summary="summary" />
-
-      <div class="flex items-start gap-4">
-        <div class="flex-1">
-          <SalesFiltersKSaleFilters
-            v-model:search-query="searchQuery"
-            v-model:status="status"
-            v-model:start-date="startDate"
-            v-model:end-date="endDate"
-            v-model:min-value="minValue"
-            v-model:max-value="maxValue"
-            @clear="clearFilters"
-          />
+      <!-- Cards de Indicadores -->
+      <div v-if="showMetrics" class="grid grid-cols-4 gap-4">
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Total Mês</p>
+          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.monthTotal) }}</p>
+          <p class="text-[10px] text-white/40 mt-2">{{ summary.monthCount }} vendas</p>
         </div>
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Média</p>
+          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.monthTotal / (summary.monthCount || 1)) }}</p>
+          <p class="text-[10px] text-white/40 mt-2">por venda</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Maior</p>
+          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.maxValue) }}</p>
+          <p class="text-[10px] text-white/40 mt-2">venda</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Total Geral</p>
+          <p class="text-2xl font-black text-white">{{ formatCurrency(summary.totalValue) }}</p>
+          <p class="text-[10px] text-white/40 mt-2">{{ summary.totalCount }} vendas</p>
+        </div>
+      </div>
+
+      <!-- Filtros em linha única -->
+      <div class="flex items-center gap-3">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Buscar venda..."
+          class="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/20 text-[10px]"
+        />
+        <select
+          v-model="status"
+          class="px-4 py-2.5 bg-[#1a1a1b] border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
+        >
+          <option value="">Todos Status</option>
+          <option value="pending">Pendente</option>
+          <option value="paid">Pago</option>
+        </select>
+        <input
+          v-model="startDate"
+          type="date"
+          class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px]"
+        />
+        <input
+          v-model="endDate"
+          type="date"
+          class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px]"
+        />
+        <button
+          @click="clearFilters"
+          class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/70 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest"
+        >
+          Limpar
+        </button>
         <UiKExportDropdown 
           :disabled="filteredSales.length === 0"
           @export="(format) => handleExport(filteredSales, format)"
@@ -66,6 +124,7 @@
 
       <!-- Barra de Ações em Massa -->
       <SalesBatchKSaleBatchActionsBar
+        v-if="selectedIds.length > 0"
         :selected-ids="selectedIds"
         :selected-total="selectedTotal"
         @batch-action="handleBatchAction"
@@ -405,5 +464,9 @@ const handleEditClient = () => {
 const handleToggleClientStatus = async () => {
   // Implementar toggle de status do cliente se necessário
   clientDetailsModal.isOpen = false
+}
+
+const formatCurrency = (val: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 }
 </script>
