@@ -20,17 +20,21 @@
        <h4 class="font-bold uppercase tracking-widest text-xs text-white">Nenhum disparo detectado</h4>
     </div>
 
-    <div v-else class="space-y-4">
-       <FinanceLogsKLogsCard
-         v-for="log in paginatedLogs"
-         :key="log.id"
-         :company-name="log.company_name || 'Sem nome'"
-         :whatsapp="log.whatsapp || 'Sem telefone'"
-         :is-cron="!!log.is_cron"
-         :status="log.status || 'Desconhecido'"
-         :formatted-date="formatDate(log.created_at)"
-         :message-body="log.message_body || 'Sem mensagem'"
-       />
+    <div v-else>
+       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+         <FinanceLogsKLogsCard
+           v-for="log in paginatedLogs"
+           :key="log.id"
+           :company-name="log.company_name || 'Sem nome'"
+           :whatsapp="log.whatsapp || 'Sem telefone'"
+           :is-cron="!!log.is_cron"
+           :status="log.status || 'Desconhecido'"
+           :formatted-date="formatDate(log.created_at)"
+           :message-body="log.message_body || 'Sem mensagem'"
+           :template-name="log.template_name"
+           @view-details="openDetails(log)"
+         />
+       </div>
 
        <FinanceLogsKLogsPagination
          v-if="totalPages > 1"
@@ -39,11 +43,18 @@
          :visible-pages="visiblePages"
        />
     </div>
+
+    <!-- Modal de Detalhes -->
+    <FinanceLogsKLogDetailsModal
+      :is-open="isModalOpen"
+      :log="selectedLog"
+      @close="closeDetails"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
 defineProps<{
   activeSubTab: string
@@ -65,6 +76,18 @@ const {
   fetchLogs,
   formatDate
 } = useFinanceLogs()
+
+const isModalOpen = ref(false)
+const selectedLog = ref<any>({})
+
+const openDetails = (log: any) => {
+  selectedLog.value = log
+  isModalOpen.value = true
+}
+
+const closeDetails = () => {
+  isModalOpen.value = false
+}
 
 onMounted(() => {
   fetchLogs()

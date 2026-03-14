@@ -9,6 +9,7 @@
         :financial-records="adaptedSubscriptions"
         :payment-history="paymentHistory"
         :show-charts="showCharts"
+        :selected-history-ids="selectedHistoryIds"
         @toggle-status="handleTogglePaymentStatus"
         @toggle-autobilling="handleToggleAutoBilling"
         @batch-autobilling="handleBatchAutoBilling"
@@ -29,6 +30,10 @@
         @toggle-charts="showCharts = !showCharts"
         @pay="handlePayInvoice"
         @reverse="handleReverseInvoice"
+        @toggle-history-select="handleToggleHistorySelect"
+        @batch-pay-history="handleBatchPayHistory"
+        @batch-reverse-history="handleBatchReverseHistory"
+        @clear-history-selection="selectedHistoryIds = []"
         @sync="handleSync"
         @config="navigateTo('/clientes')"
         @open-client-details="handleOpenClientDetails"
@@ -149,6 +154,7 @@ const {
 } = useBatchOperations()
 
 const refreshKey = ref(0)
+const selectedHistoryIds = ref<string[]>([])
 
 const subscriptionModal = reactive({
   isOpen: false,
@@ -295,6 +301,50 @@ const handleUpdatePayments = (updatedPayments: any[]) => {
   })
   
   console.log('✅ [assinaturas.vue] Assinaturas atualizadas')
+}
+
+// Handlers para ações em massa no histórico
+const handleToggleHistorySelect = (id: string) => {
+  const index = selectedHistoryIds.value.indexOf(id)
+  if (index > -1) {
+    selectedHistoryIds.value.splice(index, 1)
+  } else {
+    selectedHistoryIds.value.push(id)
+  }
+}
+
+const handleBatchPayHistory = async () => {
+  const selectedPayments = paymentHistory.value.filter(p => selectedHistoryIds.value.includes(p.id))
+  const pendingPayments = selectedPayments.filter(p => p.status === 'pending' || p.status === 'Pendente')
+  
+  if (pendingPayments.length === 0) {
+    error('Nenhuma fatura pendente', 'Selecione faturas pendentes para receber')
+    return
+  }
+  
+  for (const payment of pendingPayments) {
+    await handlePayInvoice(payment)
+  }
+  
+  selectedHistoryIds.value = []
+  success('Pagamentos recebidos', `${pendingPayments.length} fatura(s) marcada(s) como paga(s)`)
+}
+
+const handleBatchReverseHistory = async () => {
+  const selectedPayments = paymentHistory.value.filter(p => selectedHistoryIds.value.includes(p.id))
+  const paidPayments = selectedPayments.filter(p => p.status === 'paid' || p.status === 'Pago')
+  
+  if (paidPayments.length === 0) {
+    error('Nenhuma fatura paga', 'Selecione faturas pagas para estornar')
+    return
+  }
+  
+  for (const payment of paidPayments) {
+    await handleReverseInvoice(payment)
+  }
+  
+  selectedHistoryIds.value = []
+  success('Pagamentos estornados', `${paidPayments.length} fatura(s) estornada(s)`)
 }
 
 // Watcher para forçar re-render quando tags mudam

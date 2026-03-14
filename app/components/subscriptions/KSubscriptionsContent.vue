@@ -129,10 +129,15 @@
         :key="'history'"
         :active-sub-tab="activeTabModel"
         @update:active-sub-tab="handleTabUpdate"
-        :history="paymentHistory" 
+        :history="paymentHistory"
+        :selected-ids="selectedHistoryIds"
         @pay="$emit('pay', $event)"
         @reverse="$emit('reverse', $event)"
         @open-client-details="$emit('open-client-details', $event)"
+        @toggle-select="$emit('toggle-history-select', $event)"
+        @batch-pay="$emit('batch-pay-history')"
+        @batch-reverse="$emit('batch-reverse-history')"
+        @clear-selection="$emit('clear-history-selection')"
         @sync="$emit('sync')"
         @config="$emit('config')"
       />
@@ -152,6 +157,7 @@ const props = defineProps<{
   financialRecords: any[]
   paymentHistory: any[]
   showCharts: boolean
+  selectedHistoryIds: string[]
 }>()
 
 const emit = defineEmits<{
@@ -179,6 +185,10 @@ const emit = defineEmits<{
   'update-payments': [payments: any[]]
   'pay': [payment: any]
   'reverse': [payment: any]
+  'toggle-history-select': [id: string]
+  'batch-pay-history': []
+  'batch-reverse-history': []
+  'clear-history-selection': []
   sync: []
   config: []
   export: [format: string]

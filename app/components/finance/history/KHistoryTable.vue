@@ -3,6 +3,7 @@
     <table class="w-full min-w-[900px] text-left border-separate border-spacing-y-3">
       <thead>
         <tr class="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50">
+          <th class="px-4 py-3 w-12"></th>
           <th class="px-4 py-3">Cliente</th>
           <th class="px-4 py-3">Status</th>
           <th class="px-4 py-3">Data Pagamento</th>
@@ -15,8 +16,14 @@
       </thead>
       <tbody>
         <tr v-for="payment in payments" :key="payment.id" 
-            class="group/row bg-white/[0.02] hover:bg-white/[0.04] transition-all rounded-2xl border border-transparent">
+            class="group/row bg-white/[0.02] hover:bg-white/[0.04] transition-all rounded-2xl border border-transparent"
+            :class="selectedIds.includes(payment.id) ? 'bg-kros-blue/5 border-kros-blue/20' : ''">
           <td class="px-4 py-5 first:rounded-l-2xl">
+            <div @click="$emit('toggle-select', payment.id)" class="w-5 h-5 rounded-md border border-white/5 flex items-center justify-center cursor-pointer hover:border-kros-blue transition-all" :class="selectedIds.includes(payment.id) ? 'bg-kros-blue border-kros-blue' : ''">
+              <svg v-if="selectedIds.includes(payment.id)" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+          </td>
+          <td class="px-4 py-5">
             <div class="cursor-pointer hover:opacity-80 transition-opacity" @click="$emit('open-client-details', payment)">
               <p class="font-semibold text-xs tracking-tight text-white uppercase">
                 {{ payment.companies?.name }}
@@ -96,12 +103,14 @@
 <script setup lang="ts">
 defineProps<{
   payments: any[]
+  selectedIds: string[]
 }>()
 
 defineEmits<{
   pay: [payment: any]
   reverse: [payment: any]
   'open-client-details': [payment: any]
+  'toggle-select': [id: string]
 }>()
 
 const formatCurrency = (val: number) => {
