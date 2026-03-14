@@ -68,8 +68,8 @@
           <div v-else class="text-xs text-white/50 italic">Nenhuma observação</div>
         </div>
 
-        <!-- Informações Extras do Plano/Produto/Serviço -->
-        <div v-if="planCategory || planNotes" class="bg-white/5 border border-white/10 rounded-xl p-4">
+        <!-- Informações Extras do Plano/Produto/Serviço (Only for Assinatura) -->
+        <div v-if="itemType === 'Assinatura' && (planCategory || planNotes)" class="bg-white/5 border border-white/10 rounded-xl p-4">
           <h3 class="text-xs font-bold text-white/70 uppercase tracking-widest mb-2">{{ planInfoTitle }}</h3>
           
           <div class="space-y-2">

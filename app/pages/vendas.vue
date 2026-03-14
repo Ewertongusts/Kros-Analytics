@@ -147,8 +147,6 @@
       :sale-value="saleDetailsModal.sale?.monthly_price || 0"
       :payment-status="saleDetailsModal.sale?.payment_status"
       :sale-date="saleDetailsModal.sale?.created_at"
-      :plan-category="saleDetailsModal.sale?.category"
-      :plan-notes="saleDetailsModal.sale?.description"
       @close="saleDetailsModal.isOpen = false"
     />
   </LayoutsKPageLayout>

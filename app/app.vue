@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useWhiteLabel } from '~/composables/useWhiteLabel'
 import { useToast } from '~/composables/useToast'
 
@@ -70,12 +70,18 @@ useHead({
   ]
 })
 
-onMounted(async () => {
-  await fetchSettings()
-  if (settings.value.primary_color) {
-    applyColors(settings.value.primary_color)
+// Watch for user authentication changes
+watch(() => user.value, async (newUser) => {
+  if (newUser) {
+    console.log('👤 User authenticated, fetching white label settings...')
+    await fetchSettings()
+    if (settings.value.primary_color) {
+      applyColors(settings.value.primary_color)
+    }
   }
-  
+}, { immediate: true })
+
+onMounted(async () => {
   // Registrar instância do Toast
   if (toastRef.value) {
     setToastInstance(toastRef.value)
