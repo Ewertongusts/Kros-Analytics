@@ -173,6 +173,7 @@
       @close="clientDetailsModal.isOpen = false"
       @edit="handleEditClient"
       @toggle-status="handleToggleClientStatus"
+      @refresh-sales="async () => { console.log('📡 [vendas.vue] Evento refresh-sales recebido, chamando fetchSales()'); await fetchSales() }"
     />
 
     <!-- Card de Detalhes da Venda -->
@@ -430,11 +431,6 @@ const handleOpenClientDetails = async (sale: any) => {
     console.error('Erro ao buscar cliente:', err)
   }
   clientDetailsModal.isOpen = true
-}
-
-const handleOpenSaleDetails = (sale: any) => {
-  saleDetailsModal.sale = sale
-  saleDetailsModal.isOpen = true
 }
 
 const handleEditClient = () => {

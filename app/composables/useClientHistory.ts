@@ -45,29 +45,65 @@ export const useClientHistory = () => {
       // Precisamos buscar todas as vendas onde name ou representative_name corresponde ao cliente
       const customerName = companyData?.representative_name || companyData?.name
       console.log('🔎 [useClientHistory] Buscando vendas para cliente:', customerName)
-      const { data: allSales, error: salesError } = await supabase
+      
+      // Buscar por representative_name
+      const { data: salesByRep, error: repError } = await supabase
         .from('sales')
         .select('*')
-        .or(`representative_name.eq.${customerName},name.eq.${customerName}`)
+        .eq('representative_name', customerName)
         .in('sale_type', ['produto', 'servico', 'personalizado'])
         .order('created_at', { ascending: false })
 
-      if (salesError) {
-        console.error('❌ [useClientHistory] Erro ao buscar vendas:', salesError)
-      } else {
-        console.log('✅ [useClientHistory] Vendas encontradas:', allSales?.length || 0)
-        console.log('📊 [useClientHistory] Dados das vendas:', allSales)
+      // Buscar por name
+      const { data: salesByName, error: nameError } = await supabase
+        .from('sales')
+        .select('*')
+        .eq('name', customerName)
+        .in('sale_type', ['produto', 'servico', 'personalizado'])
+        .order('created_at', { ascending: false })
+
+      // Combinar resultados e remover duplicatas
+      const allSalesArray = [...(salesByRep || []), ...(salesByName || [])]
+      const allSales = Array.from(new Map(allSalesArray.map(item => [item.id, item])).values())
+
+      if (repError) {
+        console.error('❌ [useClientHistory] Erro ao buscar vendas por representative_name:', repError)
       }
+      if (nameError) {
+        console.error('❌ [useClientHistory] Erro ao buscar vendas por name:', nameError)
+      }
+      
+      console.log('✅ [useClientHistory] Vendas encontradas:', allSales?.length || 0)
+      console.log('📊 [useClientHistory] Dados das vendas:', allSales)
+      
+      // Debug: mostrar payment_status de cada venda
+      allSales?.forEach((sale: any) => {
+        console.log(`📌 [useClientHistory] Venda: ${sale.plan_name || sale.custom_name} - Status: ${sale.payment_status}`)
+      })
 
       // Calcular totais de vendas por tipo
       const productSales = allSales?.filter((s: any) => s.sale_type === 'produto') || []
       const serviceSales = allSales?.filter((s: any) => s.sale_type === 'servico') || []
       
+      // Calcular vendas pagas e pendentes por tipo
+      const paidProductSales = productSales.filter((s: any) => s.payment_status === 'paid')
+      const paidServiceSales = serviceSales.filter((s: any) => s.payment_status === 'paid')
+      const pendingProductSales = productSales.filter((s: any) => s.payment_status === 'pending')
+      const pendingServiceSales = serviceSales.filter((s: any) => s.payment_status === 'pending')
+      
       console.log('📦 [useClientHistory] Produtos encontrados:', productSales.length)
       console.log('🛠️ [useClientHistory] Serviços encontrados:', serviceSales.length)
+      console.log('✅ [useClientHistory] Produtos pagos:', paidProductSales.length)
+      console.log('✅ [useClientHistory] Serviços pagos:', paidServiceSales.length)
+      console.log('⏳ [useClientHistory] Produtos pendentes:', pendingProductSales.length)
+      console.log('⏳ [useClientHistory] Serviços pendentes:', pendingServiceSales.length)
       
       const productValue = productSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
       const serviceValue = serviceSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
+      const paidProductValue = paidProductSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
+      const paidServiceValue = paidServiceSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
+      const pendingProductValue = pendingProductSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
+      const pendingServiceValue = pendingServiceSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
 
       // 3. Buscar histórico de pagamentos (auditoria)
       console.log('💳 [useClientHistory] Buscando histórico de pagamentos...')
@@ -143,7 +179,13 @@ export const useClientHistory = () => {
         totalProductValue,
         totalServiceValue,
         totalPaidSubscriptions,
-        subscriptionLTV
+        subscriptionLTV,
+        // Vendas pagas por tipo
+        paidProductValue,
+        paidServiceValue,
+        // Vendas pendentes por tipo
+        pendingProductValue,
+        pendingServiceValue
       }
 
       console.log('📊 [useClientHistory] Estatísticas calculadas:', stats)

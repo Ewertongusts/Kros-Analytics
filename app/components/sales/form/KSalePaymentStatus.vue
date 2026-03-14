@@ -8,16 +8,15 @@
       <option value="">Selecione...</option>
       <option value="paid">✅ Pago (recebido)</option>
       <option value="pending">⏳ Pendente (a receber)</option>
-      <option value="scheduled">📅 Agendado (data futura)</option>
     </SalesUiKSaleSelect>
 
+    <!-- Quando for Pendente, mostrar campo de data opcional -->
     <SalesUiKSaleInput
-      v-if="paymentStatusLocal === 'scheduled' || paymentStatusLocal === 'pending'"
+      v-if="paymentStatusLocal === 'pending'"
       v-model="paymentDateLocal"
       type="date"
-      :label="paymentStatusLocal === 'scheduled' ? 'Data Agendada' : 'Data de Vencimento'"
-      :required="paymentStatusLocal === 'scheduled'"
-      :hint="paymentStatusLocal === 'scheduled' ? 'Data em que o pagamento será realizado' : 'Data limite para recebimento (opcional)'"
+      label="Data de Vencimento"
+      hint="Data limite para recebimento (opcional)"
     />
   </div>
 </template>

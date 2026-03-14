@@ -6,6 +6,7 @@ export const useSaleCrud = () => {
   const salesData = ref<any[]>([])
 
   const fetchSales = async () => {
+    console.log('🔄 [useSaleCrud] fetchSales iniciado')
     loading.value = true
     try {
       const { data, error } = await supabase
@@ -15,7 +16,7 @@ export const useSaleCrud = () => {
       
       if (error) throw error
       
-      console.log('Vendas carregadas:', data?.length)
+      console.log('✅ [useSaleCrud] Vendas carregadas:', data?.length)
       
       // Buscar informações do plano para cada venda
       if (data && data.length > 0) {
@@ -41,8 +42,9 @@ export const useSaleCrud = () => {
       } else {
         salesData.value = data || []
       }
+      console.log('📊 [useSaleCrud] salesData.value atualizado com', salesData.value.length, 'vendas')
     } catch (err) {
-      console.error('Erro ao buscar vendas:', err)
+      console.error('❌ [useSaleCrud] Erro ao buscar vendas:', err)
     } finally {
       loading.value = false
     }
@@ -70,6 +72,9 @@ export const useSaleCrud = () => {
         // Remover campos que não existem na tabela
         delete updateData.last_receipt_sent_at
         delete updateData.description
+        delete updateData.category
+        delete updateData.id
+        delete updateData.created_at
         
         const { data, error: updateError } = await (supabase.from('sales') as any)
           .update(updateData)
@@ -133,6 +138,9 @@ export const useSaleCrud = () => {
         // Remover campos que não existem na tabela
         delete insertData.last_receipt_sent_at
         delete insertData.description
+        delete insertData.category
+        delete insertData.id
+        delete insertData.created_at
         
         const { data, error: insertError } = await supabase
           .from('sales')
@@ -197,6 +205,42 @@ export const useSaleCrud = () => {
     }
   }
 
+  const updateSaleStatus = async (saleId: string, newStatus: 'paid' | 'pending' | 'overdue') => {
+    try {
+      console.log(`💾 [useSaleCrud] Atualizando status da venda ${saleId} para ${newStatus}`)
+      
+      const { data, error: updateError } = await (supabase.from('sales') as any)
+        .update({ 
+          payment_status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', saleId)
+        .select()
+      
+      if (updateError) throw updateError
+      
+      console.log(`✅ [useSaleCrud] Status atualizado com sucesso:`, data)
+      
+      // Registrar no histórico
+      await addHistoryEntry(
+        saleId,
+        'updated',
+        `Status da venda atualizado para: ${newStatus}`,
+        { new_status: newStatus }
+      )
+      
+      success('Status atualizado', `Venda marcada como ${newStatus === 'paid' ? 'Pago' : 'Pendente'}`)
+      
+      // Recarregar vendas
+      await fetchSales()
+      return true
+    } catch (err: any) {
+      console.error('❌ [useSaleCrud] Erro ao atualizar status:', err)
+      error('Erro ao atualizar', err.message || 'Não foi possível atualizar o status')
+      return false
+    }
+  }
+
   const computeSummary = (sales: any[]) => {
     if (!sales || sales.length === 0) {
       return {
@@ -250,6 +294,7 @@ export const useSaleCrud = () => {
     fetchSales,
     saveSale,
     deleteSale,
+    updateSaleStatus,
     computeSummary
   }
 }

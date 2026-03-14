@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, isRef } from 'vue'
 
 export interface Sale {
   id?: number
@@ -12,13 +12,16 @@ export interface Sale {
   [key: string]: any
 }
 
-export const useSaleFilters = (salesData: any) => {
+export const useSaleFilters = (salesDataInput: any) => {
   const searchQuery = ref('')
   const status = ref('todos')
   const startDate = ref('')
   const endDate = ref('')
   const minValue = ref<number | null>(null)
   const maxValue = ref<number | null>(null)
+
+  // Garantir que salesData é sempre um ref
+  const salesData = isRef(salesDataInput) ? salesDataInput : ref(salesDataInput)
 
   const filteredSales = computed(() => {
     let filtered = salesData.value || []
