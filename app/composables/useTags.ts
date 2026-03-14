@@ -14,18 +14,43 @@ export const useTags = () => {
 
   const fetchTags = async () => {
     loading.value = true
+    console.log('🔍 [useTags] fetchTags iniciado')
     try {
-      const { data, error } = await supabase
+      const user = useSupabaseUser()
+      console.log('👤 [useTags] User:', user.value?.id || 'não autenticado')
+      
+      let query = supabase
         .from('tag_definitions')
         .select('*')
-        .order('name', { ascending: true })
+      
+      console.log('📋 [useTags] Query criada para tag_definitions')
+      
+      // Remover filtro por user_id pois a tabela tag_definitions não tem essa coluna
+      // if (user.value) {
+      //   query = query.eq('user_id', user.value.id)
+      // }
+      
+      query = query.order('name', { ascending: true })
+      console.log('📋 [useTags] Query ordenada por name')
 
-      if (error) throw error
+      console.log('🚀 [useTags] Executando query...')
+      const { data, error } = await query
+
+      if (error) {
+        console.error('❌ [useTags] Erro na query:', error)
+        throw error
+      }
+      
+      console.log('✅ [useTags] Tags carregadas:', data?.length || 0)
+      console.log('📊 [useTags] Dados das tags:', data)
       tags.value = data || []
+      console.log('✅ [useTags] tags.value atualizado:', tags.value.length, 'itens')
     } catch (e: any) {
-      console.error('Erro ao buscar tags:', e.message)
+      console.error('❌ [useTags] Erro ao buscar tags:', e.message)
+      console.error('❌ [useTags] Erro completo:', e)
     } finally {
       loading.value = false
+      console.log('✅ [useTags] fetchTags finalizado')
     }
   }
 

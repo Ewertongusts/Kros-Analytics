@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   tags: string[]
@@ -85,6 +85,11 @@ const props = defineProps<{
 const emit = defineEmits(['remove-tag', 'add-tag', 'toggle-picker'])
 
 const activeTooltip = ref<string | null>(null)
+
+// Watcher para reagir a mudanças nas tags
+watch(() => props.tags, (newTags) => {
+  console.log('👀 [KCollectionRowTags] tags mudou:', newTags?.length || 0)
+}, { deep: true })
 
 const hasValidWhatsApp = computed(() => {
   const rawNum = props.whatsapp?.replace(/\D/g, '') || ''

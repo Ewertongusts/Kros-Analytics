@@ -93,6 +93,19 @@
             <SalesFormKSaleNotes
               v-model:notes="form.notes"
             />
+
+            <!-- Botão para Ver Detalhes -->
+            <button
+              type="button"
+              @click="openDetailsCard"
+              class="w-full px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all text-white/70 hover:text-white font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Ver Detalhes do Item
+            </button>
           </SalesFormKSaleFormSection>
 
           <SalesKSaleModalActions
@@ -137,12 +150,27 @@
         @desconto20="setDesconto20"
       />
     </div>
+
+    <!-- Card de Detalhes -->
+    <SalesKSaleDetailsCard
+      :is-open="isDetailsCardOpen"
+      :item-name="selectedCatalogItem?.name || form.custom_name || form.plan_name"
+      :item-type="selectedCatalogItem?.type || saleType"
+      :item-description="selectedCatalogItem?.description || form.custom_description"
+      :item-price="selectedCatalogItem?.price || form.monthly_price"
+      :notes="form.notes"
+      :client-name="form.representative_name"
+      :sale-value="finalValue"
+      :payment-status="form.payment_status"
+      :sale-date="form.payment_date || new Date().toISOString()"
+      @close="isDetailsCardOpen = false"
+    />
     </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick, toRef } from 'vue'
 import { useSaleCalculations } from '~/composables/useSaleCalculations'
 import { useSaleFormatters } from '~/composables/useSaleFormatters'
 import { useSaleForm } from '~/composables/useSaleForm'
@@ -161,6 +189,9 @@ const supabase = useSupabaseClient()
 const { fetchCurrentUser } = useCurrentUser()
 const { formatCurrency, formatDate } = useSaleFormatters()
 
+// Converter saleType prop para ref reativa
+const saleTypeRef = toRef(props, 'saleType')
+
 const customizeSale = ref(false)
 const hasInstallments = ref(false)
 const hasDownPayment = ref(false)
@@ -172,6 +203,8 @@ const installmentsList = ref<number[]>([])
 const currentUserEmail = ref('')
 const currentUserName = ref('')
 const currentUserId = ref('')
+const isDetailsCardOpen = ref(false)
+const selectedCatalogItem = ref<any>(null)
 
 const form = reactive({
   representative_name: '',
@@ -255,10 +288,15 @@ const {
   fetchCatalogItems,
   fetchCategories,
   onPlanSelect: onPlanSelectBase
-} = useSaleData(supabase, props.saleType)
+} = useSaleData(supabase, saleTypeRef)
 
 const onPlanSelect = (item: any) => {
   onPlanSelectBase(item, form)
+  selectedCatalogItem.value = item
+}
+
+const openDetailsCard = () => {
+  isDetailsCardOpen.value = true
 }
 
 // Computed para campos de cliente
@@ -309,6 +347,13 @@ watch(() => props.isOpen, async (val) => {
     }
   } else {
     resetForm()
+  }
+})
+
+watch(() => props.saleType, async (newType) => {
+  if (newType && newType !== 'personalizado' && props.isOpen) {
+    console.log('Sale type changed to:', newType)
+    await fetchCatalogItems()
   }
 })
 

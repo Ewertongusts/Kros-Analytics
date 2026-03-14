@@ -9,24 +9,41 @@ export const useSaleCrud = () => {
     loading.value = true
     try {
       const { data, error } = await supabase
-        .from('companies')
+        .from('sales')
         .select('*')
-        .in('sale_type', ['produto', 'servico', 'personalizado'])
         .order('created_at', { ascending: false })
       
       if (error) throw error
       
       console.log('Vendas carregadas:', data?.length)
       
-      // Buscar última data de envio de comprovante para cada venda
+      // Buscar informações do plano e última data de envio de comprovante para cada venda
       if (data && data.length > 0) {
-        const salesWithLastSent = await Promise.all(
+        const salesWithDetails = await Promise.all(
           data.map(async (sale) => {
             const clientName = sale.representative_name || sale.name
             const phone = sale.whatsapp?.replace(/\D/g, '')
             
+            let planDetails = { category: null, description: null }
+            
+            // Buscar detalhes do plano se plan_name existir
+            if (sale.plan_name) {
+              const { data: planData, error: planError } = await supabase
+                .from('plans')
+                .select('category, description')
+                .eq('name', sale.plan_name)
+                .limit(1)
+              
+              if (!planError && planData && planData.length > 0) {
+                planDetails = {
+                  category: planData[0].category,
+                  description: planData[0].description
+                }
+              }
+            }
+            
             if (!clientName || !phone) {
-              return { ...sale, last_receipt_sent_at: null }
+              return { ...sale, last_receipt_sent_at: null, ...planDetails }
             }
             
             // Busca por company_name e whatsapp
@@ -49,11 +66,12 @@ export const useSaleCrud = () => {
             
             return {
               ...sale,
-              last_receipt_sent_at: lastSent
+              last_receipt_sent_at: lastSent,
+              ...planDetails
             }
           })
         )
-        salesData.value = salesWithLastSent
+        salesData.value = salesWithDetails
       } else {
         salesData.value = data || []
       }
@@ -66,8 +84,10 @@ export const useSaleCrud = () => {
 
   const saveSale = async (saleData: any, selectedSaleType: string, editingSale: any) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
       if (editingSale) {
-        // UPDATE
+        // UPDATE existing sale
         const updateData = {
           ...saleData,
           sale_type: selectedSaleType,
@@ -77,7 +97,7 @@ export const useSaleCrud = () => {
         // Remover campos que não existem na tabela
         delete updateData.last_receipt_sent_at
         
-        const { data, error: updateError } = await (supabase.from('companies') as any)
+        const { data, error: updateError } = await (supabase.from('sales') as any)
           .update(updateData)
           .eq('id', editingSale.id)
           .select()
@@ -94,18 +114,53 @@ export const useSaleCrud = () => {
         
         success('Venda atualizada', 'Alterações salvas com sucesso')
       } else {
-        // INSERT
+        // INSERT new sale
+        const clientName = saleData.name || saleData.representative_name
+        
+        let companyId = null
+        
+        // Buscar ou criar empresa/cliente
+        if (clientName) {
+          const { data: existingCompanies, error: searchError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('name', clientName)
+            .limit(1)
+          
+          if (!searchError && existingCompanies && existingCompanies.length > 0) {
+            companyId = existingCompanies[0].id
+            console.log('Empresa existente encontrada:', companyId)
+          } else {
+            // Criar nova empresa
+            const { data: newCompany, error: createError } = await supabase
+              .from('companies')
+              .insert({
+                name: clientName,
+                status: 'active',
+                user_id: user?.id
+              })
+              .select()
+            
+            if (createError) throw createError
+            if (newCompany && newCompany[0]) {
+              companyId = newCompany[0].id
+              console.log('Nova empresa criada:', companyId)
+            }
+          }
+        }
+        
         const insertData = {
           ...saleData,
           sale_type: selectedSaleType,
-          is_active: true
+          company_id: companyId,
+          user_id: user?.id
         }
         
         // Remover campos que não existem na tabela
         delete insertData.last_receipt_sent_at
         
         const { data, error: insertError } = await supabase
-          .from('companies')
+          .from('sales')
           .insert(insertData as any)
           .select()
         
@@ -151,7 +206,7 @@ export const useSaleCrud = () => {
       )
       
       const { error: deleteError } = await supabase
-        .from('companies')
+        .from('sales')
         .delete()
         .eq('id', sale.id)
       

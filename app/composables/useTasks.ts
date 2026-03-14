@@ -23,13 +23,22 @@ export const useTasks = () => {
   const fetchTasks = async () => {
     loading.value = true
     try {
-      const { data, error } = await (supabase.from('tasks') as any)
+      const user = useSupabaseUser()
+      
+      let query = (supabase.from('tasks') as any)
         .select(`
           *,
           companies (name),
           payments (amount, due_date)
         `)
-        .order('created_at', { ascending: false })
+      
+      if (user.value) {
+        query = query.eq('user_id', user.value.id)
+      }
+      
+      query = query.order('created_at', { ascending: false })
+
+      const { data, error } = await query
 
       if (error) throw error
       tasks.value = data || []

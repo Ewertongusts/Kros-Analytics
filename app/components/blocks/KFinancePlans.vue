@@ -132,10 +132,13 @@ const isCategoriesModalOpen = ref(false)
 
 // Buscar planos quando o componente for montado
 onMounted(async () => {
-  console.log('🎨 KFinancePlans montado, buscando planos...')
   await fetchPlans()
-  console.log('📊 Planos após fetch:', plans.value)
 })
+
+// Watch para monitorar mudanças em plans
+watch(() => plans.value, (newPlans) => {
+  console.log('Plans updated:', newPlans.length, 'items')
+}, { deep: true })
 
 const openNewModal = () => {
   selectedPlan.value = null

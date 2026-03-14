@@ -22,10 +22,18 @@ export const useWhiteLabel = () => {
   const fetchSettings = async () => {
     loading.value = true
     try {
-      const { data, error } = await (supabase.from('white_label_settings') as any)
+      const user = useSupabaseUser()
+      
+      let query = (supabase.from('white_label_settings') as any)
         .select('*')
-        .limit(1)
-        .single()
+      
+      if (user.value) {
+        query = query.eq('user_id', user.value.id)
+      }
+      
+      query = query.limit(1)
+
+      const { data, error } = await query.single()
 
       if (data && !error) {
         settings.value = data as WhiteLabelSettings

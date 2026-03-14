@@ -1,25 +1,29 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-const activeModals = ref<Set<string>>(new Set())
+// Estado global para rastrear modais abertos
+const globalActiveModals = ref<Map<string, boolean>>(new Map())
 
 export const useFilterModals = (modalId: string) => {
-  const isOpen = ref(false)
+  // Usar o estado global em vez de criar um novo ref local
+  if (!globalActiveModals.value.has(modalId)) {
+    globalActiveModals.value.set(modalId, false)
+  }
+
+  const isOpen = computed(() => globalActiveModals.value.get(modalId) ?? false)
 
   const openModal = () => {
     // Fechar todos os outros modais
-    const othersToClose = Array.from(activeModals.value).filter(id => id !== modalId)
-    othersToClose.forEach(id => {
-      window.dispatchEvent(new CustomEvent('close-filter-modal', { detail: { modalId: id } }))
+    globalActiveModals.value.forEach((_, id) => {
+      if (id !== modalId) {
+        globalActiveModals.value.set(id, false)
+      }
     })
     
-    activeModals.value.clear()
-    activeModals.value.add(modalId)
-    isOpen.value = true
+    globalActiveModals.value.set(modalId, true)
   }
 
   const closeModal = () => {
-    activeModals.value.delete(modalId)
-    isOpen.value = false
+    globalActiveModals.value.set(modalId, false)
   }
 
   const toggleModal = () => {
@@ -28,17 +32,6 @@ export const useFilterModals = (modalId: string) => {
     } else {
       openModal()
     }
-  }
-
-  // Escutar evento de fechamento
-  if (process.client) {
-    const handleCloseEvent = (event: any) => {
-      if (event.detail.modalId === modalId && isOpen.value) {
-        closeModal()
-      }
-    }
-    
-    window.addEventListener('close-filter-modal', handleCloseEvent)
   }
 
   return {

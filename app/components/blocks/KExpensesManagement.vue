@@ -42,18 +42,7 @@
             </svg>
           </button>
 
-          <button 
-            @click="openHistory"
-            class="px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center gap-2 text-white/70 hover:text-white"
-            title="Ver histórico"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-            </svg>
-            <span class="text-[10px] font-bold uppercase tracking-widest">Histórico</span>
-          </button>
-
-          <UiKButtonPrimary icon="plus" @click="showCreateModal = true">
+          <UiKButtonPrimary icon="plus" @click="() => { resetForm(); showCreateModal = true }">
             Nova Despesa
           </UiKButtonPrimary>
         </div>
@@ -72,9 +61,9 @@
           <p class="text-[10px] text-white/40 mt-2">por despesa</p>
         </div>
         <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Recorrentes</p>
-          <p class="text-2xl font-black text-white">{{ stats.recurring }}</p>
-          <p class="text-[10px] text-white/40 mt-2">{{ formatCurrency(stats.recurringTotal) }}/mês</p>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Maior</p>
+          <p class="text-2xl font-black text-white">{{ formatCurrency(stats.max) }}</p>
+          <p class="text-[10px] text-white/40 mt-2">despesa</p>
         </div>
         <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
           <p class="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Total Geral</p>
@@ -84,32 +73,20 @@
       </div>
 
       <!-- Filtros -->
-      <div class="flex items-start gap-4">
+      <div v-if="activeTab !== 'categorias'" class="flex items-start gap-4">
         <div class="flex-1 flex gap-3">
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Buscar despesa, categoria ou valor..."
+            placeholder="Buscar despesa..."
             class="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/20 text-[10px]"
           />
           <select
             v-model="selectedCategory"
-            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
+            class="px-4 py-2.5 bg-[#1a1a1b] border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
           >
             <option value="">Todas Categorias</option>
-            <option value="infraestrutura">Infraestrutura</option>
-            <option value="software">Software</option>
-            <option value="marketing">Marketing</option>
-            <option value="pessoal">Pessoal</option>
-            <option value="outros">Outros</option>
-          </select>
-          <select
-            v-model="selectedRecurrence"
-            class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
-          >
-            <option value="">Todas</option>
-            <option value="true">Recorrentes</option>
-            <option value="false">Únicas</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
           <button
             @click="clearFilters"
@@ -132,9 +109,9 @@
               <tr class="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">
                 <th class="px-4 py-3">Descrição</th>
                 <th class="px-4 py-3">Categoria</th>
-                <th class="px-4 py-3">Tipo</th>
                 <th class="px-4 py-3">Valor</th>
-                <th class="px-4 py-3">Data</th>
+                <th class="px-4 py-3">Data Início</th>
+                <th class="px-4 py-3">Recorrência</th>
                 <th class="px-4 py-3">Ações</th>
               </tr>
             </thead>
@@ -145,13 +122,8 @@
                   <p class="font-bold text-xs text-white uppercase tracking-tight">{{ expense.description }}</p>
                 </td>
                 <td class="px-4 py-5">
-                  <span class="text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-white/70">
-                    {{ expense.category || 'Geral' }}
-                  </span>
-                </td>
-                <td class="px-4 py-5">
-                  <span :class="['text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md', expense.is_recurring ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/5 text-white/70']">
-                    {{ expense.is_recurring ? 'Mensal' : 'Único' }}
+                  <span class="text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md" :style="{ backgroundColor: getCategoryColor(expense.category_id) + '20', color: getCategoryColor(expense.category_id) }">
+                    {{ getCategoryName(expense.category_id) }}
                   </span>
                 </td>
                 <td class="px-4 py-5">
@@ -160,12 +132,29 @@
                 <td class="px-4 py-5">
                   <p class="text-[9px] text-white/60">{{ formatDate(expense.created_at) }}</p>
                 </td>
+                <td class="px-4 py-5">
+                  <span v-if="expense.is_recurring" class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 bg-blue-500/20 text-blue-400 rounded">
+                    {{ getFrequencyLabel(expense.recurring_frequency) }}
+                  </span>
+                  <span v-else class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 bg-white/10 text-white/60 rounded">
+                    Única
+                  </span>
+                </td>
                 <td class="px-4 py-5 last:rounded-r-2xl">
                   <div class="flex items-center gap-2">
+                    <button 
+                      v-if="expense.status === 'pending'"
+                      @click="handleMarkAsPaid(expense.id)" 
+                      class="p-2 hover:bg-green-500/20 rounded-lg transition-colors text-green-400/70 hover:text-green-400"
+                      title="Marcar como pago"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                    <span v-else class="text-[9px] font-bold text-green-400 uppercase tracking-widest px-2 py-1 bg-green-500/10 rounded">Pago</span>
                     <button @click="editExpense(expense)" class="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    <button @click="deleteExpense(expense.id)" class="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400/70 hover:text-red-400">
+                    <button @click="confirmDelete(expense.id, 'expense')" class="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400/70 hover:text-red-400">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                     </button>
                   </div>
@@ -201,9 +190,12 @@
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div v-for="category in categories" :key="category.id" class="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all">
             <div class="flex items-center justify-between">
-              <p class="font-bold text-white text-sm uppercase tracking-tight">{{ category.name }}</p>
+              <div class="flex items-center gap-3">
+                <div class="w-4 h-4 rounded" :style="{ backgroundColor: category.color }"></div>
+                <p class="font-bold text-white text-sm uppercase tracking-tight">{{ category.name }}</p>
+              </div>
               <button
-                @click="deleteCategory(category.id)"
+                @click="confirmDelete(category.id, 'category')"
                 class="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400/70 hover:text-red-400"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
@@ -216,85 +208,148 @@
       <BlocksKGlobalFooter />
     </div>
 
-    <!-- Modal -->
+    <!-- Modal de Despesa -->
     <UiKModal :is-open="showCreateModal" @close="showCreateModal = false">
       <UiKModalHeader 
         :title="editingExpense ? 'Editar Despesa' : 'Nova Despesa'"
         subtitle="Controle de custos e saídas"
       />
 
-      <div class="space-y-4">
-        <div>
-          <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Descrição</label>
-          <input v-model="formData.description" type="text" placeholder="Ex: Servidor AWS" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
+      <form @submit.prevent="saveExpense" class="flex flex-col max-h-[70vh]">
+        <div class="flex-1 overflow-y-auto space-y-4 px-1">
           <div>
-            <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Categoria</label>
-            <select v-model="formData.category" class="w-full bg-[#1a1a1b] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-[#222223] transition-all text-sm appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;">
-              <option value="infraestrutura">Infraestrutura</option>
-              <option value="software">Software</option>
-              <option value="marketing">Marketing</option>
-              <option value="pessoal">Pessoal</option>
-              <option value="outros">Outros</option>
+            <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Descrição</label>
+            <input v-model="formData.description" type="text" placeholder="Ex: Servidor AWS" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Categoria</label>
+              <select v-model="formData.category_id" class="w-full bg-[#1a1a1b] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-[#222223] transition-all text-sm appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;">
+                <option value="">Selecione uma categoria</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Valor (R$)</label>
+              <input v-model.number="formData.amount" type="number" placeholder="0.00" step="0.01" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Data</label>
+              <input v-model="formData.date" type="date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
+            </div>
+
+            <div>
+              <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Status</label>
+              <select v-model="formData.status" class="w-full bg-[#1a1a1b] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-[#222223] transition-all text-sm appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;">
+                <option value="pending">Pendente</option>
+                <option value="paid">Pago</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Notas (Opcional)</label>
+            <textarea v-model="formData.notes" placeholder="Adicione observações..." class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm resize-none h-16"></textarea>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input 
+                v-model="formData.is_recurring" 
+                type="checkbox" 
+                class="w-4 h-4 rounded"
+              />
+              <span class="text-white/80 text-[10px] font-bold uppercase tracking-widest">Despesa Recorrente</span>
+            </label>
+
+            <select v-if="formData.is_recurring" v-model="formData.recurring_frequency" class="w-full bg-[#1a1a1b] border border-white/10 rounded-lg px-3 py-2 text-white text-sm">
+              <option value="daily">Diária</option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensal</option>
+              <option value="quarterly">Trimestral</option>
+              <option value="semiannual">Semestral</option>
+              <option value="yearly">Anual</option>
             </select>
           </div>
-
-          <div>
-            <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Valor (R$)</label>
-            <input v-model.number="formData.amount" type="number" placeholder="0.00" step="0.01" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
-          </div>
         </div>
 
-        <div>
-          <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Data</label>
-          <input v-model="formData.date" type="date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
+        <div class="border-t border-white/10 pt-4 mt-4 flex-shrink-0">
+          <UiKModalActions
+            :confirm-text="editingExpense ? 'Atualizar' : 'Criar'"
+            :cancel-text="'Cancelar'"
+            :loading="loading"
+            submit-type="submit"
+            @cancel="showCreateModal = false"
+          />
         </div>
+      </form>
+    </UiKModal>
 
-        <div class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10">
-          <input v-model="formData.is_recurring" type="checkbox" class="w-4 h-4 rounded bg-white/10 border border-white/20 cursor-pointer accent-red-500" />
-          <label class="text-white/80 text-[10px] font-bold uppercase tracking-widest cursor-pointer">Despesa Recorrente (Mensal)</label>
-        </div>
+    <!-- Modal de Confirmação de Delete -->
+    <UiKModal :is-open="showDeleteConfirm" @close="showDeleteConfirm = false">
+      <UiKModalHeader 
+        :title="deleteConfirmType === 'expense' ? 'Deletar Despesa' : 'Deletar Categoria'"
+        :subtitle="deleteConfirmType === 'expense' ? 'Esta ação não pode ser desfeita' : 'Categorias com despesas não podem ser deletadas'"
+      />
+
+      <div class="py-6 text-center">
+        <p class="text-white/70">Tem certeza que deseja continuar?</p>
       </div>
 
       <UiKModalActions
-        :confirm-text="editingExpense ? 'Atualizar' : 'Criar'"
-        :cancel-text="'Cancelar'"
+        confirm-text="Deletar"
+        cancel-text="Cancelar"
         :loading="loading"
-        @confirm="saveExpense"
-        @cancel="showCreateModal = false"
+        @confirm="performDelete"
+        @cancel="showDeleteConfirm = false"
       />
     </UiKModal>
   </LayoutsKPageLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 
-interface Expense {
-  id: string
-  description: string
-  category: string
-  amount: number
-  is_recurring: boolean
-  created_at: string
-}
+definePageMeta({
+  middleware: 'auth'
+})
 
-const supabase = useSupabaseClient()
-const loading = ref(false)
+const { 
+  expenses, 
+  categories, 
+  loading, 
+  fetchExpenses, 
+  fetchCategories, 
+  upsertExpense, 
+  deleteExpense: deleteExpenseFromComposable, 
+  upsertCategory, 
+  deleteCategory: deleteCategoryFromComposable,
+  markExpenseAsPaid: markExpenseAsPaidComposable,
+  getPendingExpenses,
+  getPaidExpenses
+} = useExpenses()
+
+// Watch for categories changes
+watch(() => categories.value, (newVal) => {
+  console.log('Component: categories changed:', newVal.length, 'items')
+  console.log('Component: categories content:', newVal)
+}, { deep: true })
+
 const showCreateModal = ref(false)
-const editingExpense = ref<Expense | null>(null)
-const expenses = ref<Expense[]>([])
+const editingExpense = ref<any>(null)
 const searchQuery = ref('')
 const selectedCategory = ref('')
-const selectedRecurrence = ref('')
 const showMetrics = ref(false)
 const activeTab = ref('todos')
-const categories = ref<any[]>([])
-const showCategoryModal = ref(false)
-const editingCategory = ref<any | null>(null)
 const newCategoryName = ref('')
+const showDeleteConfirm = ref(false)
+const deleteConfirmId = ref<string | null>(null)
+const deleteConfirmType = ref<'expense' | 'category' | null>(null)
 
 const tabs = [
   { id: 'todos', label: 'Todos' },
@@ -305,10 +360,13 @@ const tabs = [
 
 const formData = reactive({
   description: '',
-  category: 'infraestrutura',
+  category_id: '',
   amount: 0,
+  status: 'pending' as 'pending' | 'paid',
+  notes: '',
+  date: new Date().toISOString().split('T')[0],
   is_recurring: false,
-  date: new Date().toISOString().split('T')[0]
+  recurring_frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly'
 })
 
 const stats = computed(() => {
@@ -316,46 +374,71 @@ const stats = computed(() => {
   const currentMonth = now.getMonth()
   const currentYear = now.getFullYear()
 
-  const monthExpenses = expenses.value.filter(e => {
+  const monthExpenses = expenses.value.filter((e: any) => {
     const date = new Date(e.created_at)
     return date.getMonth() === currentMonth && date.getFullYear() === currentYear
   })
 
-  const totalMonth = monthExpenses.reduce((acc, e) => acc + e.amount, 0)
-  const recurring = expenses.value.filter(e => e.is_recurring).length
-  const recurringTotal = expenses.value.filter(e => e.is_recurring).reduce((acc, e) => acc + e.amount, 0)
-  const total = expenses.value.reduce((acc, e) => acc + e.amount, 0)
-  const average = expenses.value.length > 0 ? total / expenses.value.length : 0
+  const amounts = monthExpenses.map((e: any) => e.amount)
+  const totalMonth = amounts.reduce((a: number, b: number) => a + b, 0)
+  const total = expenses.value.reduce((a: number, b: any) => a + b.amount, 0)
+  const average = monthExpenses.length > 0 ? totalMonth / monthExpenses.length : 0
+  const max = amounts.length > 0 ? Math.max(...amounts) : 0
+  const pending = getPendingExpenses.value.reduce((a: number, b: any) => a + b.amount, 0)
+  const paid = getPaidExpenses.value.reduce((a: number, b: any) => a + b.amount, 0)
 
   return {
     totalMonth,
     countMonth: monthExpenses.length,
     average,
-    recurring,
-    recurringTotal,
+    max,
     total,
-    count: expenses.value.length
+    count: expenses.value.length,
+    pending,
+    paid
   }
 })
 
 const filteredExpenses = computed(() => {
-  return expenses.value.filter(e => {
-    const matchSearch = e.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchCategory = !selectedCategory.value || e.category === selectedCategory.value
-    const matchRecurrence = !selectedRecurrence.value || e.is_recurring.toString() === selectedRecurrence.value
-    return matchSearch && matchCategory && matchRecurrence
-  })
+  let filtered = expenses.value
+
+  if (activeTab.value === 'recorrentes') {
+    filtered = filtered.filter((e: any) => e.is_recurring === true)
+  } else if (activeTab.value === 'unicos') {
+    filtered = filtered.filter((e: any) => e.is_recurring !== true)
+  }
+
+  if (searchQuery.value) {
+    filtered = filtered.filter((e: any) => 
+      e.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  }
+
+  if (selectedCategory.value) {
+    filtered = filtered.filter((e: any) => e.category_id === selectedCategory.value)
+  }
+
+  return filtered.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 })
 
-const getCategoryColor = (category: string) => {
-  const colors: Record<string, string> = {
-    infraestrutura: 'bg-blue-500/20 text-blue-400',
-    software: 'bg-purple-500/20 text-purple-400',
-    marketing: 'bg-pink-500/20 text-pink-400',
-    pessoal: 'bg-green-500/20 text-green-400',
-    outros: 'bg-gray-500/20 text-gray-400'
+const getCategoryName = (categoryId: string) => {
+  return categories.value.find((c: any) => c.id === categoryId)?.name || 'Outros'
+}
+
+const getCategoryColor = (categoryId: string) => {
+  return categories.value.find((c: any) => c.id === categoryId)?.color || '#6B7280'
+}
+
+const getFrequencyLabel = (frequency: string | undefined) => {
+  const labels: Record<string, string> = {
+    'daily': 'Diária',
+    'weekly': 'Semanal',
+    'monthly': 'Mensal',
+    'quarterly': 'Trimestral',
+    'semiannual': 'Semestral',
+    'yearly': 'Anual'
   }
-  return colors[category] || colors.outros
+  return labels[frequency || ''] || 'Desconhecida'
 }
 
 const formatCurrency = (val: number) => {
@@ -366,98 +449,110 @@ const formatDate = (date: string) => {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(date))
 }
 
-const fetchExpenses = async () => {
-  try {
-    const { data, error } = await (supabase.from('transactions') as any)
-      .select('*')
-      .eq('type', 'expense')
-      .order('created_at', { ascending: false })
-
-    if (error) throw error
-    expenses.value = data || []
-  } catch (err) {
-    console.error('Erro ao buscar despesas:', err)
-  }
-}
-
 const saveExpense = async () => {
-  if (!formData.description || !formData.amount) {
+  if (!formData.description || !formData.amount || !formData.category_id) {
     alert('Preencha todos os campos')
     return
   }
 
-  loading.value = true
-  try {
-    const dateValue = formData.date ? new Date(formData.date).toISOString() : new Date().toISOString()
-    
-    if (editingExpense.value) {
-      const { error } = await (supabase.from('transactions') as any)
-        .update({
-          description: formData.description,
-          category: formData.category,
-          amount: formData.amount,
-          is_recurring: formData.is_recurring,
-          created_at: dateValue
-        })
-        .eq('id', editingExpense.value.id)
+  const dateValue = formData.date ? new Date(formData.date).toISOString() : new Date().toISOString()
+  
+  const result = await upsertExpense({
+    id: editingExpense.value?.id,
+    description: formData.description,
+    category_id: formData.category_id,
+    amount: formData.amount,
+    status: formData.status,
+    notes: formData.notes,
+    is_recurring: formData.is_recurring,
+    recurring_frequency: formData.is_recurring ? formData.recurring_frequency : undefined,
+    created_at: dateValue,
+    updated_at: new Date().toISOString()
+  })
 
-      if (error) throw error
-      alert('✅ Despesa atualizada!')
-    } else {
-      const { error } = await (supabase.from('transactions') as any)
-        .insert({
-          description: formData.description,
-          category: formData.category,
-          amount: formData.amount,
-          type: 'expense',
-          is_recurring: formData.is_recurring,
-          created_at: dateValue
-        })
-
-      if (error) throw error
-      alert('✅ Despesa criada!')
-    }
-
+  if (result.success) {
     showCreateModal.value = false
     resetForm()
-    await fetchExpenses()
-  } catch (err: any) {
-    alert('❌ Erro: ' + err.message)
-  } finally {
-    loading.value = false
+  } else {
+    alert('Erro: ' + result.error)
   }
 }
 
-const editExpense = (expense: Expense) => {
+const editExpense = (expense: any) => {
   editingExpense.value = expense
   formData.description = expense.description
-  formData.category = expense.category
+  formData.category_id = expense.category_id
   formData.amount = expense.amount
-  formData.is_recurring = expense.is_recurring
-  formData.date = expense.created_at ? expense.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+  formData.status = expense.status || 'pending'
+  formData.notes = expense.notes || ''
+  formData.is_recurring = expense.is_recurring || false
+  formData.recurring_frequency = expense.recurring_frequency || 'monthly'
+  formData.date = expense.created_at.split('T')[0]
   showCreateModal.value = true
 }
 
-const deleteExpense = async (id: string) => {
-  if (!confirm('Tem certeza?')) return
-  try {
-    const { error } = await (supabase.from('transactions') as any)
-      .delete()
-      .eq('id', id)
+const confirmDelete = (id: string, type: 'expense' | 'category') => {
+  deleteConfirmId.value = id
+  deleteConfirmType.value = type
+  showDeleteConfirm.value = true
+}
 
-    if (error) throw error
-    await fetchExpenses()
-    alert('✅ Deletado!')
-  } catch (err: any) {
-    alert('❌ Erro: ' + err.message)
+const performDelete = async () => {
+  if (!deleteConfirmId.value || !deleteConfirmType.value) return
+
+  if (deleteConfirmType.value === 'expense') {
+    const result = await deleteExpenseFromComposable(deleteConfirmId.value)
+    if (!result.success) {
+      alert('Erro: ' + result.error)
+    }
+  } else {
+    const result = await deleteCategoryFromComposable(deleteConfirmId.value)
+    if (!result.success) {
+      alert('Erro: ' + result.error)
+    }
+  }
+
+  showDeleteConfirm.value = false
+  deleteConfirmId.value = null
+  deleteConfirmType.value = null
+}
+
+const saveCategory = async () => {
+  if (!newCategoryName.value.trim()) return
+
+  console.log('saveCategory: Starting with name:', newCategoryName.value)
+
+  const result = await upsertCategory({
+    name: newCategoryName.value.trim(),
+    color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+    is_active: true
+  })
+
+  console.log('saveCategory: Result:', result)
+  console.log('saveCategory: Categories after save:', categories.value)
+
+  if (result.success) {
+    newCategoryName.value = ''
+  } else {
+    alert('Erro: ' + result.error)
+  }
+}
+
+const handleMarkAsPaid = async (id: string) => {
+  const result = await markExpenseAsPaidComposable(id)
+  if (!result.success) {
+    alert('Erro: ' + result.error)
   }
 }
 
 const resetForm = () => {
   formData.description = ''
-  formData.category = 'infraestrutura'
+  formData.category_id = ''
   formData.amount = 0
+  formData.status = 'pending'
+  formData.notes = ''
   formData.is_recurring = false
+  formData.recurring_frequency = 'monthly'
   formData.date = new Date().toISOString().split('T')[0]
   editingExpense.value = null
 }
@@ -465,65 +560,11 @@ const resetForm = () => {
 const clearFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = ''
-  selectedRecurrence.value = ''
-}
-
-const openHistory = () => {
-  console.log('Abrir histórico de despesas')
-}
-
-const saveCategory = async () => {
-  if (!newCategoryName.value.trim()) return
-
-  loading.value = true
-  try {
-    const { error } = await (supabase.from('expense_categories') as any)
-      .insert({
-        name: newCategoryName.value.trim()
-      })
-
-    if (error) throw error
-    newCategoryName.value = ''
-    await fetchCategories()
-    alert('Categoria criada!')
-  } catch (err: any) {
-    alert('Erro: ' + err.message)
-  } finally {
-    loading.value = false
-  }
-}
-
-const deleteCategory = async (id: string) => {
-  if (!confirm('Tem certeza?')) return
-  try {
-    const { error } = await (supabase.from('expense_categories') as any)
-      .delete()
-      .eq('id', id)
-
-    if (error) throw error
-    await fetchCategories()
-    alert('Categoria deletada!')
-  } catch (err: any) {
-    alert('Erro: ' + err.message)
-  }
-}
-
-const fetchCategories = async () => {
-  try {
-    const { data, error } = await (supabase.from('expense_categories') as any)
-      .select('*')
-      .order('name', { ascending: true })
-
-    if (error) throw error
-    categories.value = data || []
-  } catch (err) {
-    console.error('Erro ao buscar categorias:', err)
-  }
 }
 
 onMounted(async () => {
-  await fetchExpenses()
   await fetchCategories()
+  await fetchExpenses()
 })
 </script>
 

@@ -56,33 +56,44 @@ export const useCrm = () => {
     loading.value = true
     error.value = null
     try {
+      const user = useSupabaseUser()
+      
       // Fetch Configurações
-      const { data: configData, error: configErr } = await supabase
+      let configQuery = supabase
         .from('crm_settings')
         .select('*')
-        .limit(1)
-        .single()
+      
+      if (user.value) {
+        configQuery = configQuery.eq('user_id', user.value.id)
+      }
+      
+      const { data: configData, error: configErr } = await configQuery.limit(1).single()
       
       if (configData) {
         settings.value = configData
       }
 
       // Fetch Templates
-      const { data: tmplData, error: tmplErr } = await supabase
+      let tmplQuery = supabase
         .from('message_templates')
         .select('*')
-        .order('created_at', { ascending: false })
+      
+      const { data: tmplData, error: tmplErr } = await tmplQuery.order('created_at', { ascending: false })
       
       if (tmplErr) throw tmplErr
       templates.value = tmplData || []
 
       // Fetch Test Logs
-      const { data: logsData } = await supabase
+      let logsQuery = supabase
         .from('message_logs')
         .select('*')
         .in('log_type', ['test', 'test_image', 'test_file'])
-        .order('created_at', { ascending: false })
-        .limit(20)
+      
+      if (user.value) {
+        logsQuery = logsQuery.eq('user_id', user.value.id)
+      }
+      
+      const { data: logsData } = await logsQuery.order('created_at', { ascending: false }).limit(20)
       
       testLogs.value = (logsData || []) as ApiTestLog[]
 

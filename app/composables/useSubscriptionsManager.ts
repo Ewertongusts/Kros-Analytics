@@ -39,19 +39,29 @@ export const useSubscriptionsManager = () => {
     loading.value = true
     error.value = null
     try {
-      console.log('fetchSubscriptions: buscando dados do banco...')
-      const { data, error: err } = await supabase
+      console.log('🔍 [useSubscriptionsManager] fetchSubscriptions: buscando dados do banco...')
+      
+      let query = supabase
         .from('subscriptions')
         .select(`
           *,
           customer:companies!customer_id(id, name, email, tags, representative_name),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
-        .order('created_at', { ascending: false })
       
-      if (err) throw err
+      // Remover filtro por user_id pois a tabela subscriptions não tem essa coluna
+      // if (user.value) {
+      //   query = query.eq('user_id', user.value.id)
+      // }
       
-      console.log('fetchSubscriptions: dados recebidos:', data?.length)
+      const { data, error: err } = await query.order('created_at', { ascending: false })
+      
+      if (err) {
+        console.error('❌ [useSubscriptionsManager] Erro na query:', err)
+        throw err
+      }
+      
+      console.log('✅ [useSubscriptionsManager] fetchSubscriptions: dados recebidos:', data?.length)
       
       // Limpar array primeiro para forçar reatividade
       subscriptions.value = []
@@ -70,11 +80,16 @@ export const useSubscriptionsManager = () => {
         plan_billing_cycle: sub.plan?.billing_cycle
       }))
       
-      console.log('fetchSubscriptions: subscriptions.value atualizado:', subscriptions.value.length)
+      console.log('✅ [useSubscriptionsManager] fetchSubscriptions: subscriptions.value atualizado:', subscriptions.value.length)
+      console.log('📋 [useSubscriptionsManager] Dados das assinaturas:', subscriptions.value)
+      console.log('🏷️ [useSubscriptionsManager] Tags por assinatura:')
+      subscriptions.value.forEach((sub, idx) => {
+        console.log(`  [${idx}] ${sub.customer_name}: ${sub.tags?.length || 0} tags -`, sub.tags)
+      })
       
       return { success: true, data: subscriptions.value }
     } catch (err: any) {
-      console.error('Erro ao buscar assinaturas:', err)
+      console.error('❌ [useSubscriptionsManager] Erro ao buscar assinaturas:', err)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {

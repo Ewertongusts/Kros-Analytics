@@ -1,0 +1,8 @@
+-- PASSO 1: Adicionar colunas na tabela transactions
+ALTER TABLE transactions 
+ADD COLUMN IF NOT EXISTS user_id UUID,
+ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending',
+ADD COLUMN IF NOT EXISTS notes TEXT,
+ADD COLUMN IF NOT EXISTS receipt_url TEXT,
+ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS recurring_frequency VARCHAR(20);

@@ -74,6 +74,18 @@
         <polyline points="14 2 14 8 20 8"/>
       </svg>
     </button>
+
+    <!-- Ver Detalhes -->
+    <button 
+      @click="$emit('open-details')"
+      class="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500 hover:text-white transition-all"
+      title="Ver detalhes da venda"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </button>
     
     <!-- Deletar -->
     <button 
@@ -103,5 +115,6 @@ defineEmits<{
   report: []
   delete: []
   'mark-paid': []
+  'open-details': []
 }>()
 </script>

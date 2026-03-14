@@ -7,54 +7,70 @@ export const useClientHistory = () => {
   const fetchClientHistory = async (companyId: string) => {
     loading.value = true
     try {
-      console.log('🔍 Buscando histórico do cliente:', companyId)
+      console.log('🔍 [useClientHistory] Buscando histórico do cliente:', companyId)
 
       // 1. Buscar assinaturas
+      console.log('📋 [useClientHistory] Iniciando busca de assinaturas...')
       const { data: subscriptions, error: subError } = await supabase
         .from('subscriptions')
-        .select(`
-          *,
-          plan:plans!plan_id(id, name, price, billing_cycle)
-        `)
+        .select('*')
         .eq('customer_id', companyId)
         .order('created_at', { ascending: false })
 
-      if (subError) console.error('❌ Erro ao buscar assinaturas:', subError)
-      console.log('✅ Assinaturas encontradas:', subscriptions?.length || 0)
+      if (subError) {
+        console.error('❌ [useClientHistory] Erro ao buscar assinaturas:', subError)
+      } else {
+        console.log('✅ [useClientHistory] Assinaturas encontradas:', subscriptions?.length || 0)
+        console.log('📊 [useClientHistory] Dados das assinaturas:', subscriptions)
+      }
 
       // 2. Buscar a empresa principal
+      console.log('🏢 [useClientHistory] Buscando empresa com ID:', companyId)
       const { data: company, error: companyError } = await supabase
         .from('companies')
         .select('*')
         .eq('id', companyId)
         .single()
 
-      if (companyError) console.error('❌ Erro ao buscar empresa:', companyError)
+      if (companyError) {
+        console.error('❌ [useClientHistory] Erro ao buscar empresa:', companyError)
+      } else {
+        console.log('✅ [useClientHistory] Empresa encontrada:', company?.name || 'N/A')
+      }
       const companyData = company as any
-      console.log('✅ Empresa encontrada:', companyData?.name || 'N/A')
+      console.log('📋 [useClientHistory] Dados da empresa:', companyData)
 
       // 2b. Buscar TODAS as vendas (produtos e serviços) associadas a este cliente
-      // Nota: Vendas são armazenadas na tabela companies com sale_type
-      // Precisamos buscar todas as vendas onde representative_name corresponde ao cliente
+      // Nota: Vendas são armazenadas na tabela sales com sale_type
+      // Precisamos buscar todas as vendas onde name ou representative_name corresponde ao cliente
       const customerName = companyData?.representative_name || companyData?.name
+      console.log('🔎 [useClientHistory] Buscando vendas para cliente:', customerName)
       const { data: allSales, error: salesError } = await supabase
-        .from('companies')
+        .from('sales')
         .select('*')
-        .eq('representative_name', customerName)
+        .or(`representative_name.eq.${customerName},name.eq.${customerName}`)
         .in('sale_type', ['produto', 'servico', 'personalizado'])
         .order('created_at', { ascending: false })
 
-      if (salesError) console.error('❌ Erro ao buscar vendas:', salesError)
-      console.log('✅ Vendas encontradas:', allSales?.length || 0, 'para cliente:', customerName)
+      if (salesError) {
+        console.error('❌ [useClientHistory] Erro ao buscar vendas:', salesError)
+      } else {
+        console.log('✅ [useClientHistory] Vendas encontradas:', allSales?.length || 0)
+        console.log('📊 [useClientHistory] Dados das vendas:', allSales)
+      }
 
       // Calcular totais de vendas por tipo
       const productSales = allSales?.filter((s: any) => s.sale_type === 'produto') || []
       const serviceSales = allSales?.filter((s: any) => s.sale_type === 'servico') || []
       
+      console.log('📦 [useClientHistory] Produtos encontrados:', productSales.length)
+      console.log('🛠️ [useClientHistory] Serviços encontrados:', serviceSales.length)
+      
       const productValue = productSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
       const serviceValue = serviceSales.reduce((sum: number, s: any) => sum + (s.monthly_price || 0), 0)
 
       // 3. Buscar histórico de pagamentos (auditoria)
+      console.log('💳 [useClientHistory] Buscando histórico de pagamentos...')
       const { data: paymentHistory, error: histError } = await supabase
         .from('payment_history')
         .select('*')
@@ -62,22 +78,32 @@ export const useClientHistory = () => {
         .order('created_at', { ascending: false })
         .limit(50)
 
-      if (histError) console.error('❌ Erro ao buscar histórico:', histError)
-      console.log('✅ Histórico encontrado:', paymentHistory?.length || 0)
+      if (histError) {
+        console.error('❌ [useClientHistory] Erro ao buscar histórico:', histError)
+      } else {
+        console.log('✅ [useClientHistory] Histórico encontrado:', paymentHistory?.length || 0)
+      }
 
       // 4. Buscar tarefas associadas
+      console.log('✓ [useClientHistory] Buscando tarefas...')
       const { data: tasks, error: taskError } = await supabase
         .from('tasks')
         .select('*')
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
 
-      if (taskError) console.error('❌ Erro ao buscar tarefas:', taskError)
-      console.log('✅ Tarefas encontradas:', tasks?.length || 0)
+      if (taskError) {
+        console.error('❌ [useClientHistory] Erro ao buscar tarefas:', taskError)
+      } else {
+        console.log('✅ [useClientHistory] Tarefas encontradas:', tasks?.length || 0)
+      }
 
       // Calcular estatísticas de assinaturas
       const activeSubscriptions = subscriptions?.filter((s: any) => s.status === 'active') || []
       const suspendedSubscriptions = subscriptions?.filter((s: any) => s.status === 'suspended') || []
+      
+      console.log('📊 [useClientHistory] Assinaturas ativas:', activeSubscriptions.length)
+      console.log('📊 [useClientHistory] Assinaturas suspensas:', suspendedSubscriptions.length)
       
       // Contar pagamentos realizados do histórico
       const paidPayments = paymentHistory?.filter((p: any) => p.action_type === 'payment_received' || p.description?.includes('Pago')) || []
@@ -120,11 +146,11 @@ export const useClientHistory = () => {
         subscriptionLTV
       }
 
-      console.log('📊 Estatísticas calculadas:', stats)
-      console.log('📋 Assinaturas:', subscriptions)
-      console.log('💰 Empresa:', company)
+      console.log('📊 [useClientHistory] Estatísticas calculadas:', stats)
+      console.log('📋 [useClientHistory] Assinaturas finais:', subscriptions)
+      console.log('💰 [useClientHistory] Empresa final:', company)
 
-      return {
+      const result = {
         success: true,
         data: {
           subscriptions: subscriptions || [],
@@ -137,8 +163,11 @@ export const useClientHistory = () => {
           subscriptionLTV
         }
       }
+      
+      console.log('✅ [useClientHistory] Resultado final:', result)
+      return result
     } catch (err: any) {
-      console.error('❌ Erro ao buscar histórico do cliente:', err)
+      console.error('❌ [useClientHistory] Erro ao buscar histórico do cliente:', err)
       return { success: false, error: err.message }
     } finally {
       loading.value = false

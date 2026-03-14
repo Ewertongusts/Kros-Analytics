@@ -88,6 +88,7 @@
         @delete="handleDelete"
         @mark-paid="handleMarkPaidIndividual"
         @open-client-details="handleOpenClientDetails"
+        @open-details="handleOpenSaleDetails"
       />
 
       <BlocksKGlobalFooter />
@@ -132,6 +133,23 @@
       @close="clientDetailsModal.isOpen = false"
       @edit="handleEditClient"
       @toggle-status="handleToggleClientStatus"
+    />
+
+    <!-- Card de Detalhes da Venda -->
+    <SalesKSaleDetailsCard
+      :is-open="saleDetailsModal.isOpen"
+      :item-name="saleDetailsModal.sale?.plan_name || saleDetailsModal.sale?.custom_name"
+      :item-type="saleDetailsModal.sale?.sale_type"
+      :item-description="saleDetailsModal.sale?.custom_description"
+      :item-price="saleDetailsModal.sale?.monthly_price || 0"
+      :notes="saleDetailsModal.sale?.notes"
+      :client-name="saleDetailsModal.sale?.representative_name || saleDetailsModal.sale?.name"
+      :sale-value="saleDetailsModal.sale?.monthly_price || 0"
+      :payment-status="saleDetailsModal.sale?.payment_status"
+      :sale-date="saleDetailsModal.sale?.created_at"
+      :plan-category="saleDetailsModal.sale?.category"
+      :plan-notes="saleDetailsModal.sale?.description"
+      @close="saleDetailsModal.isOpen = false"
     />
   </LayoutsKPageLayout>
 </template>
@@ -192,6 +210,11 @@ const isAllSelected = ref(false)
 const clientDetailsModal = reactive({
   isOpen: false,
   company: null as any
+})
+
+const saleDetailsModal = reactive({
+  isOpen: false,
+  sale: null as any
 })
 
 const selectedTotal = computed(() => {
@@ -338,20 +361,20 @@ onMounted(async () => {
 
 const handleOpenClientDetails = async (sale: any) => {
   try {
-    // Buscar o cliente real (não a venda) pelo representative_name
+    // Buscar o cliente real pelo name (que é o nome da empresa)
     const supabase = useSupabaseClient()
     const { data: customer, error } = await supabase
       .from('companies')
       .select('*')
-      .eq('representative_name', sale.representative_name)
-      .is('sale_type', null) // Buscar apenas registros de clientes, não vendas
+      .eq('name', sale.name || sale.representative_name)
+      .limit(1)
       .single()
     
     if (error || !customer) {
       console.warn('Cliente não encontrado, usando dados da venda:', error)
       // Fallback: usar dados da venda
       clientDetailsModal.company = {
-        id: sale.id,
+        id: sale.company_id || sale.id,
         name: sale.name,
         representative_name: sale.representative_name,
         email: sale.email,
@@ -359,7 +382,7 @@ const handleOpenClientDetails = async (sale: any) => {
         whatsapp: sale.whatsapp,
         created_at: sale.created_at,
         updated_at: sale.updated_at,
-        is_active: sale.is_active,
+        is_active: true,
         notes: sale.notes
       }
     } else {
@@ -369,6 +392,11 @@ const handleOpenClientDetails = async (sale: any) => {
     console.error('Erro ao buscar cliente:', err)
   }
   clientDetailsModal.isOpen = true
+}
+
+const handleOpenSaleDetails = (sale: any) => {
+  saleDetailsModal.sale = sale
+  saleDetailsModal.isOpen = true
 }
 
 const handleEditClient = () => {

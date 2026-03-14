@@ -1,19 +1,28 @@
 <template>
-  <UiKModal :is-open="isOpen" size="md" @close="$emit('close')">
+  <UiKModal :is-open="isOpen" size="sm" @close="$emit('close')">
     <UiKModalHeader :title="`${isEditing ? 'EDITAR' : 'NOVO'} ITEM`" />
 
-    <form @submit.prevent="handleSave" class="space-y-3">
+    <form @submit.prevent="handleSave" class="flex flex-col max-h-[70vh]">
+      <div class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-2">
         <div class="space-y-2">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Tipo</label>
-          <select 
-            v-model="form.type"
-            required
-            class="w-full bg-[#111112] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-kros-blue transition-all font-medium appearance-none"
-          >
-            <option value="Plano Recorrente">Plano Recorrente</option>
-            <option value="Serviço Único">Serviço Único</option>
-            <option value="Produto">Produto</option>
-          </select>
+          <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">Tipo *</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button
+              v-for="typeOption in typeOptions"
+              :key="typeOption.value"
+              type="button"
+              @click="form.type = typeOption.value"
+              :class="[
+                'py-3 px-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border-2',
+                form.type === typeOption.value
+                  ? `${typeOption.activeBg} ${typeOption.activeBorder} ${typeOption.activeText}`
+                  : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:border-white/20'
+              ]"
+            >
+              <div class="text-lg mb-1">{{ typeOption.icon }}</div>
+              {{ typeOption.label }}
+            </button>
+          </div>
         </div>
 
         <div class="space-y-2">
@@ -77,6 +86,7 @@
             </select>
             </div>
         </div>
+      </div>
 
       <UiKModalActions
         cancel-text="Cancelar"
@@ -84,6 +94,7 @@
         :loading="submitting"
         submit-type="submit"
         @cancel="$emit('close')"
+        class="mt-4 pt-4 border-t border-white/10 flex-shrink-0"
       />
     </form>
   </UiKModal>
@@ -105,6 +116,33 @@ const supabase = useSupabaseClient()
 const categories = ref<any[]>([])
 
 const isEditing = computed(() => !!props.initialData?.id)
+
+const typeOptions = [
+  {
+    value: 'Plano Recorrente',
+    label: 'Assinatura',
+    icon: '🔄',
+    activeBg: 'bg-emerald-500/20',
+    activeBorder: 'border-emerald-500',
+    activeText: 'text-emerald-400'
+  },
+  {
+    value: 'Serviço Único',
+    label: 'Serviço',
+    icon: '🛠️',
+    activeBg: 'bg-blue-500/20',
+    activeBorder: 'border-blue-500',
+    activeText: 'text-blue-400'
+  },
+  {
+    value: 'Produto',
+    label: 'Produto',
+    icon: '📦',
+    activeBg: 'bg-purple-500/20',
+    activeBorder: 'border-purple-500',
+    activeText: 'text-purple-400'
+  }
+]
 
 const form = reactive({
   id: '',

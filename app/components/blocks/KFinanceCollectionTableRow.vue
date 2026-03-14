@@ -20,6 +20,17 @@
           {{ payment.company_actual_name }}
         </p>
       </div>
+      <!-- Tags Component -->
+      <FinanceCollectionKCollectionRowTags
+        :key="`tags-${payment.id}-${payment.tags?.length || 0}`"
+        :tags="payment.tags || []"
+        :whatsapp="payment.company_whatsapp"
+        :tag-definitions="tagDefinitions"
+        :show-picker="showTagPicker"
+        @remove-tag="handleRemoveTag"
+        @add-tag="handleAddTag"
+        @toggle-picker="showTagPicker = !showTagPicker"
+      />
     </td>
     <td :class="['font-medium', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
        <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.due_date) }}</span>
@@ -98,7 +109,8 @@ const emit = defineEmits([
   'open-history',
   'delete',
   'update-subscription-status',
-  'open-client-details'
+  'open-client-details',
+  'update-tags'
 ])
 
 const { 
@@ -109,6 +121,74 @@ const {
   isUrgentAlert, 
   avatarClass 
 } = useCollectionRow(props.payment)
+
+// Função para obter a cor da tag
+const getTagColor = (tagName: string): string => {
+  const tag = props.tagDefinitions.find(t => t.name === tagName)
+  return tag?.color || '#666666'
+}
+
+// Estado para o picker de tags
+const showTagPicker = ref(false)
+
+// Handlers para tags
+const handleRemoveTag = async (tagName: string) => {
+  try {
+    const supabase = useSupabaseClient()
+    const newTags = (props.payment.tags || []).filter((t: string) => t !== tagName)
+    
+    const { error } = await supabase
+      .from('companies')
+      .update({ tags: newTags })
+      .eq('id', props.payment.company_id)
+    
+    if (error) throw error
+    
+    // Emitir evento para o componente pai atualizar
+    emit('update-tags', { id: props.payment.id, tags: newTags })
+    
+    const { success } = useToast()
+    success('Tag removida', `Tag "${tagName}" removida com sucesso`)
+  } catch (err: any) {
+    const { error: errorToast } = useToast()
+    errorToast('Erro ao remover tag', err.message)
+  }
+}
+
+const handleAddTag = async (tagName: string) => {
+  try {
+    const supabase = useSupabaseClient()
+    const currentTags = props.payment.tags || []
+    
+    // Evitar duplicatas
+    if (currentTags.includes(tagName)) {
+      const { warning } = useToast()
+      warning('Tag já existe', `A tag "${tagName}" já está adicionada`)
+      return
+    }
+    
+    const newTags = [...currentTags, tagName]
+    
+    const { error } = await supabase
+      .from('companies')
+      .update({ tags: newTags })
+      .eq('id', props.payment.company_id)
+    
+    if (error) throw error
+    
+    // Emitir evento para o componente pai atualizar
+    emit('update-tags', { id: props.payment.id, tags: newTags })
+    
+    // Fechar o picker
+    showTagPicker.value = false
+    
+    const { success } = useToast()
+    success('Tag adicionada', `Tag "${tagName}" adicionada com sucesso`)
+  } catch (err: any) {
+    const { error: errorToast } = useToast()
+    errorToast('Erro ao adicionar tag', err.message)
+  }
+}
 
 // Mapear status de pagamento para o formato do badge
 const mapPaymentStatus = (status: string): 'paid' | 'pending' | 'overdue' => {

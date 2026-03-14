@@ -74,6 +74,7 @@
         @report="$emit('report', sale)"
         @delete="$emit('delete', sale)"
         @mark-paid="$emit('mark-paid', sale)"
+        @open-details="$emit('open-details', sale)"
       />
     </td>
   </tr>
@@ -95,6 +96,7 @@ const emit = defineEmits<{
   'toggle-select': [id: string]
   'mark-paid': [sale: any]
   'open-client-details': [sale: any]
+  'open-details': [sale: any]
 }>()
 
 const formatCurrency = (val: number) => {

@@ -204,19 +204,11 @@ export const useSaleForm = (
       installments: hasInstallments.value ? form.installments : 1,
       down_payment: hasDownPayment.value ? form.down_payment : 0,
       installments_payment_type: (hasInstallments.value && hasDownPayment.value) ? form.installments_payment_type : null,
-      custom_installments: customInstallments.value ? installmentsList.value : null,
       interest_rate: hasInterest.value ? form.interest_rate : 0,
       interest_type: hasInterest.value ? form.interest_type : null,
       discount_value: hasDiscount.value ? form.discount_value : 0,
       discount_type: hasDiscount.value ? form.discount_type : null,
-      final_value: finalValue.value,
-      created_by: currentUserId.value,
-      created_by_name: currentUserName.value,
-      created_by_email: currentUserEmail.value,
-      received_by: form.payment_status === 'paid' ? currentUserId.value : null,
-      received_by_name: form.payment_status === 'paid' ? currentUserName.value : null,
-      received_by_email: form.payment_status === 'paid' ? currentUserEmail.value : null,
-      received_at: form.payment_status === 'paid' ? new Date().toISOString() : null
+      final_value: finalValue.value
     }
   }
 

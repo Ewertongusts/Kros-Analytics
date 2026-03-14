@@ -33,6 +33,7 @@
             @delete="$emit('delete', $event)"
             @mark-paid="$emit('mark-paid', $event)"
             @open-client-details="$emit('open-client-details', $event)"
+            @open-details="$emit('open-details', $event)"
           />
           <tr v-if="sales.length === 0">
             <td colspan="8" class="px-6 py-12 text-center">
@@ -69,5 +70,6 @@ defineEmits<{
   'toggle-select-all': []
   'mark-paid': [sale: any]
   'open-client-details': [sale: any]
+  'open-details': [sale: any]
 }>()
 </script>

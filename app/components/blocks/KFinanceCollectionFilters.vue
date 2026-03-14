@@ -34,7 +34,9 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { watch } from 'vue'
+
+const props = defineProps<{
   totalCount: number
   searchQuery: string
   selectedTags: string[]

@@ -288,12 +288,15 @@ export const useCompanies = () => {
       await fetchCompanies()
       
       // Registrar no histórico
+      const actionType = isNew ? 'company_created' : 'company_updated'
+      const description = isNew 
+        ? `Cliente "${companyData.representative_name || companyData.name}" foi cadastrado`
+        : `Cliente "${companyData.representative_name || companyData.name}" foi atualizado`
+      
       await supabase.from('payment_history').insert({
         company_id: companyData.id,
-        action_type: isNew ? 'company_created' : 'company_updated',
-        description: isNew 
-          ? `Cliente "${companyData.representative_name || companyData.name}" foi cadastrado`
-          : `Cliente "${companyData.representative_name || companyData.name}" foi atualizado`,
+        action_type: actionType,
+        description: description,
         user_id: user.value?.id,
         user_name: user.value?.email?.split('@')[0] || 'Sistema',
         metadata: {

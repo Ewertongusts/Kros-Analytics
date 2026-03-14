@@ -30,6 +30,7 @@
         @sync="handleSync"
         @config="navigateTo('/clientes')"
         @open-client-details="handleOpenClientDetails"
+        @update-payments="handleUpdatePayments"
         @export="(format) => { exportPayments(subscriptions, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
       />
       
@@ -245,6 +246,27 @@ const handleSync = async () => {
   console.log('Assinaturas recarregadas:', subscriptions.value.length)
 }
 
+const handleUpdatePayments = (updatedPayments: any[]) => {
+  console.log('🏷️ [assinaturas.vue] handleUpdatePayments:', updatedPayments.length)
+  
+  // Atualizar apenas as tags dos subscriptions que foram modificados
+  updatedPayments.forEach(updatedPayment => {
+    const sub = subscriptions.value.find(s => s.id === updatedPayment.id)
+    if (sub) {
+      // Usar Object.assign para manter a reatividade
+      Object.assign(sub, { tags: updatedPayment.tags })
+    }
+  })
+  
+  console.log('✅ [assinaturas.vue] Assinaturas atualizadas')
+}
+
+// Watcher para forçar re-render quando tags mudam
+watch(() => subscriptions.value.map(s => s.tags?.length || 0).join(','), () => {
+  console.log('🔄 [assinaturas.vue] Tags mudaram, forçando re-render')
+  refreshKey.value++
+}, { deep: true })
+
 const handleDeleteSuccess = (id: string) => {
   console.log('handleDeleteSuccess chamado para ID:', id)
   // Remover do array local usando o composable
@@ -295,15 +317,17 @@ const adaptedSubscriptions = computed(() => {
     }
   })
   
-  console.log('adaptedSubscriptions recalculado:', adapted.length, 'itens')
   return adapted
 })
 
 onMounted(async () => {
+  console.log('🚀 [assinaturas.vue] onMounted iniciado')
+  console.log('📊 [assinaturas.vue] Chamando fetchStats() e fetchSubscriptions()...')
   await Promise.all([fetchStats(), fetchSubscriptions()])
   
   // Log das assinaturas carregadas
-  console.log('Assinaturas carregadas:', subscriptions.value)
+  console.log('✅ [assinaturas.vue] Assinaturas carregadas:', subscriptions.value?.length || 0)
+  console.log('📋 [assinaturas.vue] Dados das assinaturas:', subscriptions.value)
   
   // Registrar acesso à página
   try {
@@ -327,21 +351,27 @@ onMounted(async () => {
 
 const handleOpenClientDetails = async (payment: any) => {
   try {
-    // Buscar o cliente completo pelo company_id
+    // Buscar o cliente completo pelo customer_id (que é o company_id nas assinaturas)
     const supabase = useSupabaseClient()
+    const customerId = payment.customer_id || payment.company_id
+    
+    console.log('🔍 Abrindo detalhes do cliente:', { customerId, payment })
+    
     const { data: customer, error } = await supabase
       .from('companies')
       .select('*')
-      .eq('id', payment.company_id)
+      .eq('id', customerId)
       .single()
+    
+    console.log('📊 Cliente encontrado:', { customer, error })
     
     if (error || !customer) {
       console.warn('Cliente não encontrado, usando dados do pagamento:', error)
       // Fallback: usar dados do pagamento
       clientDetailsModal.company = {
-        id: payment.company_id,
-        name: payment.company_actual_name,
-        representative_name: payment.company_name,
+        id: customerId,
+        name: payment.company_actual_name || payment.name,
+        representative_name: payment.company_name || payment.representative_name,
         email: payment.email,
         phone: payment.phone,
         whatsapp: payment.whatsapp,

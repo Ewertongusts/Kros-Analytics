@@ -439,12 +439,16 @@ onMounted(async () => {
   }
 })
 
-// Recarregar dados quando o modal abre
 watch(() => props.isOpen, async (newVal) => {
+  console.log('👀 [KClientDetailsModal] Modal aberto:', newVal)
+  console.log('👀 [KClientDetailsModal] Company recebida:', props.company)
   if (newVal && props.company?.id) {
+    console.log('🔄 [KClientDetailsModal] Chamando fetchClientHistory com ID:', props.company.id)
     const result = await fetchClientHistory(props.company.id)
+    console.log('📊 [KClientDetailsModal] Resultado de fetchClientHistory:', result)
     if (result.success) {
       clientHistory.value = result.data
+      console.log('✅ [KClientDetailsModal] clientHistory atualizado:', clientHistory.value)
     }
   }
 })

@@ -9,7 +9,7 @@
         :selected-tags="selectedTags"
         :tag-definitions="tagDefinitions"
         @toggle-tag="toggleTag"
-        @toggle-all-tags="toggleAllTags(tagDefinitions.map(t => t.name))"
+        @toggle-all-tags="toggleAllTags(tagNames)"
         @clear-tags="clearTags"
         :active-filter="activeFilter"
         @update:active-filter="activeFilter = $event"
@@ -107,8 +107,9 @@
             @open-logs="$emit('open-logs', $event)"
             @open-history="$emit('open-history', $event)"
             @delete="handleDelete"
-            @update-subscription-status="handleUpdateSubscriptionStatus"
+            @update-subscription-status="(data) => handleUpdateSubscriptionStatus(data)"
             @open-client-details="$emit('open-client-details', $event)"
+            @update-tags="handleUpdateTags"
           />
         </tbody>
       </table>
@@ -248,7 +249,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useTags } from '~/composables/useTags'
 import { useCollectionFilters } from '~/composables/useCollectionFilters'
 import { useCollectionSelection } from '~/composables/useCollectionSelection'
@@ -263,7 +264,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details', 'update-payments'])
 
 const handleExportDebug = (format: any) => {
   emit('export', format)
@@ -273,6 +274,12 @@ const isMsgModalOpen = ref(false)
 const selectedPayment = ref<any>(null)
 const { tags: tagDefinitions, fetchTags } = useTags()
 const { isCompact, rememberPreferences, isLoaded, loadPreferences, searchQuery, selectedTags, activeFilter, subscriptionStatusFilter, savePreferences } = useViewPreferences()
+
+// Computed para nomes das tags
+const tagNames = computed(() => {
+  console.log('📊 [KFinanceCollectionBoard] tagNames computed - tags:', tagDefinitions.value?.length || 0)
+  return tagDefinitions.value?.map(t => t.name) || []
+})
 
 // Composables - passar refs do useViewPreferences para compartilhar estado
 const {
@@ -458,8 +465,10 @@ const handleEdit = (payment: any) => {
   emit('edit-subscription', payment)
 }
 
-onMounted(() => {
-  fetchTags()
+onMounted(async () => {
+  console.log('🚀 [KFinanceCollectionBoard] onMounted iniciado')
+  await fetchTags()
+  console.log('✅ [KFinanceCollectionBoard] Tags carregadas:', tagDefinitions.value?.length || 0)
   loadPreferences()
 })
 
@@ -493,6 +502,76 @@ const handleBatchSent = () => {
 
 const toggleAutoBilling = (payment: any) => {
   emit('toggle-autobilling', payment)
+}
+
+const handleUpdateSubscriptionStatus = async (data: { id: string, status: string }) => {
+  console.log('🔄 [KFinanceCollectionBoard] handleUpdateSubscriptionStatus:', data)
+  
+  try {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    // Encontrar a assinatura para obter dados adicionais
+    const subscription = props.payments.find(p => p.id === data.id)
+    if (!subscription) {
+      console.error('Assinatura não encontrada:', data.id)
+      return
+    }
+    
+    // Atualizar status na tabela subscriptions
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({ status: data.status })
+      .eq('id', data.id)
+    
+    if (error) throw error
+    
+    console.log('✅ Status atualizado para:', data.status)
+    
+    // Registrar no histórico
+    await supabase.from('payment_history').insert({
+      payment_id: data.id,
+      company_id: subscription.company_id,
+      action_type: 'subscription_status_changed',
+      description: `Status da assinatura alterado para: ${data.status}`,
+      user_id: user.value?.id,
+      user_name: user.value?.email?.split('@')[0] || 'Sistema',
+      metadata: {
+        old_status: subscription.status,
+        new_status: data.status,
+        company_name: subscription.company_name,
+        plan_name: subscription.plan_name
+      }
+    })
+    
+    // Emitir evento para sincronizar dados
+    emit('sync')
+  } catch (err: any) {
+    console.error('❌ Erro ao atualizar status:', err)
+    const { error: errorToast } = useToast()
+    errorToast('Erro ao atualizar', err.message)
+  }
+}
+
+const handleUpdateTags = (data: { id: string, tags: string[] }) => {
+  console.log('🏷️ [KFinanceCollectionBoard] handleUpdateTags:', data)
+  
+  // Encontrar o índice do pagamento
+  const index = props.payments.findIndex(p => p.id === data.id)
+  if (index !== -1) {
+    // Criar um novo objeto com as tags atualizadas
+    const updatedPayment = {
+      ...props.payments[index],
+      tags: data.tags
+    }
+    
+    // Criar um novo array para forçar reatividade
+    const newPayments = [...props.payments]
+    newPayments[index] = updatedPayment
+    
+    // Emitir evento para o pai atualizar o array
+    emit('update-payments', newPayments)
+  }
 }
 
 // Função para calcular páginas visíveis

@@ -8,6 +8,9 @@
         <span class="text-[7px] font-black uppercase tracking-[0.15em] text-white/30">Categorias</span>
         <div class="flex items-center gap-1.5">
           <span class="text-[9px] font-bold uppercase tracking-widest">Tags</span>
+          <div v-if="tagDefinitions.length > 0" class="flex items-center justify-center min-w-[14px] h-[14px] bg-green-500/40 text-white rounded-full text-[7px] font-black">
+            {{ tagDefinitions.length }}
+          </div>
           <div v-if="selectedTags.length > 0" class="flex items-center justify-center min-w-[14px] h-[14px] bg-kros-blue text-white rounded-full text-[7px] font-black">
             {{ selectedTags.length }}
           </div>
