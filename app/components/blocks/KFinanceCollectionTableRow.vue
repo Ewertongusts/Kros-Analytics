@@ -32,6 +32,17 @@
         @toggle-picker="showTagPicker = !showTagPicker"
       />
     </td>
+    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
+       <span 
+         v-if="payment.plan_name"
+         @click="$emit('open-plan-details', payment)"
+         class="font-semibold text-white/80 cursor-pointer hover:text-white hover:underline transition-all"
+         :class="isCompact ? 'text-[10px]' : 'text-xs'"
+       >
+         {{ payment.plan_name }}
+       </span>
+       <span v-else class="font-semibold text-white/40" :class="isCompact ? 'text-[10px]' : 'text-xs'">-</span>
+    </td>
     <td :class="['font-medium', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
        <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.due_date) }}</span>
     </td>
@@ -110,6 +121,7 @@ const emit = defineEmits([
   'delete',
   'update-subscription-status',
   'open-client-details',
+  'open-plan-details',
   'update-tags'
 ])
 

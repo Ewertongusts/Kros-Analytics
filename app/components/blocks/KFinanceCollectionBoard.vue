@@ -109,6 +109,7 @@
             @delete="handleDelete"
             @update-subscription-status="(data) => handleUpdateSubscriptionStatus(data)"
             @open-client-details="$emit('open-client-details', $event)"
+            @open-plan-details="handleOpenPlanDetails"
             @update-tags="handleUpdateTags"
           />
         </tbody>
@@ -264,7 +265,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details', 'update-payments'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details', 'open-plan-details', 'update-payments'])
 
 const handleExportDebug = (format: any) => {
   emit('export', format)
@@ -463,6 +464,10 @@ const handleDelete = async (payment: any) => {
 const handleEdit = (payment: any) => {
   console.log('Editando assinatura:', payment)
   emit('edit-subscription', payment)
+}
+
+const handleOpenPlanDetails = (payment: any) => {
+  emit('open-plan-details', payment)
 }
 
 onMounted(async () => {

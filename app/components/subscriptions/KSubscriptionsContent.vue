@@ -114,6 +114,7 @@
         @open-history="$emit('open-history', $event)"
         @batch-tag-progress="$emit('batch-tag-progress', $event)"
         @open-client-details="$emit('open-client-details', $event)"
+        @open-plan-details="$emit('open-plan-details', $event)"
         @update-payments="$emit('update-payments', $event)"
         @sync="$emit('sync')"
         @config="$emit('config')"
@@ -167,6 +168,7 @@ const emit = defineEmits<{
   'open-timeline': []
   'toggle-charts': []
   'open-client-details': [payment: any]
+  'open-plan-details': [payment: any]
   'update-payments': [payments: any[]]
   sync: []
   config: []

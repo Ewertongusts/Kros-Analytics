@@ -29,9 +29,14 @@
       </span>
     </td>
 
+    <!-- Plano -->
+    <td class="px-6 py-4">
+      <p class="text-sm font-medium text-white">{{ sale.plan_name || '-' }}</p>
+    </td>
+
     <!-- Item -->
     <td class="px-6 py-4">
-      <p class="text-sm font-medium text-white">{{ sale.plan_name || sale.custom_name }}</p>
+      <p class="text-sm font-medium text-white">{{ sale.custom_name || sale.plan_name || '-' }}</p>
       <p v-if="sale.custom_description" class="text-[10px] text-white/40 mt-1">{{ sale.custom_description }}</p>
     </td>
 

@@ -5,7 +5,7 @@
     <div class="relative bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] w-full max-w-[600px] p-8 shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-300">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-white uppercase tracking-widest">Detalhes da Venda</h2>
+        <h2 class="text-xl font-bold text-white uppercase tracking-widest">{{ headerTitle }}</h2>
         <button 
           @click="$emit('close')"
           class="p-2 hover:bg-white/10 rounded-lg transition-all text-white/50 hover:text-white"
@@ -20,7 +20,7 @@
       <div class="space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
         <!-- Informações do Item -->
         <div class="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">Item Cadastrado</h3>
+          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">{{ itemInfoTitle }}</h3>
           
           <div class="space-y-3">
             <!-- Nome do Item -->
@@ -85,9 +85,9 @@
           </div>
         </div>
 
-        <!-- Informações da Venda -->
+        <!-- Informações da Venda/Assinatura -->
         <div class="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">Informações da Venda</h3>
+          <h3 class="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">{{ saleInfoTitle }}</h3>
           
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -104,11 +104,9 @@
               <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Status</p>
               <span :class="[
                 'px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest inline-block',
-                paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' :
-                paymentStatus === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                'bg-red-500/20 text-red-400'
+                statusColor
               ]">
-                {{ paymentStatus === 'paid' ? 'Pago' : paymentStatus === 'pending' ? 'Pendente' : 'Atrasado' }}
+                {{ statusLabel }}
               </span>
             </div>
 
@@ -155,6 +153,59 @@ const props = defineProps<{
 const emit = defineEmits(['close'])
 
 const { formatCurrency, formatDate } = useSaleFormatters()
+
+const headerTitle = computed(() => {
+  if (props.itemType === 'Assinatura') {
+    return 'Detalhes do Plano'
+  }
+  return 'Detalhes da Venda'
+})
+
+const itemInfoTitle = computed(() => {
+  if (props.itemType === 'Assinatura') {
+    return 'Plano Cadastrado'
+  }
+  return 'Item Cadastrado'
+})
+
+const saleInfoTitle = computed(() => {
+  if (props.itemType === 'Assinatura') {
+    return 'Informações da Assinatura'
+  }
+  return 'Informações da Venda'
+})
+
+const statusLabel = computed(() => {
+  if (props.itemType === 'Assinatura') {
+    // Para assinaturas: active, suspended, cancelled, trial, pending
+    const statusMap: Record<string, string> = {
+      'active': 'Ativa',
+      'suspended': 'Suspensa',
+      'cancelled': 'Cancelada',
+      'trial': 'Teste',
+      'pending': 'Pendente'
+    }
+    return statusMap[props.paymentStatus] || props.paymentStatus
+  }
+  // Para vendas: paid, pending, overdue
+  return props.paymentStatus === 'paid' ? 'Pago' : props.paymentStatus === 'pending' ? 'Pendente' : 'Atrasado'
+})
+
+const statusColor = computed(() => {
+  if (props.itemType === 'Assinatura') {
+    const colorMap: Record<string, string> = {
+      'active': 'bg-green-500/20 text-green-400',
+      'suspended': 'bg-yellow-500/20 text-yellow-400',
+      'cancelled': 'bg-red-500/20 text-red-400',
+      'trial': 'bg-blue-500/20 text-blue-400',
+      'pending': 'bg-orange-500/20 text-orange-400'
+    }
+    return colorMap[props.paymentStatus] || 'bg-gray-500/20 text-gray-400'
+  }
+  return props.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' :
+         props.paymentStatus === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+         'bg-red-500/20 text-red-400'
+})
 
 const planInfoTitle = computed(() => {
   if (props.itemType === 'produto') {

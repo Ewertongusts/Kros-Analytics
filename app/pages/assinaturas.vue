@@ -30,6 +30,7 @@
         @sync="handleSync"
         @config="navigateTo('/clientes')"
         @open-client-details="handleOpenClientDetails"
+        @open-plan-details="handleOpenPlanDetails"
         @update-payments="handleUpdatePayments"
         @export="(format) => { exportPayments(subscriptions, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
       />
@@ -92,6 +93,23 @@
       @edit="handleEditClient"
       @toggle-status="handleToggleClientStatus"
     />
+
+    <!-- Modal de Detalhes do Plano -->
+    <SalesKSaleDetailsCard
+      :is-open="planDetailsModal.isOpen"
+      :item-name="planDetailsModal.payment?.plan_name"
+      :item-type="'Assinatura'"
+      :item-description="planDetailsModal.payment?.plan_notes"
+      :item-price="planDetailsModal.payment?.amount || 0"
+      :notes="planDetailsModal.payment?.notes"
+      :client-name="planDetailsModal.payment?.customer_name"
+      :sale-value="planDetailsModal.payment?.amount || 0"
+      :payment-status="planDetailsModal.payment?.status"
+      :sale-date="planDetailsModal.payment?.created_at"
+      :plan-category="planDetailsModal.payment?.plan_category"
+      :plan-notes="planDetailsModal.payment?.plan_notes"
+      @close="planDetailsModal.isOpen = false"
+    />
   </LayoutsKPageLayout>
 </template>
 
@@ -129,6 +147,11 @@ const subscriptionModal = reactive({
 const clientDetailsModal = reactive({
   isOpen: false,
   company: null as any
+})
+
+const planDetailsModal = reactive({
+  isOpen: false,
+  payment: null as any
 })
 
 const {
@@ -387,6 +410,41 @@ const handleOpenClientDetails = async (payment: any) => {
     console.error('Erro ao buscar cliente:', err)
   }
   clientDetailsModal.isOpen = true
+}
+
+const handleOpenPlanDetails = async (payment: any) => {
+  try {
+    const supabase = useSupabaseClient()
+    
+    // Buscar detalhes do plano
+    let planCategory = null
+    let planDescription = null
+    
+    if (payment.plan_name) {
+      const { data: planData } = await supabase
+        .from('plans')
+        .select('category, description')
+        .eq('name', payment.plan_name)
+        .limit(1)
+      
+      if (planData && planData.length > 0) {
+        planCategory = planData[0].category
+        planDescription = planData[0].description
+      }
+    }
+    
+    // Preparar dados para o modal
+    planDetailsModal.payment = {
+      ...payment,
+      plan_category: planCategory,
+      plan_notes: planDescription
+    }
+    planDetailsModal.isOpen = true
+  } catch (err) {
+    console.error('Erro ao buscar detalhes do plano:', err)
+    planDetailsModal.payment = payment
+    planDetailsModal.isOpen = true
+  }
 }
 
 const handleEditClient = () => {
