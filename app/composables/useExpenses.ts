@@ -10,6 +10,7 @@ export interface Expense {
   receipt_url?: string
   is_recurring: boolean
   recurring_frequency?: string
+  due_date?: string
   created_at: string
   updated_at: string
 }
@@ -107,6 +108,7 @@ export const useExpenses = () => {
         receipt_url: expense.receipt_url || null,
         is_recurring: expense.is_recurring || false,
         recurring_frequency: expense.recurring_frequency || null,
+        due_date: expense.due_date || null,
         type: 'expense'
       }
 

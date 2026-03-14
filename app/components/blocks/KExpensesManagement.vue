@@ -178,7 +178,9 @@
                 <th class="px-4 py-3">Descrição</th>
                 <th class="px-4 py-3">Categoria</th>
                 <th class="px-4 py-3">Valor</th>
+                <th class="px-4 py-3">Data de Vencimento</th>
                 <th class="px-4 py-3">Data de Pagamento</th>
+                <th class="px-4 py-3">Tipo</th>
                 <th class="px-4 py-3">Ações</th>
               </tr>
             </thead>
@@ -197,7 +199,15 @@
                   <span class="text-xs font-black tabular-nums text-green-400">{{ formatCurrency(expense.amount) }}</span>
                 </td>
                 <td class="px-4 py-5">
+                  <p class="text-[9px] text-white/60">{{ expense.due_date ? formatDate(expense.due_date) : 'N/A' }}</p>
+                </td>
+                <td class="px-4 py-5">
                   <p class="text-[9px] text-white/60">{{ formatDate(expense.updated_at) }}</p>
+                </td>
+                <td class="px-4 py-5">
+                  <span class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded" :class="expense.is_recurring ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-white/60'">
+                    {{ expense.is_recurring ? getFrequencyLabel(expense.recurring_frequency) : 'Único' }}
+                  </span>
                 </td>
                 <td class="px-4 py-5 last:rounded-r-2xl">
                   <div class="flex items-center gap-2">
@@ -289,10 +299,17 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Data</label>
+              <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Data de Início</label>
               <input v-model="formData.date" type="date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
             </div>
 
+            <div>
+              <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Data de Vencimento</label>
+              <input v-model="formData.due_date" type="date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-sm" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-white/80 text-[10px] font-bold uppercase tracking-widest mb-2">Status</label>
               <select v-model="formData.status" class="w-full bg-[#1a1a1b] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:bg-[#222223] transition-all text-sm appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;">
@@ -417,6 +434,7 @@ const formData = reactive({
   status: 'pending' as 'pending' | 'paid',
   notes: '',
   date: new Date().toISOString().split('T')[0],
+  due_date: new Date().toISOString().split('T')[0],
   is_recurring: false,
   recurring_frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly'
 })
@@ -512,6 +530,7 @@ const saveExpense = async () => {
   }
 
   const dateValue = formData.date ? new Date(formData.date).toISOString() : new Date().toISOString()
+  const dueDateValue = formData.due_date ? new Date(formData.due_date).toISOString() : null
   
   const result = await upsertExpense({
     id: editingExpense.value?.id,
@@ -523,6 +542,7 @@ const saveExpense = async () => {
     is_recurring: formData.is_recurring,
     recurring_frequency: formData.is_recurring ? formData.recurring_frequency : undefined,
     created_at: dateValue,
+    due_date: dueDateValue,
     updated_at: new Date().toISOString()
   })
 
@@ -544,6 +564,7 @@ const editExpense = (expense: any) => {
   formData.is_recurring = expense.is_recurring || false
   formData.recurring_frequency = expense.recurring_frequency || 'monthly'
   formData.date = expense.created_at.split('T')[0]
+  formData.due_date = expense.due_date ? expense.due_date.split('T')[0] : new Date().toISOString().split('T')[0]
   showCreateModal.value = true
 }
 
@@ -617,6 +638,7 @@ const resetForm = () => {
   formData.is_recurring = false
   formData.recurring_frequency = 'monthly'
   formData.date = new Date().toISOString().split('T')[0]
+  formData.due_date = new Date().toISOString().split('T')[0]
   editingExpense.value = null
 }
 
