@@ -1,119 +1,156 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-export interface PaymentHistoryEntry {
+export interface PaymentRecord {
   id: string
-  payment_id?: string
-  company_id?: string
-  action_type: string
-  description: string
-  user_id?: string
-  user_name?: string
-  metadata?: any
+  expense_id: string
+  user_id: string
+  amount: number
+  paid_date: string
+  payment_method?: string
+  notes?: string
   created_at: string
+}
+
+export interface PaymentFilters {
+  search: string
+  category: string
+  expenseType: 'all' | 'unique' | 'recurring'
+  dateRange: { start: string; end: string } | null
 }
 
 export const usePaymentHistory = () => {
   const supabase = useSupabaseClient()
-  const user = useSupabaseUser()
-  const history = ref<PaymentHistoryEntry[]>([])
+  const payments = ref<PaymentRecord[]>([])
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  const addHistoryEntry = async (entry: {
-    payment_id?: string
-    company_id?: string
-    action_type: string
-    description: string
-    metadata?: any
-  }) => {
+  const fetchPaymentHistory = async () => {
+    loading.value = true
+    error.value = null
     try {
-      const userName = user.value?.user_metadata?.full_name || user.value?.email || 'Sistema'
+      const { data: { user } } = await supabase.auth.getUser()
       
-      const { error } = await supabase
-        .from('payment_history')
-        .insert([{
-          payment_id: entry.payment_id,
-          company_id: entry.company_id,
-          action_type: entry.action_type,
-          description: entry.description,
-          user_id: user.value?.id,
-          user_name: userName,
-          metadata: entry.metadata || {}
-        }])
+      if (!user) {
+        throw new Error('Usuário não autenticado')
+      }
 
-      if (error) throw error
+      const { data, error: fetchError } = await (supabase.from('payment_history') as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('paid_date', { ascending: false })
+
+      if (fetchError) throw fetchError
+      
+      payments.value = data || []
+      console.log('✅ Payment history fetched:', payments.value.length, 'records')
+    } catch (e: any) {
+      error.value = e.message
+      console.error('❌ Erro ao buscar histórico de pagamentos:', e)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const recordPayment = async (expenseId: string, amount: number, paymentMethod?: string, notes?: string) => {
+    loading.value = true
+    error.value = null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        throw new Error('Usuário não autenticado')
+      }
+
+      const payload = {
+        expense_id: expenseId,
+        user_id: user.id,
+        amount,
+        paid_date: new Date().toISOString(),
+        payment_method: paymentMethod || null,
+        notes: notes || null
+      }
+
+      console.log('📝 Recording payment:', payload)
+
+      const { data, error: insertError } = await (supabase.from('payment_history') as any)
+        .insert([payload])
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+
+      console.log('✅ Payment recorded successfully')
+      await fetchPaymentHistory()
+      return { success: true, data }
+    } catch (e: any) {
+      error.value = e.message
+      console.error('❌ Erro ao registrar pagamento:', e)
+      return { success: false, error: e.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deletePaymentRecord = async (paymentId: string) => {
+    loading.value = true
+    error.value = null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        throw new Error('Usuário não autenticado')
+      }
+
+      console.log('🗑️ Deleting payment record:', paymentId)
+
+      const { error: deleteError } = await (supabase.from('payment_history') as any)
+        .delete()
+        .eq('id', paymentId)
+        .eq('user_id', user.id)
+
+      if (deleteError) throw deleteError
+
+      console.log('✅ Payment record deleted')
+      await fetchPaymentHistory()
       return { success: true }
-    } catch (err: any) {
-      console.error('Erro ao adicionar entrada no histórico:', err)
-      return { success: false, error: err.message }
-    }
-  }
-
-  const fetchPaymentHistory = async (paymentId: string) => {
-    loading.value = true
-    try {
-      const { data, error } = await supabase
-        .from('payment_history')
-        .select('*')
-        .eq('payment_id', paymentId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      history.value = data || []
-      return { success: true, data }
-    } catch (err: any) {
-      console.error('Erro ao buscar histórico:', err)
-      return { success: false, error: err.message }
+    } catch (e: any) {
+      error.value = e.message
+      console.error('❌ Erro ao deletar registro de pagamento:', e)
+      return { success: false, error: e.message }
     } finally {
       loading.value = false
     }
   }
 
-  const fetchCompanyHistory = async (companyId: string) => {
-    loading.value = true
-    try {
-      const { data, error } = await supabase
-        .from('payment_history')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      history.value = data || []
-      return { success: true, data }
-    } catch (err: any) {
-      console.error('Erro ao buscar histórico:', err)
-      return { success: false, error: err.message }
-    } finally {
-      loading.value = false
+  const getPaymentSummary = computed(() => {
+    if (payments.value.length === 0) {
+      return {
+        totalPaid: 0,
+        count: 0,
+        average: 0,
+        byCategory: {}
+      }
     }
-  }
 
-  const fetchAllHistory = async (limit = 100) => {
-    loading.value = true
-    try {
-      const { data, error } = await supabase
-        .from('payment_history')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit)
+    const totalPaid = payments.value.reduce((sum, p) => sum + p.amount, 0)
+    const count = payments.value.length
+    const average = totalPaid / count
 
-      if (error) throw error
-      history.value = data || []
-      return { success: true, data }
-    } catch (err: any) {
-      console.error('Erro ao buscar histórico:', err)
-      return { success: false, error: err.message }
-    } finally {
-      loading.value = false
+    return {
+      totalPaid,
+      count,
+      average,
+      byCategory: {}
     }
-  }
+  })
 
   return {
-    history,
+    payments,
     loading,
-    addHistoryEntry,
+    error,
     fetchPaymentHistory,
-    fetchCompanyHistory,
-    fetchAllHistory
+    recordPayment,
+    deletePaymentRecord,
+    getPaymentSummary
   }
 }
