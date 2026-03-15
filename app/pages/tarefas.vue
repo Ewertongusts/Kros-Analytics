@@ -372,18 +372,9 @@ const displayColumns = computed(() => {
 
 // Função para obter tasks de uma coluna específica
 const getTasksInColumn = (columnId: string) => {
-  const tasks = handlerTasks.value
-    .filter(t => {
-      const shouldInclude = t.column_id === columnId && !isExiting(t.id!)
-      if (!shouldInclude && t.column_id === columnId) {
-        console.log(`🚫 [FILTER] Card ${t.id} está exiting, removendo de ${columnId}`)
-      }
-      return shouldInclude
-    })
+  return handlerTasks.value
+    .filter(t => t.column_id === columnId && !isExiting(t.id!))
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  
-  console.log(`📊 [COLUMN] ${columnId}: ${tasks.length} cards (total: ${handlerTasks.value.filter(t => t.column_id === columnId).length})`)
-  return tasks
 }
 
 const removeColumn = (columnId: string) => {
@@ -462,56 +453,40 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
     
     // Se está mudando de coluna, iniciar transição completa
     if (fromColumnId !== targetColumnId) {
-      console.log(`🎯 [DROP] Iniciando drop: ${task.id} de ${fromColumnId} para ${targetColumnId}`)
-      
       try {
         // 1. Iniciar estado de saída IMEDIATAMENTE (oculta o card)
-        console.log(`1️⃣ [DROP] Chamando startExiting(${task.id})`)
         startExiting(task.id, fromColumnId)
-        console.log(`✅ [DROP] startExiting chamado, isExiting agora: ${isExiting(task.id)}`)
         
         // 2. Usar nextTick para garantir que Vue re-renderize ANTES de atualizar dados
-        console.log(`⏳ [DROP] Aguardando nextTick para Vue re-renderizar...`)
         await nextTick()
-        console.log(`✅ [DROP] Vue re-renderizou com nextTick`)
         
         // 3. AGORA fazer o drop (atualizar dados) - DEPOIS de Vue re-renderizar
-        console.log(`2️⃣ [DROP] Chamando handleDrop()`)
         handleDrop(e, targetColumnId, moveTask)
-        console.log(`✅ [DROP] handleDrop chamado, card agora em ${targetColumnId}`)
       } catch (stateError) {
         console.error('❌ [DROP] Erro ao iniciar exit:', stateError)
       }
       
       try {
         // 4. Aguardar um pouco para o DOM atualizar
-        console.log(`⏳ [DROP] Aguardando 100ms para DOM atualizar...`)
         await new Promise(resolve => setTimeout(resolve, 100))
-        console.log(`✅ [DROP] DOM atualizado`)
         
         // 5. Executar transição completa com todas as animações avançadas
-        console.log(`3️⃣ [DROP] Chamando executeFullTransition()`)
         await executeFullTransition(
           task.id,
           fromColumnId,
           targetColumnId,
           task.priority || 'media'
         )
-        console.log(`✅ [DROP] executeFullTransition completo`)
       } catch (transitionError) {
         console.error('❌ [DROP] Erro na transição:', transitionError)
       }
       
       try {
         // 6. Iniciar transições de entrada/acomodação
-        console.log(`4️⃣ [DROP] Chamando startEntering(${task.id})`)
         startEntering(task.id, targetColumnId)
-        console.log(`✅ [DROP] startEntering chamado`)
         
         setTimeout(() => {
-          console.log(`5️⃣ [DROP] Chamando startSettling(${task.id})`)
           startSettling(task.id, targetColumnId)
-          console.log(`✅ [DROP] startSettling chamado`)
         }, 400)
       } catch (stateError) {
         console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
