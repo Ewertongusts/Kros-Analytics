@@ -293,7 +293,7 @@
           <!-- Cards Container -->
           <div class="p-2 space-y-2 min-h-[100px]">
             <TasksKTaskCard
-              v-for="task in handlerTasks.filter(t => t.status === column.status)"
+              v-for="task in getTasksInColumn(column.column_id)"
               :key="task.id"
               :task="task"
               :is-drag-over="dragOverTaskId === task.id"
@@ -308,7 +308,7 @@
               @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
               @dragleave="handleDragLeave"
               @drop="(e: DragEvent) => {
-                handleTaskDropWithPosition(e, column.status)
+                handleTaskDropWithPosition(e, column.column_id)
                 handleDragEndWithScroll()
               }"
             />
@@ -574,6 +574,13 @@ const displayColumns = computed(() => {
   return [...customColumns.value]
 })
 
+// Função para obter tasks de uma coluna específica
+const getTasksInColumn = (columnId: string) => {
+  return handlerTasks.value
+    .filter(t => t.column_id === columnId)
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+}
+
 const removeColumn = (columnId: string) => {
   const confirmed = confirm('Deseja remover esta coluna? As tarefas não serão deletadas.')
   if (confirmed) {
@@ -609,8 +616,8 @@ const handleTaskDrop = async (e: DragEvent, targetStatus: string) => {
   await handleDrop(e, targetStatus as any, moveTask)
 }
 
-const handleTaskDropWithPosition = async (e: DragEvent, targetStatus: string) => {
-  await handleDrop(e, targetStatus, moveTask)
+const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) => {
+  await handleDrop(e, targetColumnId, moveTask)
 }
 
 const deleteSelectedTasks = async () => {

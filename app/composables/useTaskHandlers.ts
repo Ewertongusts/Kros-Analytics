@@ -69,7 +69,7 @@ export const useTaskHandlers = () => {
 
   const moveTask = async (
     taskId: string,
-    newStatus: 'todo' | 'in_progress' | 'done' | string,
+    newColumnId: string,
     targetTaskId?: string,
     position?: 'above' | 'below'
   ) => {
@@ -77,9 +77,9 @@ export const useTaskHandlers = () => {
     if (!task) return
 
     // Se está movendo para a mesma coluna com reordenação
-    if (task.status === newStatus && targetTaskId && position) {
-      const tasksInStatus = tasks.value.filter(t => t.status === newStatus)
-      const targetIndex = tasksInStatus.findIndex(t => t.id === targetTaskId)
+    if (task.column_id === newColumnId && targetTaskId && position) {
+      const tasksInColumn = tasks.value.filter(t => t.column_id === newColumnId)
+      const targetIndex = tasksInColumn.findIndex(t => t.id === targetTaskId)
       
       if (targetIndex !== -1) {
         // Calcular a nova posição
@@ -89,9 +89,9 @@ export const useTaskHandlers = () => {
         }
 
         // Reordenar localmente
-        const draggedIndex = tasksInStatus.findIndex(t => t.id === taskId)
+        const draggedIndex = tasksInColumn.findIndex(t => t.id === taskId)
         if (draggedIndex !== -1) {
-          const reordered = tasksInStatus.filter(t => t.id !== taskId)
+          const reordered = tasksInColumn.filter(t => t.id !== taskId)
           reordered.splice(newPosition, 0, task)
 
           // Atualizar posições no banco
@@ -104,8 +104,8 @@ export const useTaskHandlers = () => {
         }
       }
     } else {
-      // Se está mudando de coluna, apenas atualizar o status
-      await updateTask(taskId, { status: newStatus as 'todo' | 'in_progress' | 'done' })
+      // Se está mudando de coluna, atualizar o column_id
+      await updateTask(taskId, { column_id: newColumnId })
     }
 
     await fetchTasks()
