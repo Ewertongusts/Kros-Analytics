@@ -1,9 +1,9 @@
 import { ref } from 'vue'
-import type { Task } from '~/composables/useTasks'
+import type { Task } from './useTasks'
 
 export const useTaskDragDrop = () => {
   const draggedTask = ref<Task | null>(null)
-  const dragSource = ref<string | null>(null)
+  const dragSource = ref<string>('')
 
   const handleDragStart = (task: Task, source: string) => {
     draggedTask.value = task
@@ -12,7 +12,7 @@ export const useTaskDragDrop = () => {
 
   const handleDragEnd = () => {
     draggedTask.value = null
-    dragSource.value = null
+    dragSource.value = ''
   }
 
   const handleDragOver = (e: DragEvent) => {
@@ -23,15 +23,13 @@ export const useTaskDragDrop = () => {
   const handleDrop = async (
     e: DragEvent,
     targetStatus: 'todo' | 'in_progress' | 'done',
-    moveTask: (task: Task, status: 'todo' | 'in_progress' | 'done') => Promise<void>
+    moveTask: (taskId: string, status: 'todo' | 'in_progress' | 'done') => Promise<void>
   ) => {
     e.preventDefault()
-    
-    if (draggedTask.value && dragSource.value !== targetStatus) {
-      await moveTask(draggedTask.value, targetStatus)
+    if (draggedTask.value) {
+      await moveTask(draggedTask.value.id!, targetStatus)
+      handleDragEnd()
     }
-    
-    handleDragEnd()
   }
 
   return {

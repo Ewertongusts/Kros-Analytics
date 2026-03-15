@@ -1,9 +1,10 @@
-import { ref } from 'vue'
-import type { Task } from '~/composables/useTasks'
+import { ref, computed } from 'vue'
+import type { Task } from './useTasks'
+import { useTasks } from './useTasks'
 
 export const useTaskHandlers = () => {
-  const { tasks, loading, createTask, updateTask, deleteTask: removeTask, moveTask: moveTaskStatus, fetchTasks } = useTasks()
-
+  const { tasks, loading, createTask, updateTask, deleteTask: deleteTaskApi, fetchTasks } = useTasks()
+  
   const isTaskModalOpen = ref(false)
   const selectedTask = ref<Task | null>(null)
   const loadingAction = ref(false)
@@ -18,34 +19,41 @@ export const useTaskHandlers = () => {
     selectedTask.value = null
   }
 
-  const handleSaveTask = async (taskData: Task) => {
+  const handleSaveTask = async (taskData: Partial<Task>) => {
     loadingAction.value = true
-
-    let res
-    if (selectedTask.value?.id) {
-      res = await updateTask(selectedTask.value.id, taskData)
-    } else {
-      res = await createTask(taskData)
-    }
-
-    if (res.success) {
+    try {
+      if (selectedTask.value?.id) {
+        await updateTask(selectedTask.value.id, taskData)
+      } else {
+        await createTask(taskData as Task)
+      }
+      await fetchTasks()
       closeTaskModal()
-    } else {
-      alert('Erro ao salvar: ' + res.error)
+    } catch (error) {
+      console.error('Erro ao salvar tarefa:', error)
+    } finally {
+      loadingAction.value = false
     }
-
-    loadingAction.value = false
-  }
-
-  const moveTask = async (task: Task, newStatus: 'todo' | 'in_progress' | 'done') => {
-    if (!task.id) return
-    await moveTaskStatus(task.id, newStatus)
   }
 
   const deleteTask = async (id: string) => {
-    const confirmed = await confirm('Deseja realmente deletar esta tarefa?', 'Deletar tarefa')
-    if (!confirmed) return
-    await removeTask(id)
+    loadingAction.value = true
+    try {
+      await deleteTaskApi(id)
+      await fetchTasks()
+    } catch (error) {
+      console.error('Erro ao deletar tarefa:', error)
+    } finally {
+      loadingAction.value = false
+    }
+  }
+
+  const moveTask = async (taskId: string, newStatus: 'todo' | 'in_progress' | 'done') => {
+    const task = tasks.value.find(t => t.id === taskId)
+    if (task) {
+      await updateTask(taskId, { status: newStatus })
+      await fetchTasks()
+    }
   }
 
   return {
@@ -58,7 +66,7 @@ export const useTaskHandlers = () => {
     openTaskModal,
     closeTaskModal,
     handleSaveTask,
-    moveTask,
-    deleteTask
+    deleteTask,
+    moveTask
   }
 }

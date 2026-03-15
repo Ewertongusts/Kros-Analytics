@@ -140,18 +140,18 @@ import { computed, onMounted, ref, onUnmounted } from 'vue'
 import type { Task } from '~/composables/useTasks'
 import { useTaskHandlers } from '~/composables/useTaskHandlers'
 import { useTaskDragDrop } from '~/composables/useTaskDragDrop'
+import { useTaskHistory } from '~/composables/useTaskHistory'
 
 definePageMeta({
   middleware: 'auth'
 })
 
-const { tasks, loading, fetchTasks } = useTasks()
 const { companies, fetchCompanies } = useCompanies()
 const { tags: tagDefinitions, fetchTags } = useTags()
 
 const {
   tasks: handlerTasks,
-  loading: handlerLoading,
+  loading,
   fetchTasks: handlerFetchTasks,
   isTaskModalOpen,
   selectedTask,
@@ -164,10 +164,12 @@ const {
 } = useTaskHandlers()
 
 const { draggedTask, dragSource, handleDragStart, handleDragEnd, handleDragOver, handleDrop } = useTaskDragDrop()
+const { canUndo, canRedo, addToHistory, undo: undoHistory, redo: redoHistory } = useTaskHistory()
 
 const searchQuery = ref('')
 const priorityFilter = ref('')
 const statusFilter = ref('')
+const handlerLoading = ref(false)
 
 const todoTasks = computed(() => handlerTasks.value.filter(t => t.status === 'todo'))
 const inProgressTasks = computed(() => handlerTasks.value.filter(t => t.status === 'in_progress'))
@@ -203,6 +205,41 @@ const handleTaskDrop = async (e: DragEvent, targetStatus: 'todo' | 'in_progress'
   await handleDrop(e, targetStatus, moveTask)
 }
 
+const undo = () => {
+  const entry = undoHistory()
+  if (entry) {
+    addToHistory({
+      action: entry.action,
+      task: entry.task,
+      previousState: entry.previousState,
+      timestamp: Date.now()
+    })
+  }
+}
+
+const redo = () => {
+  const entry = redoHistory()
+  if (entry) {
+    addToHistory({
+      action: entry.action,
+      task: entry.task,
+      previousState: entry.previousState,
+      timestamp: Date.now()
+    })
+  }
+}
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault()
+    undo()
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+    e.preventDefault()
+    redo()
+  }
+}
+
 let unsubscribe: (() => void) | null = null
 
 onMounted(async () => {
@@ -226,12 +263,16 @@ onMounted(async () => {
   unsubscribe = () => {
     supabase.removeChannel(channel)
   }
+
+  // Keyboard shortcuts
+  window.addEventListener('keydown', handleKeyDown)
 })
 
 onUnmounted(() => {
   if (unsubscribe) {
     unsubscribe()
   }
+  window.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 
