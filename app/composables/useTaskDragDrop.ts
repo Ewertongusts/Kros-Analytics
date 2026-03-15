@@ -36,10 +36,12 @@ export const useTaskDragDrop = () => {
     if (taskId && e.currentTarget && draggedTask.value && moveTaskFn) {
       const target = e.currentTarget as HTMLElement
       const rect = target.getBoundingClientRect()
-      const midpoint = rect.top + (rect.height / 2)
       
-      // Comparar clientY com o midpoint absoluto
-      const newPosition = e.clientY < midpoint ? 'above' : 'below'
+      // Usar 35% do topo para "acima" (mais generoso)
+      const threshold = rect.top + (rect.height * 0.35)
+      
+      // Comparar clientY com o threshold
+      const newPosition = e.clientY < threshold ? 'above' : 'below'
       
       // Só atualizar se mudou de tarefa ou de posição (evita piscar)
       if (dragOverTaskId.value !== taskId || dragOverPosition.value !== newPosition) {
