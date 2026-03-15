@@ -172,16 +172,56 @@
 
         <!-- Colunas Customizadas -->
         <div 
-          v-for="column in customColumns"
-          :key="column.id"
-          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200"
-          @dragover="handleDragOverWithScroll"
-          @drop="handleTaskDrop($event, column.status)"
+          v-for="(column, index) in displayColumns"
+          :key="column.column_id"
+          @dragover="(e) => {
+            handleColumnDragOver(column.column_id, e, customColumns)
+            handleDragOverWithScroll(e)
+          }"
+          @dragleave="handleColumnDragLeave"
+          @drop="(e) => {
+            handleColumnDrop(column.column_id, customColumns, moveColumn, e)
+            if (!e.dataTransfer?.types.includes('column-drag')) {
+              handleTaskDrop(e, column.status as any)
+            }
+          }"
+          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200 relative"
+          :class="[
+            draggedColumnId === column.column_id ? 'opacity-50' : ''
+          ]"
+          :style="{
+            transform: draggedColumnId && draggedColumnId !== column.column_id ? `translateX(${
+              displayColumns.findIndex(c => c.column_id === draggedColumnId) < index ? '-12px' : 
+              displayColumns.findIndex(c => c.column_id === draggedColumnId) > index ? '12px' : '0px'
+            })` : 'translateX(0px)',
+            transition: 'transform 0.2s ease-out'
+          }"
         >
+          <!-- Indicador de inserção à esquerda (antes de 50%) -->
+          <div 
+            v-if="dragOverColumnId === column.column_id && dragOverSide === 'left' && draggedColumnId !== column.column_id"
+            class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl transition-opacity duration-150 shadow-lg"
+            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 12px var(--kros-blue, #FF0000)' }"
+          ></div>
+          
+          <!-- Indicador de inserção à direita (depois de 50%) -->
+          <div 
+            v-if="dragOverColumnId === column.column_id && dragOverSide === 'right' && draggedColumnId !== column.column_id"
+            class="absolute right-0 top-0 bottom-0 w-1.5 rounded-r-xl transition-opacity duration-150 shadow-lg"
+            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 12px var(--kros-blue, #FF0000)' }"
+          ></div>
           <!-- Header da Coluna -->
-          <div class="p-2.5 border-b border-white/5">
+          <div 
+            class="p-2.5 border-b border-white/5"
+            draggable="true"
+            @dragstart="handleColumnDragStart(column.column_id, $event)"
+            @dragend="handleColumnDragEnd"
+          >
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5 flex-1">
+              <div class="flex items-center gap-1.5 flex-1 cursor-grab active:cursor-grabbing" :class="{ 'opacity-50': draggedColumnId === column.column_id }">
+                <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm4-8h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2z" />
+                </svg>
                 <div class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: column.color }"></div>
                 <h3 class="font-semibold text-white text-xs">{{ column.name }}</h3>
               </div>
@@ -190,7 +230,7 @@
                   {{ handlerTasks.filter(t => t.status === column.status).length }}
                 </span>
                 <button
-                  @click="openTaskModal(undefined, column.status)"
+                  @click="openTaskModal(undefined, column.status as any)"
                   class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
                   title="Nova tarefa"
                 >
@@ -199,25 +239,12 @@
                   </svg>
                 </button>
                 <button
-                  @click="moveColumnLeft(column.id)"
-                  :disabled="customColumns.indexOf(column) === 0"
-                  class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors disabled:opacity-30"
-                  :class="customColumns.indexOf(column) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'"
-                  title="Mover para esquerda"
+                  @click="renameColumn(column)"
+                  class="p-1 rounded hover:bg-blue-500/20 text-white/40 hover:text-blue-400 transition-colors"
+                  title="Renomear coluna"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  @click="moveColumnRight(column.id)"
-                  :disabled="customColumns.indexOf(column) === customColumns.length - 1"
-                  class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors disabled:opacity-30"
-                  :class="customColumns.indexOf(column) === customColumns.length - 1 ? 'cursor-not-allowed' : 'cursor-pointer'"
-                  title="Mover para direita"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
                 <button
@@ -307,6 +334,14 @@
       </div>
     </div>
 
+    <!-- Modal de Renomear Coluna -->
+    <TasksKRenameColumnModal
+      :is-open="isRenameModalOpen"
+      :column="columnToRename"
+      @close="isRenameModalOpen = false"
+      @save="handleRenameColumnSave"
+    />
+
     <!-- Modal de Tarefa -->
       <BlocksKTaskModal 
         v-if="isTaskModalOpen"
@@ -325,13 +360,16 @@
 
       <!-- Botão Flutuante de Ações -->
       <button
-        class="fixed bottom-8 right-8 w-14 h-14 bg-red-600 hover:bg-red-700 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 z-50"
+        :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
+        class="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90 z-50"
         title="Ações"
       >
         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
       </button>
+
+
   </LayoutsKPageLayout>
 </template>
 
@@ -341,6 +379,7 @@ import type { Task } from '~/composables/useTasks'
 import { useTaskHandlers } from '~/composables/useTaskHandlers'
 import { useTaskDragDrop } from '~/composables/useTaskDragDrop'
 import { useTaskHistory } from '~/composables/useTaskHistory'
+import { useColumnDragDrop } from '~/composables/useColumnDragDrop'
 
 definePageMeta({
   middleware: 'auth'
@@ -368,6 +407,7 @@ const {
 const { draggedTask, dragSource, handleDragStart, handleDragEnd, handleDragOver, handleDrop } = useTaskDragDrop()
 const { canUndo, canRedo, addToHistory, undo: undoHistory, redo: redoHistory } = useTaskHistory()
 const { columns: customColumns, fetchColumns, addColumn, updateColumn, deleteColumn, moveColumn, clearLocalStorage } = useKanbanColumns()
+const { draggedColumnId, dragOverColumnId, dragOverSide, isDraggingColumn, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
 
 const searchQuery = ref('')
 const priorityFilter = ref('')
@@ -375,6 +415,8 @@ const statusFilter = ref('')
 const handlerLoading = ref(false)
 const showFilters = ref(false)
 const kanbanHeight = ref(50)
+const isRenameModalOpen = ref(false)
+const columnToRename = ref<any>(null)
 
 const calculateKanbanHeight = () => {
   // Medir a distância real do topo até o kanban
@@ -442,6 +484,12 @@ const orphanTasks = computed(() => {
   return handlerTasks.value.filter(t => !validStatuses.includes(t.status || ''))
 })
 
+// Colunas para exibição
+const displayColumns = computed(() => {
+  // Criar novo array para forçar Vue a detectar mudanças de ordem
+  return [...customColumns.value]
+})
+
 const removeColumn = (columnId: string) => {
   const confirmed = confirm('Deseja remover esta coluna? As tarefas não serão deletadas.')
   if (confirmed) {
@@ -449,17 +497,19 @@ const removeColumn = (columnId: string) => {
   }
 }
 
-const moveColumnLeft = (columnId: string) => {
-  const index = customColumns.value.findIndex(c => c.column_id === columnId)
-  if (index > 0) {
-    moveColumn(columnId, index - 1)
-  }
+const renameColumn = (column: any) => {
+  columnToRename.value = column
+  isRenameModalOpen.value = true
 }
 
-const moveColumnRight = (columnId: string) => {
-  const index = customColumns.value.findIndex(c => c.column_id === columnId)
-  if (index < customColumns.value.length - 1) {
-    moveColumn(columnId, index + 1)
+const handleRenameColumnSave = (newName: string, newColor: string) => {
+  if (columnToRename.value) {
+    updateColumn(columnToRename.value.column_id, { 
+      name: newName,
+      color: newColor
+    })
+    isRenameModalOpen.value = false
+    columnToRename.value = null
   }
 }
 

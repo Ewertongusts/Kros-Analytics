@@ -102,7 +102,11 @@
         <button
           @click="handleSave"
           :disabled="!form.title || submitting"
-          class="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 rounded-lg text-sm text-white transition-all font-medium disabled:cursor-not-allowed"
+          :style="{ 
+            backgroundColor: submitting || !form.title ? 'var(--kros-blue, #3b82f6)' : 'var(--kros-blue, #3b82f6)',
+            opacity: submitting || !form.title ? 0.5 : 1
+          }"
+          class="flex-1 px-3 py-2 rounded-lg text-sm text-white transition-all font-medium disabled:cursor-not-allowed hover:opacity-90"
         >
           {{ submitting ? 'Salvando...' : 'Salvar' }}
         </button>

@@ -6,6 +6,7 @@
       draggable="true"
       @dragstart="handleDragStart"
       @drag="handleDrag"
+      @dragover="handleDragOver"
       @dragend="handleDragEnd"
       :style="{ 
         backgroundColor: isOrphan ? 'rgba(24, 24, 27, 0.5)' : '#1c1c1e',
@@ -188,6 +189,16 @@ const isDragging = ref(false)
 const dragX = ref(0)
 const dragY = ref(0)
 const cardWidth = ref(0)
+let dragTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+// Reset drag state function
+const resetDragState = () => {
+  console.log('🔄 RESETTING DRAG STATE')
+  isDragging.value = false
+  dragX.value = 0
+  dragY.value = 0
+  cardWidth.value = 0
+}
 
 const isOverdue = computed(() => {
   if (!props.task.due_date) return false
@@ -232,34 +243,81 @@ const handleDuplicate = () => {
 }
 
 const handleDragStart = (e: DragEvent) => {
-  // Capturar largura do card
+  console.log('🎯 DRAG START - Capturing cardWidth')
+  
+  // CRITICAL: Capture width BEFORE setting isDragging
   if (cardElement.value) {
     cardWidth.value = cardElement.value.offsetWidth
+    console.log('📏 Card width captured:', cardWidth.value)
+  } else {
+    console.warn('⚠️ cardElement is null!')
+    cardWidth.value = 300 // Fallback
   }
   
   isDragging.value = true
   
-  // Posição inicial
+  // Set initial position
   dragX.value = e.clientX - (cardWidth.value / 2)
   dragY.value = e.clientY - 20
   
-  // Remover fantasma padrão
+  console.log('📍 Initial position:', { dragX: dragX.value, dragY: dragY.value })
+  
+  // Remove default drag image
   const emptyImage = new Image()
   e.dataTransfer?.setDragImage(emptyImage, 0, 0)
+  
+  // Set timeout to force reset if dragend doesn't fire
+  if (dragTimeoutId) clearTimeout(dragTimeoutId)
+  dragTimeoutId = setTimeout(() => {
+    console.warn('⚠️ Drag timeout - forcing reset')
+    resetDragState()
+  }, 1000)
   
   emit('dragstart', props.task)
 }
 
 const handleDrag = (e: DragEvent) => {
-  // Durante o drag, atualizar posição
+  // CRITICAL: Only update if we have valid coordinates
   if (e.clientX !== 0 && e.clientY !== 0) {
+    dragX.value = e.clientX - (cardWidth.value / 2)
+    dragY.value = e.clientY - 20
+    console.log('🎯 Drag position:', { dragX: dragX.value, dragY: dragY.value })
+  }
+}
+
+const handleDragOver = (e: DragEvent) => {
+  // Drag is still active, keep updating position
+  if (isDragging.value && e.clientX !== 0 && e.clientY !== 0) {
     dragX.value = e.clientX - (cardWidth.value / 2)
     dragY.value = e.clientY - 20
   }
 }
 
 const handleDragEnd = () => {
-  isDragging.value = false
+  console.log('🛑 DRAG END - Resetting state')
+  if (dragTimeoutId) clearTimeout(dragTimeoutId)
+  resetDragState()
   emit('dragend')
 }
+
+// Document-level dragend listener as final fallback
+const handleDocumentDragEnd = () => {
+  if (isDragging.value) {
+    console.warn('⚠️ Document dragend fired - resetting')
+    resetDragState()
+  }
+}
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    document.addEventListener('dragend', handleDocumentDragEnd)
+  }
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    document.removeEventListener('dragend', handleDocumentDragEnd)
+  }
+  if (dragTimeoutId) clearTimeout(dragTimeoutId)
+})
 </script>

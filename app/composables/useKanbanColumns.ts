@@ -153,19 +153,29 @@ export const useKanbanColumns = () => {
   }
 
   const moveColumn = async (columnId: string, newPosition: number) => {
+    console.log('🔄 moveColumn chamado:', { columnId, newPosition, totalColumns: columns.value.length })
+    
     const column = columns.value.find(c => c.column_id === columnId)
-    if (!column) return
+    if (!column) {
+      console.error('❌ Coluna não encontrada:', columnId)
+      return
+    }
 
-    // Atualizar localmente primeiro
-    columns.value = columns.value.filter(c => c.column_id !== columnId)
-    columns.value.splice(newPosition, 0, column)
+    // Criar novo array com a coluna movida (mantém reatividade)
+    const newColumns = columns.value.filter(c => c.column_id !== columnId)
+    newColumns.splice(newPosition, 0, column)
 
     // Atualizar posições
-    columns.value.forEach((col, idx) => {
+    newColumns.forEach((col, idx) => {
       col.position = idx
     })
 
+    // Atualizar o ref com o novo array (força reatividade)
+    columns.value = newColumns
+    console.log('✅ Colunas reordenadas localmente:', columns.value.map(c => ({ name: c.name, position: c.position })))
+
     if (!user.value?.id) {
+      console.log('💾 Salvando no localStorage')
       saveToLocalStorage()
       return
     }
@@ -173,21 +183,24 @@ export const useKanbanColumns = () => {
     loading.value = true
     try {
       // Atualizar todas as posições no banco
-      const updates = columns.value.map(col => ({
-        column_id: col.column_id,
-        position: col.position
-      }))
-
-      for (const update of updates) {
-        await supabase
+      for (const col of columns.value) {
+        const { error } = await supabase
           .from('kanban_columns')
-          .update({ position: update.position })
-          .eq('column_id', update.column_id)
+          .update({ position: col.position })
+          .eq('column_id', col.column_id)
+        
+        if (error) {
+          console.error('❌ Erro ao atualizar posição:', error)
+          throw error
+        }
       }
 
-      console.log('✅ Posições atualizadas')
+      console.log('✅ Posições atualizadas no banco')
+      saveToLocalStorage()
     } catch (err) {
       console.error('❌ Erro ao mover coluna:', err)
+      // Reverter em caso de erro
+      await fetchColumns()
     } finally {
       loading.value = false
     }
