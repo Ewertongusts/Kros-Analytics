@@ -27,7 +27,8 @@ export const useTasks = () => {
       console.log('👤 Usuário atual:', user.value?.id)
       const query = (supabase.from('tasks') as any)
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('status', { ascending: true })
+        .order('position', { ascending: true })
 
       const { data, error } = await query
 

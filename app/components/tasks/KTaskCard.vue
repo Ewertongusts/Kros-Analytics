@@ -22,9 +22,19 @@
         'group relative p-3.5 rounded-lg transition-all duration-200 hover:shadow-xl hover:shadow-black/40 cursor-grab active:cursor-grabbing aspect-[4/3]',
         isOrphan ? 'border border-orange-500/40 hover:border-orange-500/60' : 'border border-white/10 hover:border-white/20',
         { 'invisible': isDragging },
-        isDragOver ? 'ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20' : ''
+        isDragOver ? 'ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20' : '',
+        isSelected ? 'ring-2 ring-green-500/50 shadow-lg shadow-green-500/20' : ''
       ]"
     >
+      <!-- Checkbox de Seleção -->
+      <div class="absolute top-2 left-2 z-10">
+        <input
+          type="checkbox"
+          :checked="isSelected"
+          @change="$emit('select', task.id)"
+          class="w-4 h-4 rounded cursor-pointer"
+        />
+      </div>
       <!-- Tags -->
       <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1.5 mb-2.5">
         <span
@@ -192,9 +202,10 @@ const props = defineProps<{
   isOrphan?: boolean
   isDragOver?: boolean
   dragOverPosition?: 'above' | 'below' | null
+  isSelected?: boolean
 }>()
 
-const emit = defineEmits(['edit', 'delete', 'duplicate', 'dragstart', 'dragend'])
+const emit = defineEmits(['edit', 'delete', 'duplicate', 'dragstart', 'dragend', 'select'])
 
 // Debug
 console.log('🔍 KTaskCard props:', { task: props.task.title, isOrphan: props.isOrphan })

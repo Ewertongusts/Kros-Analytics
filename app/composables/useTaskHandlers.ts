@@ -32,7 +32,14 @@ export const useTaskHandlers = () => {
       } else {
         console.log('➕ Criando nova tarefa')
         // Se for nova tarefa, usar o status padrão da coluna
-        const newTask = { ...taskData, status: taskData.status || defaultStatus.value } as Task
+        const tasksInStatus = tasks.value.filter(t => t.status === (taskData.status || defaultStatus.value))
+        const newPosition = tasksInStatus.length
+        
+        const newTask = { 
+          ...taskData, 
+          status: taskData.status || defaultStatus.value,
+          position: newPosition
+        } as Task
         console.log('📋 Dados da nova tarefa:', newTask)
         const result = await createTask(newTask)
         console.log('✅ Resultado da criação:', result)

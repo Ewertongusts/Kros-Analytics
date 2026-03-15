@@ -7,7 +7,7 @@
 
     <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700" :style="{ paddingTop: `calc(100vh - ${kanbanHeight}px)` }">
       <!-- Kanban Board - Fixed no topo -->
-      <div class="flex gap-3 overflow-x-auto items-start fixed left-0 right-0 z-40" :style="{ top: `${kanbanHeight}px`, height: `calc(100vh - ${kanbanHeight}px)`, paddingLeft: '120px' }">
+      <div class="flex gap-3 overflow-x-auto items-start fixed left-0 right-0 z-40" :style="{ top: `${kanbanHeight}px`, height: `calc(100vh - ${kanbanHeight}px)`, paddingLeft: '120px', paddingRight: '40px' }">
         <!-- A Fazer -->
         <div 
           class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200"
@@ -47,9 +47,11 @@
               :task="task"
               :is-drag-over="dragOverTaskId === task.id"
               :drag-over-position="dragOverPosition"
+              :is-selected="isTaskSelected(task.id!)"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
+              @select="toggleTaskSelection"
               @dragstart="handleTaskDragStart(task, 'todo')"
               @dragend="handleDragEndWithScroll"
               @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
@@ -109,9 +111,11 @@
               :task="task"
               :is-drag-over="dragOverTaskId === task.id"
               :drag-over-position="dragOverPosition"
+              :is-selected="isTaskSelected(task.id!)"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
+              @select="toggleTaskSelection"
               @dragstart="handleTaskDragStart(task, 'in_progress')"
               @dragend="handleDragEndWithScroll"
               @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
@@ -171,9 +175,11 @@
               :task="task"
               :is-drag-over="dragOverTaskId === task.id"
               :drag-over-position="dragOverPosition"
+              :is-selected="isTaskSelected(task.id!)"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
+              @select="toggleTaskSelection"
               @dragstart="handleTaskDragStart(task, 'done')"
               @dragend="handleDragEndWithScroll"
               @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
@@ -292,9 +298,11 @@
               :task="task"
               :is-drag-over="dragOverTaskId === task.id"
               :drag-over-position="dragOverPosition"
+              :is-selected="isTaskSelected(task.id!)"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
+              @select="toggleTaskSelection"
               @dragstart="handleTaskDragStart(task, column.status)"
               @dragend="handleDragEndWithScroll"
               @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
@@ -315,7 +323,20 @@
           </div>
         </div>
 
-        <!-- Coluna de Tarefas Órfãs (se houver) -->
+        <!-- Botão Adicionar Coluna -->
+        <div class="flex-shrink-0 w-[220px]">
+          <button
+            @click="addNewColumn"
+            class="w-full p-2.5 bg-[#1a1a1c] hover:bg-white/5 border border-dashed border-white/10 hover:border-white/20 rounded-xl transition-all text-white/30 hover:text-white/50 flex items-center justify-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span class="text-xs font-medium">Add Column</span>
+          </button>
+        </div>
+
+        <!-- Coluna de Tarefas Órfãs (se houver) - SEMPRE POR ÚLTIMO -->
         <div 
           v-if="orphanTasks.length > 0"
           class="flex-shrink-0 w-[220px] rounded-xl bg-transparent border border-orange-500/30 transition-all duration-200"
@@ -344,9 +365,11 @@
               :is-orphan="true"
               :is-drag-over="dragOverTaskId === task.id"
               :drag-over-position="dragOverPosition"
+              :is-selected="isTaskSelected(task.id!)"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
+              @select="toggleTaskSelection"
               @dragstart="handleTaskDragStart(task, task.status || 'todo')"
               @dragend="handleDragEndWithScroll"
               @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
@@ -357,19 +380,6 @@
               }"
             />
           </div>
-        </div>
-
-        <!-- Botão Adicionar Coluna -->
-        <div class="flex-shrink-0 w-[220px]">
-          <button
-            @click="addNewColumn"
-            class="w-full p-2.5 bg-[#1a1a1c] hover:bg-white/5 border border-dashed border-white/10 hover:border-white/20 rounded-xl transition-all text-white/30 hover:text-white/50 flex items-center justify-center gap-1.5"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="text-xs font-medium">Add Column</span>
-          </button>
         </div>
       </div>
     </div>
@@ -399,7 +409,40 @@
       <!-- Removido temporariamente -->
 
       <!-- Botão Flutuante de Ações -->
+      <div v-if="selectedCount > 0" class="fixed bottom-8 right-8 flex flex-col gap-3 z-50">
+        <!-- Contador de seleção -->
+        <div class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold">
+          {{ selectedCount }} selecionado(s)
+        </div>
+        
+        <!-- Botão Deletar -->
+        <button
+          @click="deleteSelectedTasks"
+          :style="{ backgroundColor: '#ef4444' }"
+          class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
+          title="Deletar selecionados"
+        >
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+
+        <!-- Botão Limpar seleção -->
+        <button
+          @click="deselectAll"
+          :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
+          class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
+          title="Limpar seleção"
+        >
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Botão Flutuante de Ações (quando nenhuma tarefa selecionada) -->
       <button
+        v-else
         :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
         class="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90 z-50"
         title="Ações"
@@ -448,6 +491,7 @@ const { draggedTask, dragSource, dragOverTaskId, dragOverPosition, handleDragSta
 const { canUndo, canRedo, addToHistory, undo: undoHistory, redo: redoHistory } = useTaskHistory()
 const { columns: customColumns, fetchColumns, addColumn, updateColumn, deleteColumn, moveColumn, clearLocalStorage } = useKanbanColumns()
 const { draggedColumnId, dragOverColumnId, dragOverSide, isDraggingColumn, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
+const { selectedTaskIds, toggleTaskSelection, isTaskSelected, selectAll, deselectAll, selectedCount, getSelectedTaskIds } = useTaskSelection()
 
 const searchQuery = ref('')
 const priorityFilter = ref('')
@@ -481,17 +525,17 @@ const addNewColumn = () => {
 }
 
 const todoTasks = computed(() => {
-  const result = handlerTasks.value.filter(t => t.status === 'todo')
+  const result = handlerTasks.value.filter(t => t.status === 'todo').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   console.log('📋 todoTasks computed:', result.length, result)
   return result
 })
 const inProgressTasks = computed(() => {
-  const result = handlerTasks.value.filter(t => t.status === 'in_progress')
+  const result = handlerTasks.value.filter(t => t.status === 'in_progress').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   console.log('📋 inProgressTasks computed:', result.length, result)
   return result
 })
 const doneTasks = computed(() => {
-  const result = handlerTasks.value.filter(t => t.status === 'done')
+  const result = handlerTasks.value.filter(t => t.status === 'done').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   console.log('📋 doneTasks computed:', result.length, result)
   return result
 })
@@ -507,7 +551,7 @@ const filteredTasks = computed(() => {
     const matchStatus = !statusFilter.value || task.status === statusFilter.value
     
     return matchSearch && matchPriority && matchStatus
-  })
+  }).sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
 })
 
 const filteredTodoTasks = computed(() => filteredTasks.value.filter(t => t.status === 'todo'))
@@ -567,6 +611,26 @@ const handleTaskDrop = async (e: DragEvent, targetStatus: string) => {
 
 const handleTaskDropWithPosition = async (e: DragEvent, targetStatus: string) => {
   await handleDrop(e, targetStatus, moveTask)
+}
+
+const deleteSelectedTasks = async () => {
+  const selectedIds = getSelectedTaskIds()
+  if (selectedIds.length === 0) return
+
+  const confirmed = confirm(`Deseja deletar ${selectedIds.length} tarefa(s)?`)
+  if (!confirmed) return
+
+  loadingAction.value = true
+  try {
+    for (const id of selectedIds) {
+      await deleteTask(id)
+    }
+    deselectAll()
+  } catch (error) {
+    console.error('Erro ao deletar tarefas:', error)
+  } finally {
+    loadingAction.value = false
+  }
 }
 
 // Auto-scroll horizontal durante drag
