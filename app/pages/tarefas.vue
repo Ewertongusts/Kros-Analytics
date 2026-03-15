@@ -45,11 +45,19 @@
               v-for="task in filteredTodoTasks"
               :key="task.id"
               :task="task"
+              :is-drag-over="dragOverTaskId === task.id"
+              :drag-over-position="dragOverPosition"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
               @dragstart="handleTaskDragStart(task, 'todo')"
               @dragend="handleDragEndWithScroll"
+              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
+              @dragleave="handleDragLeave"
+              @drop="(e: DragEvent) => {
+                handleTaskDropWithPosition(e, 'todo')
+                handleDragEndWithScroll()
+              }"
             />
             <div v-if="filteredTodoTasks.length === 0" class="flex items-center justify-center py-6 text-white/20">
               <div class="text-center">
@@ -99,11 +107,19 @@
               v-for="task in filteredInProgressTasks"
               :key="task.id"
               :task="task"
+              :is-drag-over="dragOverTaskId === task.id"
+              :drag-over-position="dragOverPosition"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
               @dragstart="handleTaskDragStart(task, 'in_progress')"
               @dragend="handleDragEndWithScroll"
+              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
+              @dragleave="handleDragLeave"
+              @drop="(e: DragEvent) => {
+                handleTaskDropWithPosition(e, 'in_progress')
+                handleDragEndWithScroll()
+              }"
             />
             <div v-if="filteredInProgressTasks.length === 0" class="flex items-center justify-center py-6 text-white/20">
               <div class="text-center">
@@ -153,11 +169,19 @@
               v-for="task in filteredDoneTasks"
               :key="task.id"
               :task="task"
+              :is-drag-over="dragOverTaskId === task.id"
+              :drag-over-position="dragOverPosition"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
               @dragstart="handleTaskDragStart(task, 'done')"
               @dragend="handleDragEndWithScroll"
+              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
+              @dragleave="handleDragLeave"
+              @drop="(e: DragEvent) => {
+                handleTaskDropWithPosition(e, 'done')
+                handleDragEndWithScroll()
+              }"
             />
             <div v-if="filteredDoneTasks.length === 0" class="flex items-center justify-center py-6 text-white/20">
               <div class="text-center">
@@ -266,11 +290,19 @@
               v-for="task in handlerTasks.filter(t => t.status === column.status)"
               :key="task.id"
               :task="task"
+              :is-drag-over="dragOverTaskId === task.id"
+              :drag-over-position="dragOverPosition"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
               @dragstart="handleTaskDragStart(task, column.status)"
               @dragend="handleDragEndWithScroll"
+              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
+              @dragleave="handleDragLeave"
+              @drop="(e: DragEvent) => {
+                handleTaskDropWithPosition(e, column.status)
+                handleDragEndWithScroll()
+              }"
             />
             <div v-if="handlerTasks.filter(t => t.status === column.status).length === 0" class="flex items-center justify-center py-6 text-white/20">
               <div class="text-center">
@@ -310,11 +342,19 @@
               :key="task.id"
               :task="task"
               :is-orphan="true"
+              :is-drag-over="dragOverTaskId === task.id"
+              :drag-over-position="dragOverPosition"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
               @dragstart="handleTaskDragStart(task, task.status || 'todo')"
               @dragend="handleDragEndWithScroll"
+              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
+              @dragleave="handleDragLeave"
+              @drop="(e: DragEvent) => {
+                handleTaskDropWithPosition(e, task.status || 'todo')
+                handleDragEndWithScroll()
+              }"
             />
           </div>
         </div>
@@ -404,7 +444,7 @@ const {
   duplicateTask
 } = useTaskHandlers()
 
-const { draggedTask, dragSource, handleDragStart, handleDragEnd, handleDragOver, handleDrop } = useTaskDragDrop()
+const { draggedTask, dragSource, dragOverTaskId, dragOverPosition, handleDragStart, handleDragEnd, handleDragOver, handleDragLeave, handleDrop } = useTaskDragDrop()
 const { canUndo, canRedo, addToHistory, undo: undoHistory, redo: redoHistory } = useTaskHistory()
 const { columns: customColumns, fetchColumns, addColumn, updateColumn, deleteColumn, moveColumn, clearLocalStorage } = useKanbanColumns()
 const { draggedColumnId, dragOverColumnId, dragOverSide, isDraggingColumn, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
@@ -523,6 +563,10 @@ const handleTaskDragStart = (task: Task, source: string) => {
 
 const handleTaskDrop = async (e: DragEvent, targetStatus: string) => {
   await handleDrop(e, targetStatus as any, moveTask)
+}
+
+const handleTaskDropWithPosition = async (e: DragEvent, targetStatus: string) => {
+  await handleDrop(e, targetStatus, moveTask)
 }
 
 // Auto-scroll horizontal durante drag

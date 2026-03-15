@@ -1,5 +1,11 @@
 <template>
   <div>
+    <!-- Indicador acima (quando drag está acima) -->
+    <div 
+      v-if="isDragOver && dragOverPosition === 'above'"
+      class="h-1 bg-blue-500 rounded mb-2 shadow-lg shadow-blue-500/50"
+    ></div>
+
     <!-- Card Original -->
     <div 
       ref="cardElement"
@@ -15,7 +21,8 @@
       :class="[
         'group relative p-3.5 rounded-lg transition-all duration-200 hover:shadow-xl hover:shadow-black/40 cursor-grab active:cursor-grabbing aspect-[4/3]',
         isOrphan ? 'border border-orange-500/40 hover:border-orange-500/60' : 'border border-white/10 hover:border-white/20',
-        { 'invisible': isDragging }
+        { 'invisible': isDragging },
+        isDragOver ? 'ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20' : ''
       ]"
     >
       <!-- Tags -->
@@ -105,6 +112,12 @@
       </div>
     </div>
 
+    <!-- Indicador abaixo (quando drag está abaixo) -->
+    <div 
+      v-if="isDragOver && dragOverPosition === 'below'"
+      class="h-1 bg-blue-500 rounded mt-2 shadow-lg shadow-blue-500/50"
+    ></div>
+
     <!-- Clone Flutuante -->
     <Teleport to="body">
       <div
@@ -177,6 +190,8 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 const props = defineProps<{
   task: any
   isOrphan?: boolean
+  isDragOver?: boolean
+  dragOverPosition?: 'above' | 'below' | null
 }>()
 
 const emit = defineEmits(['edit', 'delete', 'duplicate', 'dragstart', 'dragend'])

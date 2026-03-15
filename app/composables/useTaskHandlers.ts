@@ -60,12 +60,48 @@ export const useTaskHandlers = () => {
     }
   }
 
-  const moveTask = async (taskId: string, newStatus: 'todo' | 'in_progress' | 'done') => {
+  const moveTask = async (
+    taskId: string,
+    newStatus: 'todo' | 'in_progress' | 'done' | string,
+    targetTaskId?: string,
+    position?: 'above' | 'below'
+  ) => {
     const task = tasks.value.find(t => t.id === taskId)
-    if (task) {
-      await updateTask(taskId, { status: newStatus })
-      await fetchTasks()
+    if (!task) return
+
+    // Se está movendo para a mesma coluna com reordenação
+    if (task.status === newStatus && targetTaskId && position) {
+      const tasksInStatus = tasks.value.filter(t => t.status === newStatus)
+      const targetIndex = tasksInStatus.findIndex(t => t.id === targetTaskId)
+      
+      if (targetIndex !== -1) {
+        // Calcular a nova posição
+        let newPosition = targetIndex
+        if (position === 'below') {
+          newPosition = targetIndex + 1
+        }
+
+        // Reordenar localmente
+        const draggedIndex = tasksInStatus.findIndex(t => t.id === taskId)
+        if (draggedIndex !== -1) {
+          const reordered = tasksInStatus.filter(t => t.id !== taskId)
+          reordered.splice(newPosition, 0, task)
+
+          // Atualizar posições no banco
+          for (let i = 0; i < reordered.length; i++) {
+            const reorderedTask = reordered[i]
+            if (reorderedTask?.id) {
+              await updateTask(reorderedTask.id, { position: i })
+            }
+          }
+        }
+      }
+    } else {
+      // Se está mudando de coluna, apenas atualizar o status
+      await updateTask(taskId, { status: newStatus as 'todo' | 'in_progress' | 'done' })
     }
+
+    await fetchTasks()
   }
 
   const duplicateTask = async (task: Task) => {

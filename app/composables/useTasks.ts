@@ -9,6 +9,7 @@ export interface Task {
   due_date?: string
   company_id?: string
   assigned_to?: string
+  position?: number
   created_at?: string
   updated_at?: string
 }
@@ -108,6 +109,7 @@ export const useTasks = () => {
       if (updates.due_date !== undefined) updateData.due_date = updates.due_date ? new Date(updates.due_date).toISOString() : null
       if (updates.company_id !== undefined) updateData.company_id = updates.company_id || null
       if (updates.assigned_to !== undefined) updateData.assigned_to = updates.assigned_to || null
+      if (updates.position !== undefined) updateData.position = updates.position
 
       const { error } = await (supabase.from('tasks') as any)
         .update(updateData)
