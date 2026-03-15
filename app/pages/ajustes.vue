@@ -1,7 +1,6 @@
 <template>
   <div class="min-h-screen p-8 md:p-12 overflow-hidden">
     <div class="max-w-6xl mx-auto space-y-10">
-      <BlocksKPageHeader title="Configurações" subtitle="Ajustes do Sistema e Preferências" />
       
       <!-- TABS -->
       <UiKTabs v-model="activeTab" :tabs="tabs" class="animate-in fade-in duration-1000 delay-200" />
@@ -45,8 +44,6 @@
       <!-- GLOW EFFECTS -->
       <div class="fixed -top-40 -right-40 w-96 h-96 bg-kros-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
       <div class="fixed top-1/2 -left-40 w-80 h-80 bg-kros-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
-      
-      <BlocksKGlobalFooter />
     </div>
   </div>
 </template>

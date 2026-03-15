@@ -6,26 +6,23 @@
     />
     
     <div v-else class="space-y-12 mb-20 animate-in fade-in duration-700">
-      <BlocksKPageHeader title="Dashboard" subtitle="Visão geral do negócio">
-        <template #actions>
-          <div class="flex items-center gap-3">
-            <select 
-              class="bg-[#111112] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-xl border border-white/10 outline-none cursor-pointer"
-            >
-              <option>Mês Atual (Março)</option>
-              <option>Trimestre Atual</option>
-              <option>Semestre Atual</option>
-              <option>Anual 2026</option>
-            </select>
-            <UiKButtonPrimary 
-              icon="refresh"
-              @click="fetchStats"
-            >
-              Sincronizar
-            </UiKButtonPrimary>
-          </div>
-        </template>
-      </BlocksKPageHeader>
+      <!-- Botões de Ação no Topo -->
+      <div class="flex items-center justify-end gap-3">
+        <select 
+          class="bg-[#111112] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-xl border border-white/10 outline-none cursor-pointer"
+        >
+          <option>Mês Atual (Março)</option>
+          <option>Trimestre Atual</option>
+          <option>Semestre Atual</option>
+          <option>Anual 2026</option>
+        </select>
+        <UiKButtonPrimary 
+          icon="refresh"
+          @click="fetchStats"
+        >
+          Sincronizar
+        </UiKButtonPrimary>
+      </div>
         
         <div class="space-y-8">
            <BlocksKDashboardMetrics :stats="stats" />
@@ -48,8 +45,6 @@
         </div>
 
       <BlocksKDashboardMainContent :stats="stats" />
-
-      <BlocksKGlobalFooter />
     </div>
   </LayoutsKPageLayout>
 </template>

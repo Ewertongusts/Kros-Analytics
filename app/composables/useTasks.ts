@@ -22,16 +22,23 @@ export const useTasks = () => {
   const fetchTasks = async () => {
     loading.value = true
     try {
+      console.log('🔍 Iniciando busca de tarefas...')
+      console.log('👤 Usuário atual:', user.value?.id)
       const query = (supabase.from('tasks') as any)
         .select('*')
         .order('created_at', { ascending: false })
 
       const { data, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Erro ao buscar tarefas:', error)
+        throw error
+      }
+      console.log('✅ Tarefas recebidas do banco:', data?.length || 0, data)
       tasks.value = data || []
+      console.log('📦 tasks.value atualizado:', tasks.value.length)
     } catch (err: any) {
-      console.error('Erro ao buscar tarefas:', err)
+      console.error('❌ Erro ao buscar tarefas:', err)
     } finally {
       loading.value = false
     }
@@ -40,9 +47,17 @@ export const useTasks = () => {
   const createTask = async (task: Task) => {
     loading.value = true
     try {
-      if (!user.value?.id) {
+      console.log('👤 Verificando usuário...', user.value)
+      
+      // O ID do usuário pode estar em user.value.id ou user.value.sub
+      const userId = user.value?.id || user.value?.sub
+      
+      if (!userId) {
+        console.error('❌ Usuário não autenticado - ID não encontrado')
         throw new Error('Usuário não autenticado')
       }
+
+      console.log('✅ ID do usuário encontrado:', userId)
 
       const taskData = {
         title: task.title,
@@ -52,20 +67,27 @@ export const useTasks = () => {
         due_date: task.due_date ? new Date(task.due_date).toISOString() : null,
         company_id: task.company_id || null,
         assigned_to: task.assigned_to || null,
-        created_by: user.value.id,
+        created_by: userId,
         created_at: new Date().toISOString()
       }
+
+      console.log('📤 Enviando tarefa para o banco:', taskData)
 
       const { data, error } = await (supabase.from('tasks') as any)
         .insert([taskData])
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Erro do Supabase ao criar tarefa:', error)
+        throw error
+      }
+      
+      console.log('✅ Tarefa criada com sucesso:', data)
       await fetchTasks()
       return { success: true, data }
     } catch (err: any) {
-      console.error('Erro ao criar tarefa:', err)
+      console.error('❌ Erro ao criar tarefa:', err)
       return { success: false, error: err.message }
     } finally {
       loading.value = false

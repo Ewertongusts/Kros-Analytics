@@ -8,86 +8,92 @@
       @drag="handleDrag"
       @dragend="handleDragEnd"
       :class="{ 'invisible': isDragging }"
-      class="group relative p-4 bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/15 hover:border-white/30 rounded-lg transition-all duration-200 hover:shadow-xl hover:shadow-black/30 cursor-grab active:cursor-grabbing hover:bg-gradient-to-br hover:from-white/[0.08] hover:to-white/[0.03]"
+      class="group relative p-3.5 bg-[#1c1c1e] border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 hover:shadow-xl hover:shadow-black/40 cursor-grab active:cursor-grabbing aspect-[4/3]"
     >
-      <!-- Indicador de Prioridade (barra lateral) -->
-      <div 
-        :class="[
-          'absolute left-0 top-0 bottom-0 w-1 rounded-l-lg transition-all',
-          task.priority === 'alta' ? 'bg-red-500' :
-          task.priority === 'media' ? 'bg-yellow-500' :
-          'bg-blue-500'
-        ]"
-      />
-
-      <!-- Header com Prioridade -->
-      <div class="flex items-start justify-between gap-3 mb-3">
-        <div class="flex-1 min-w-0">
-          <h3 class="font-semibold text-white text-sm leading-tight mb-1 line-clamp-2 group-hover:text-kros-blue transition-colors">
-            {{ task.title }}
-          </h3>
-          <p v-if="task.description" class="text-xs text-white/50 line-clamp-1">
-            {{ task.description }}
-          </p>
-        </div>
-        
-        <!-- Prioridade Badge -->
-        <span 
-          :class="[
-            'px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex-shrink-0 whitespace-nowrap',
-            task.priority === 'alta' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
-            task.priority === 'media' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-            'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-          ]"
+      <!-- Tags -->
+      <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1.5 mb-2.5">
+        <span
+          v-for="(tag, index) in task.tags.slice(0, 2)"
+          :key="index"
+          class="px-2 py-1 rounded text-[10px] font-semibold bg-white/10 text-white/80 border border-white/20"
         >
-          {{ priorityLabel }}
+          {{ tag }}
         </span>
       </div>
 
-      <!-- Metadados -->
-      <div class="space-y-2 mb-4 text-xs">
-        <!-- Responsável -->
-        <div v-if="task.assigned_to" class="flex items-center gap-2 text-white/60">
-          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <span class="truncate">{{ task.assigned_to }}</span>
+      <!-- Título -->
+      <h3 class="font-semibold text-white text-sm leading-snug mb-2.5 line-clamp-2">
+        {{ task.title }}
+      </h3>
+
+      <!-- Descrição -->
+      <p v-if="task.description" class="text-xs text-white/40 line-clamp-1 mb-2.5">
+        {{ task.description }}
+      </p>
+
+      <!-- Footer -->
+      <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2 pt-2.5 border-t border-white/5">
+        <!-- Avatar e Prioridade -->
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <!-- Avatar -->
+          <div v-if="task.assigned_to" class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+            {{ getInitials(task.assigned_to) }}
+          </div>
+          
+          <!-- Prioridade Badge -->
+          <span 
+            :class="[
+              'px-2 py-1 rounded text-[9px] font-bold uppercase',
+              task.priority === 'alta' ? 'bg-red-500/20 text-red-400' :
+              task.priority === 'media' ? 'bg-yellow-500/20 text-yellow-400' :
+              'bg-blue-500/20 text-blue-400'
+            ]"
+          >
+            {{ priorityLabel }}
+          </span>
         </div>
 
-        <!-- Data de Vencimento -->
-        <div v-if="task.due_date" class="flex items-center gap-2" :class="isOverdue ? 'text-red-400 font-medium' : 'text-white/60'">
-          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span>{{ formatDate(task.due_date) }}</span>
-          <span v-if="isOverdue" class="ml-auto text-[9px] font-bold px-1.5 py-0.5 bg-red-500/20 rounded">ATRASADA</span>
-        </div>
+        <!-- Data e Ações -->
+        <div class="flex items-center gap-1.5">
+          <!-- Data -->
+          <div v-if="task.due_date" class="flex items-center gap-1 text-white/40 text-[10px]">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>{{ formatDateShort(task.due_date) }}</span>
+          </div>
 
-        <!-- Empresa -->
-        <div v-if="task.company_name" class="flex items-center gap-2 text-white/60">
-          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-          <span class="truncate">{{ task.company_name }}</span>
+          <!-- Botões de ação (aparecem no hover) -->
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            <button
+              @click.stop="$emit('edit', task)"
+              class="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+              title="Editar"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              @click.stop="handleDuplicate"
+              class="p-1 rounded hover:bg-blue-500/20 text-white/60 hover:text-blue-400 transition-colors"
+              title="Duplicar"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              @click.stop="$emit('delete', task)"
+              class="p-1 rounded hover:bg-red-500/20 text-white/60 hover:text-red-400 transition-colors"
+              title="Deletar"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
-
-      <!-- Footer com Ações -->
-      <div class="flex items-center gap-2 pt-3 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          @click="$emit('edit', task)"
-          class="flex-1 px-2 py-1.5 rounded-md bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40 transition-all text-[10px] font-semibold uppercase tracking-wider"
-          title="Editar"
-        >
-          Editar
-        </button>
-        <button
-          @click="$emit('delete', task)"
-          class="flex-1 px-2 py-1.5 rounded-md bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 transition-all text-[10px] font-semibold uppercase tracking-wider"
-          title="Deletar"
-        >
-          Deletar
-        </button>
       </div>
     </div>
 
@@ -105,62 +111,51 @@
           transform: 'scale(1.05) rotate(3deg)',
           opacity: '0.95'
         }"
-        class="p-4 bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/50 rounded-lg shadow-2xl"
+        class="p-3.5 bg-[#1c1c1e] border border-white/30 rounded-lg shadow-2xl aspect-[4/3]"
       >
-        <!-- Indicador de Prioridade -->
-        <div 
-          :class="[
-            'absolute left-0 top-0 bottom-0 w-1 rounded-l-lg',
-            task.priority === 'alta' ? 'bg-red-500' :
-            task.priority === 'media' ? 'bg-yellow-500' :
-            'bg-blue-500'
-          ]"
-        />
-
-        <!-- Header -->
-        <div class="flex items-start justify-between gap-3 mb-3">
-          <div class="flex-1 min-w-0">
-            <h3 class="font-semibold text-white text-sm leading-tight mb-1 line-clamp-2">
-              {{ task.title }}
-            </h3>
-            <p v-if="task.description" class="text-xs text-white/50 line-clamp-1">
-              {{ task.description }}
-            </p>
-          </div>
-          
-          <span 
-            :class="[
-              'px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex-shrink-0 whitespace-nowrap',
-              task.priority === 'alta' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
-              task.priority === 'media' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-              'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-            ]"
+        <!-- Tags -->
+        <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1.5 mb-2.5">
+          <span
+            v-for="(tag, index) in task.tags.slice(0, 2)"
+            :key="index"
+            class="px-2 py-1 rounded text-[10px] font-semibold bg-white/10 text-white/80 border border-white/20"
           >
-            {{ priorityLabel }}
+            {{ tag }}
           </span>
         </div>
 
-        <!-- Metadados -->
-        <div class="space-y-2 text-xs">
-          <div v-if="task.assigned_to" class="flex items-center gap-2 text-white/60">
-            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span class="truncate">{{ task.assigned_to }}</span>
-          </div>
+        <!-- Título -->
+        <h3 class="font-semibold text-white text-sm leading-snug mb-2.5 line-clamp-2">
+          {{ task.title }}
+        </h3>
 
-          <div v-if="task.due_date" class="flex items-center gap-2" :class="isOverdue ? 'text-red-400 font-medium' : 'text-white/60'">
-            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Descrição -->
+        <p v-if="task.description" class="text-xs text-white/40 line-clamp-1 mb-2.5">
+          {{ task.description }}
+        </p>
+
+        <!-- Footer -->
+        <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2 pt-2.5 border-t border-white/5">
+          <div class="flex items-center gap-2">
+            <div v-if="task.assigned_to" class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-[10px] font-bold">
+              {{ getInitials(task.assigned_to) }}
+            </div>
+            <span 
+              :class="[
+                'px-2 py-1 rounded text-[9px] font-bold uppercase',
+                task.priority === 'alta' ? 'bg-red-500/20 text-red-400' :
+                task.priority === 'media' ? 'bg-yellow-500/20 text-yellow-400' :
+                'bg-blue-500/20 text-blue-400'
+              ]"
+            >
+              {{ priorityLabel }}
+            </span>
+          </div>
+          <div v-if="task.due_date" class="flex items-center gap-1 text-white/40 text-[10px]">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span>{{ formatDate(task.due_date) }}</span>
-          </div>
-
-          <div v-if="task.company_name" class="flex items-center gap-2 text-white/60">
-            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            <span class="truncate">{{ task.company_name }}</span>
+            <span>{{ formatDateShort(task.due_date) }}</span>
           </div>
         </div>
       </div>
@@ -175,7 +170,7 @@ const props = defineProps<{
   task: any
 }>()
 
-const emit = defineEmits(['edit', 'delete', 'dragstart', 'dragend'])
+const emit = defineEmits(['edit', 'delete', 'duplicate', 'dragstart', 'dragend'])
 
 const cardElement = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
@@ -196,6 +191,33 @@ const priorityLabel = computed(() => {
 const formatDate = (date: string) => {
   if (!date) return '-'
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(date))
+}
+
+const formatDateShort = (date: string) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  const today = new Date()
+  const diffDays = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) return 'Hoje'
+  if (diffDays === 1) return 'Amanhã'
+  if (diffDays === -1) return 'Ontem'
+  if (diffDays < 0) return `${Math.abs(diffDays)}d atrás`
+  if (diffDays < 7) return `${diffDays}d`
+  
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(d)
+}
+
+const getInitials = (name: string) => {
+  if (!name) return '?'
+  const parts = name.trim().split(' ')
+  if (parts.length === 1) return parts[0]?.charAt(0).toUpperCase() || '?'
+  return ((parts[0]?.charAt(0) || '') + (parts[parts.length - 1]?.charAt(0) || '')).toUpperCase() || '?'
+}
+
+const handleDuplicate = () => {
+  console.log('🎯 Botão duplicar clicado no card:', props.task)
+  emit('duplicate', props.task)
 }
 
 const handleDragStart = (e: DragEvent) => {

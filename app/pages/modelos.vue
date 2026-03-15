@@ -1,8 +1,6 @@
 <template>
   <LayoutsKPageLayout>
     <KFinanceMessageTemplates />
-    
-    <BlocksKGlobalFooter />
   </LayoutsKPageLayout>
 </template>
 

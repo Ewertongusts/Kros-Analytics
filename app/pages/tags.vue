@@ -6,16 +6,15 @@
     />
     
     <div v-else class="space-y-8">
-      <BlocksKPageHeader title="Tags e Segmentos" subtitle="Organização e Categorização de Clientes">
-        <template #actions>
-          <UiKButtonPrimary 
-            icon="plus"
-            @click="openModal()"
-          >
-            Nova Tag
-          </UiKButtonPrimary>
-        </template>
-      </BlocksKPageHeader>
+      <!-- Botão de Ação no Topo -->
+      <div class="flex items-center justify-end">
+        <UiKButtonPrimary 
+          icon="plus"
+          @click="openModal()"
+        >
+          Nova Tag
+        </UiKButtonPrimary>
+      </div>
       
       <BlocksKTagsGrid 
         :tags="tags" 
@@ -23,8 +22,6 @@
         @edit="openModal" 
         @delete="handleDelete" 
       />
-
-      <BlocksKGlobalFooter />
     </div>
 
     <BlocksKTagModal 

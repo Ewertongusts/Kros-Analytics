@@ -216,8 +216,6 @@
           @open-details="handleOpenSaleDetails"
         />
       </div>
-
-      <BlocksKGlobalFooter />
     </div>
 
     <SalesModalKSaleTypeSelector

@@ -41,8 +41,6 @@
         @update-payments="handleUpdatePayments"
         @export="(format) => { exportPayments(subscriptions, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
       />
-      
-      <BlocksKGlobalFooter />
     </div>
 
     <SubscriptionsKSubscriptionsModals

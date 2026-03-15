@@ -366,8 +366,6 @@
           </div>
         </div>
       </div>
-
-      <BlocksKGlobalFooter />
     </div>
 
     <!-- Modal de Despesa -->

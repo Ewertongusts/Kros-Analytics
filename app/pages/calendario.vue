@@ -6,7 +6,6 @@
     />
 
     <div v-else class="space-y-8 animate-in fade-in duration-500">
-      <BlocksKPageHeader title="Calendário" subtitle="Agendamentos e Compromissos" />
       
       <div class="min-h-[60vh] flex flex-col items-center justify-center">
         <div class="flex flex-col items-center justify-center py-20 opacity-40">
@@ -16,8 +15,6 @@
            <p class="text-[10px] font-bold uppercase tracking-widest text-white/30 mt-4 px-6 py-2 bg-white/5 rounded-full">Integrando com Motor de Agendamentos</p>
         </div>
       </div>
-      
-      <BlocksKGlobalFooter />
     </div>
 
     <BlocksKExpenseModal 
