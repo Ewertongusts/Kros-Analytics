@@ -2,71 +2,71 @@
   <div class="space-y-4">
     <!-- Métricas -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <div class="p-4 bg-white/5 border border-white/10 rounded-xl">
-        <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Total</p>
-        <p class="text-2xl font-black text-white">{{ totalTasks }}</p>
+      <div class="p-4 bg-gradient-to-br from-white/5 to-white/0 border border-white/15 rounded-lg hover:border-white/25 transition-all">
+        <p class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">📊 Total</p>
+        <p class="text-3xl font-black text-white">{{ totalTasks }}</p>
       </div>
-      <div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-        <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">A Fazer</p>
-        <p class="text-2xl font-black text-blue-400">{{ todoCount }}</p>
+      <div class="p-4 bg-gradient-to-br from-blue-500/10 to-blue-500/0 border border-blue-500/20 rounded-lg hover:border-blue-500/40 transition-all">
+        <p class="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-2">📋 A Fazer</p>
+        <p class="text-3xl font-black text-blue-300">{{ todoCount }}</p>
       </div>
-      <div class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-        <p class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Em Andamento</p>
-        <p class="text-2xl font-black text-yellow-400">{{ inProgressCount }}</p>
+      <div class="p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-500/0 border border-yellow-500/20 rounded-lg hover:border-yellow-500/40 transition-all">
+        <p class="text-[10px] font-bold text-yellow-300 uppercase tracking-widest mb-2">⚙️ Em Andamento</p>
+        <p class="text-3xl font-black text-yellow-300">{{ inProgressCount }}</p>
       </div>
-      <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-        <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">Concluído</p>
-        <p class="text-2xl font-black text-emerald-400">{{ doneCount }}</p>
+      <div class="p-4 bg-gradient-to-br from-emerald-500/10 to-emerald-500/0 border border-emerald-500/20 rounded-lg hover:border-emerald-500/40 transition-all">
+        <p class="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-2">✅ Concluído</p>
+        <p class="text-3xl font-black text-emerald-300">{{ doneCount }}</p>
       </div>
     </div>
 
     <!-- Filtros -->
-    <div class="flex items-end gap-3 flex-wrap">
+    <div class="flex items-end gap-3 flex-wrap p-4 bg-gradient-to-br from-white/5 to-white/0 border border-white/15 rounded-lg">
       <!-- Busca -->
-      <div class="flex-1 min-w-[200px]">
-        <label class="block text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1.5">Buscar</label>
+      <div class="flex-1 min-w-[250px]">
+        <label class="block text-[10px] font-bold text-white/60 uppercase tracking-widest mb-2">🔍 Buscar Tarefa</label>
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Buscar tarefa..."
-          class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/20 text-[10px]"
+          placeholder="Digite o título ou descrição..."
+          class="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm"
         />
       </div>
 
       <!-- Prioridade -->
       <div>
-        <label class="block text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1.5">Prioridade</label>
+        <label class="block text-[10px] font-bold text-white/60 uppercase tracking-widest mb-2">⭐ Prioridade</label>
         <select
           v-model="priorityFilter"
-          class="px-4 py-2.5 bg-[#1a1a1b] border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
+          class="px-4 py-2.5 bg-white/5 border border-white/15 rounded-lg text-white focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm font-semibold"
         >
           <option value="">Todas</option>
-          <option value="alta">Alta</option>
-          <option value="media">Média</option>
-          <option value="baixa">Baixa</option>
+          <option value="alta">🔴 Alta</option>
+          <option value="media">🟡 Média</option>
+          <option value="baixa">🟢 Baixa</option>
         </select>
       </div>
 
       <!-- Status -->
       <div>
-        <label class="block text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1.5">Status</label>
+        <label class="block text-[10px] font-bold text-white/60 uppercase tracking-widest mb-2">📌 Status</label>
         <select
           v-model="statusFilter"
-          class="px-4 py-2.5 bg-[#1a1a1b] border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 text-[10px] font-bold uppercase tracking-widest"
+          class="px-4 py-2.5 bg-white/5 border border-white/15 rounded-lg text-white focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm font-semibold"
         >
           <option value="">Todos</option>
-          <option value="todo">A Fazer</option>
-          <option value="in_progress">Em Andamento</option>
-          <option value="done">Concluído</option>
+          <option value="todo">📋 A Fazer</option>
+          <option value="in_progress">⚙️ Em Andamento</option>
+          <option value="done">✅ Concluído</option>
         </select>
       </div>
 
       <!-- Limpar -->
       <button
         @click="clearFilters"
-        class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/70 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest"
+        class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/15 hover:border-white/30 rounded-lg text-white/70 hover:text-white transition-all text-sm font-semibold uppercase tracking-wider"
       >
-        Limpar
+        🔄 Limpar
       </button>
     </div>
   </div>

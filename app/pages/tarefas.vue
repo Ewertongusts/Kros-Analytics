@@ -38,16 +38,26 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- A Fazer -->
         <div 
-          class="space-y-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 transition-all"
-          :class="dragSource === 'todo' ? 'ring-2 ring-blue-500/50 bg-blue-500/10' : ''"
+          class="flex flex-col rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-500/0 border border-blue-500/15 transition-all duration-200"
+          :class="dragSource === 'todo' ? 'ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20' : ''"
           @dragover="handleDragOver"
           @drop="handleTaskDrop($event, 'todo')"
         >
-          <div class="flex items-center justify-between px-2">
-            <h3 class="font-bold text-white uppercase tracking-widest text-sm">A Fazer</h3>
-            <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold">{{ filteredTodoTasks.length }}</span>
+          <!-- Header da Coluna -->
+          <div class="p-4 border-b border-blue-500/10">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                <h3 class="font-bold text-white uppercase tracking-widest text-sm">A Fazer</h3>
+              </div>
+              <span class="px-2.5 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-bold border border-blue-500/30">
+                {{ filteredTodoTasks.length }}
+              </span>
+            </div>
           </div>
-          <div class="space-y-3 min-h-[500px]">
+
+          <!-- Cards Container -->
+          <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[600px]">
             <TasksKTaskCard
               v-for="task in filteredTodoTasks"
               :key="task.id"
@@ -57,24 +67,39 @@
               @dragstart="handleTaskDragStart(task, 'todo')"
               @dragend="handleDragEnd"
             />
-            <div v-if="filteredTodoTasks.length === 0" class="text-center py-8 text-white/30 text-sm">
-              Nenhuma tarefa
+            <div v-if="filteredTodoTasks.length === 0" class="flex items-center justify-center py-12 text-white/30">
+              <div class="text-center">
+                <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-sm">Nenhuma tarefa</p>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Em Andamento -->
         <div 
-          class="space-y-3 p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/10 transition-all"
-          :class="dragSource === 'in_progress' ? 'ring-2 ring-yellow-500/50 bg-yellow-500/10' : ''"
+          class="flex flex-col rounded-xl bg-gradient-to-br from-yellow-500/5 to-yellow-500/0 border border-yellow-500/15 transition-all duration-200"
+          :class="dragSource === 'in_progress' ? 'ring-2 ring-yellow-500/50 shadow-lg shadow-yellow-500/20' : ''"
           @dragover="handleDragOver"
           @drop="handleTaskDrop($event, 'in_progress')"
         >
-          <div class="flex items-center justify-between px-2">
-            <h3 class="font-bold text-white uppercase tracking-widest text-sm">Em Andamento</h3>
-            <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-[10px] font-bold">{{ filteredInProgressTasks.length }}</span>
+          <!-- Header da Coluna -->
+          <div class="p-4 border-b border-yellow-500/10">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                <h3 class="font-bold text-white uppercase tracking-widest text-sm">Em Andamento</h3>
+              </div>
+              <span class="px-2.5 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-bold border border-yellow-500/30">
+                {{ filteredInProgressTasks.length }}
+              </span>
+            </div>
           </div>
-          <div class="space-y-3 min-h-[500px]">
+
+          <!-- Cards Container -->
+          <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[600px]">
             <TasksKTaskCard
               v-for="task in filteredInProgressTasks"
               :key="task.id"
@@ -84,24 +109,39 @@
               @dragstart="handleTaskDragStart(task, 'in_progress')"
               @dragend="handleDragEnd"
             />
-            <div v-if="filteredInProgressTasks.length === 0" class="text-center py-8 text-white/30 text-sm">
-              Nenhuma tarefa
+            <div v-if="filteredInProgressTasks.length === 0" class="flex items-center justify-center py-12 text-white/30">
+              <div class="text-center">
+                <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <p class="text-sm">Nenhuma tarefa</p>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Concluído -->
         <div 
-          class="space-y-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 transition-all"
-          :class="dragSource === 'done' ? 'ring-2 ring-emerald-500/50 bg-emerald-500/10' : ''"
+          class="flex flex-col rounded-xl bg-gradient-to-br from-emerald-500/5 to-emerald-500/0 border border-emerald-500/15 transition-all duration-200"
+          :class="dragSource === 'done' ? 'ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-500/20' : ''"
           @dragover="handleDragOver"
           @drop="handleTaskDrop($event, 'done')"
         >
-          <div class="flex items-center justify-between px-2">
-            <h3 class="font-bold text-white uppercase tracking-widest text-sm">Concluído</h3>
-            <span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-bold">{{ filteredDoneTasks.length }}</span>
+          <!-- Header da Coluna -->
+          <div class="p-4 border-b border-emerald-500/10">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <h3 class="font-bold text-white uppercase tracking-widest text-sm">Concluído</h3>
+              </div>
+              <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-bold border border-emerald-500/30">
+                {{ filteredDoneTasks.length }}
+              </span>
+            </div>
           </div>
-          <div class="space-y-3 min-h-[500px] max-h-[700px] overflow-y-auto custom-scrollbar">
+
+          <!-- Cards Container -->
+          <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[600px]">
             <TasksKTaskCard
               v-for="task in filteredDoneTasks"
               :key="task.id"
@@ -111,8 +151,13 @@
               @dragstart="handleTaskDragStart(task, 'done')"
               @dragend="handleDragEnd"
             />
-            <div v-if="filteredDoneTasks.length === 0" class="text-center py-8 text-white/30 text-sm">
-              Nenhuma tarefa
+            <div v-if="filteredDoneTasks.length === 0" class="flex items-center justify-center py-12 text-white/30">
+              <div class="text-center">
+                <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-sm">Nenhuma tarefa</p>
+              </div>
             </div>
           </div>
         </div>
@@ -132,6 +177,9 @@
         @close="closeTaskModal"
         @save="handleSaveTask"
       />
+
+      <!-- Preview de Drag e Drop -->
+      <!-- Removido temporariamente -->
   </LayoutsKPageLayout>
 </template>
 
@@ -190,7 +238,11 @@ const filteredTasks = computed(() => {
 })
 
 const filteredTodoTasks = computed(() => filteredTasks.value.filter(t => t.status === 'todo'))
-const filteredInProgressTasks = computed(() => filteredTasks.value.filter(t => t.status === 'in_progress'))
+const filteredInProgressTasks = computed(() => {
+  const result = filteredTasks.value.filter(t => t.status === 'in_progress')
+  console.log('📊 [filteredInProgressTasks] resultado:', result)
+  return result
+})
 const filteredDoneTasks = computed(() => filteredTasks.value.filter(t => t.status === 'done'))
 
 const syncData = async () => {
@@ -243,29 +295,33 @@ const handleKeyDown = (e: KeyboardEvent) => {
 let unsubscribe: (() => void) | null = null
 
 onMounted(async () => {
-  await fetchCompanies()
-  await fetchTags()
-  await handlerFetchTasks()
+  try {
+    await fetchCompanies()
+    await fetchTags()
+    await handlerFetchTasks()
 
-  // Real-time subscription
-  const supabase = useSupabaseClient()
-  const channel = supabase
-    .channel('tasks-changes')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'tasks' },
-      () => {
-        handlerFetchTasks()
-      }
-    )
-    .subscribe()
+    // Real-time subscription
+    const supabase = useSupabaseClient()
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          handlerFetchTasks()
+        }
+      )
+      .subscribe()
 
-  unsubscribe = () => {
-    supabase.removeChannel(channel)
+    unsubscribe = () => {
+      supabase.removeChannel(channel)
+    }
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', handleKeyDown)
+  } catch (error) {
+    console.error('Erro ao montar página de tarefas:', error)
   }
-
-  // Keyboard shortcuts
-  window.addEventListener('keydown', handleKeyDown)
 })
 
 onUnmounted(() => {
@@ -277,20 +333,39 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
+/* Scrollbar customizado */
+div::-webkit-scrollbar {
   width: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+div::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+div::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 10px;
+  transition: background 0.2s;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+div::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Animações de entrada */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Aplicar animação aos cards */
+:deep(.space-y-3 > div) {
+  animation: slideInUp 0.3s ease-out;
 }
 </style>

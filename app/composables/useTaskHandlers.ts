@@ -1,9 +1,12 @@
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import type { Task } from './useTasks'
 import { useTasks } from './useTasks'
 
 export const useTaskHandlers = () => {
   const { tasks, loading, createTask, updateTask, deleteTask: deleteTaskApi, fetchTasks } = useTasks()
+  
+  // ✅ Use toRef to maintain reactivity
+  const tasksRef = toRef(tasks)
   
   const isTaskModalOpen = ref(false)
   const selectedTask = ref<Task | null>(null)
@@ -49,7 +52,7 @@ export const useTaskHandlers = () => {
   }
 
   const moveTask = async (taskId: string, newStatus: 'todo' | 'in_progress' | 'done') => {
-    const task = tasks.value.find(t => t.id === taskId)
+    const task = tasksRef.value.find(t => t.id === taskId)
     if (task) {
       await updateTask(taskId, { status: newStatus })
       await fetchTasks()
@@ -57,7 +60,7 @@ export const useTaskHandlers = () => {
   }
 
   return {
-    tasks,
+    tasks: tasksRef,
     loading,
     fetchTasks,
     isTaskModalOpen,
