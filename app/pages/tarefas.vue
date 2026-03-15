@@ -460,8 +460,17 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
         // 2. Usar nextTick para garantir que Vue re-renderize ANTES de atualizar dados
         await nextTick()
         
-        // 3. AGORA fazer o drop (atualizar dados) - DEPOIS de Vue re-renderizar
-        handleDrop(e, targetColumnId, moveTask)
+        // 3. Aguardar mais tempo para garantir que o DOM foi completamente atualizado
+        await new Promise(resolve => setTimeout(resolve, 150))
+        
+        // 4. AGORA fazer o drop (atualizar dados) - DEPOIS de Vue re-renderizar
+        // Chamar moveTask diretamente em vez de handleDrop para ter controle total
+        moveTask(
+          task.id!,
+          targetColumnId,
+          dragOverTaskId.value || undefined,
+          dragOverPosition.value || undefined
+        )
       } catch (stateError) {
         console.error('❌ [DROP] Erro ao iniciar exit:', stateError)
       }
@@ -491,9 +500,18 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
       } catch (stateError) {
         console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
       }
+      
+      // Limpar estado de drag
+      handleDragEnd()
     } else {
       // Mesma coluna, apenas fazer o drop
-      handleDrop(e, targetColumnId, moveTask)
+      moveTask(
+        task.id!,
+        targetColumnId,
+        dragOverTaskId.value || undefined,
+        dragOverPosition.value || undefined
+      )
+      handleDragEnd()
     }
   } catch (error) {
     console.error('❌ [DROP] Erro geral:', error)
