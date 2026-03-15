@@ -338,7 +338,10 @@ const handleDragEnd = () => {
   console.log('🛑 DRAG END - Resetting state')
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
   
-  // Adicionar ripple effect ao soltar
+  // Reset IMEDIATAMENTE para evitar que o card fique invisível
+  resetDragState()
+  
+  // Adicionar ripple effect ao soltar (após reset)
   if (cardElement.value) {
     cardElement.value.classList.add('ripple-effect')
     setTimeout(() => {
@@ -346,7 +349,6 @@ const handleDragEnd = () => {
     }, 600)
   }
   
-  resetDragState()
   emit('dragend')
 }
 

@@ -454,7 +454,24 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
     // Se está mudando de coluna, iniciar transição completa
     if (fromColumnId !== targetColumnId) {
       try {
-        // Executar transição completa com todas as animações avançadas
+        // 1. Iniciar estado de saída IMEDIATAMENTE
+        startExiting(task.id, fromColumnId)
+      } catch (stateError) {
+        console.error('❌ [DROP] Erro ao iniciar exit:', stateError)
+      }
+      
+      try {
+        // 2. Fazer o drop (atualizar dados) - ANTES das animações
+        handleDrop(e, targetColumnId, moveTask)
+      } catch (dropError) {
+        console.error('❌ [DROP] Erro ao fazer drop:', dropError)
+      }
+      
+      try {
+        // 3. Aguardar um pouco para o DOM atualizar
+        await new Promise(resolve => setTimeout(resolve, 50))
+        
+        // 4. Executar transição completa com todas as animações avançadas
         await executeFullTransition(
           task.id,
           fromColumnId,
@@ -466,23 +483,12 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
       }
       
       try {
-        // Fazer o drop
-        handleDrop(e, targetColumnId, moveTask)
-      } catch (dropError) {
-        console.error('❌ [DROP] Erro ao fazer drop:', dropError)
-      }
-      
-      try {
-        // Iniciar transições de entrada/saída
-        startExiting(task.id, fromColumnId)
+        // 5. Iniciar transições de entrada/acomodação
+        startEntering(task.id, targetColumnId)
         
         setTimeout(() => {
-          startEntering(task.id, targetColumnId)
-          
-          setTimeout(() => {
-            startSettling(task.id, targetColumnId)
-          }, 400)
-        }, 300)
+          startSettling(task.id, targetColumnId)
+        }, 400)
       } catch (stateError) {
         console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
       }
