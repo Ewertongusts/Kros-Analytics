@@ -373,7 +373,7 @@ const displayColumns = computed(() => {
 // Função para obter tasks de uma coluna específica
 const getTasksInColumn = (columnId: string) => {
   return handlerTasks.value
-    .filter(t => t.column_id === columnId)
+    .filter(t => t.column_id === columnId && !isExiting(t.id!))
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
 }
 
@@ -454,24 +454,27 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
     // Se está mudando de coluna, iniciar transição completa
     if (fromColumnId !== targetColumnId) {
       try {
-        // 1. Iniciar estado de saída IMEDIATAMENTE
+        // 1. Iniciar estado de saída IMEDIATAMENTE (oculta o card)
         startExiting(task.id, fromColumnId)
+        
+        // 2. Aguardar para Vue re-renderizar e remover o card da coluna original
+        await new Promise(resolve => setTimeout(resolve, 50))
       } catch (stateError) {
         console.error('❌ [DROP] Erro ao iniciar exit:', stateError)
       }
       
       try {
-        // 2. Fazer o drop (atualizar dados) - ANTES das animações
+        // 3. Fazer o drop (atualizar dados) - DEPOIS de marcar como exiting
         handleDrop(e, targetColumnId, moveTask)
       } catch (dropError) {
         console.error('❌ [DROP] Erro ao fazer drop:', dropError)
       }
       
       try {
-        // 3. Aguardar um pouco para o DOM atualizar
-        await new Promise(resolve => setTimeout(resolve, 50))
+        // 4. Aguardar um pouco para o DOM atualizar
+        await new Promise(resolve => setTimeout(resolve, 100))
         
-        // 4. Executar transição completa com todas as animações avançadas
+        // 5. Executar transição completa com todas as animações avançadas
         await executeFullTransition(
           task.id,
           fromColumnId,
@@ -483,7 +486,7 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
       }
       
       try {
-        // 5. Iniciar transições de entrada/acomodação
+        // 6. Iniciar transições de entrada/acomodação
         startEntering(task.id, targetColumnId)
         
         setTimeout(() => {

@@ -12,6 +12,7 @@ export const useRealtimeCardTransitions = () => {
   const transitionMap = ref<Map<string, CardTransitionState>>(new Map())
   const MAX_TRANSITIONS = 500
   const TRANSITION_TIMEOUT = 5000 // 5 segundos
+  let cleanupInterval: ReturnType<typeof setInterval> | null = null
 
   // Cleanup periódico de transições antigas
   const cleanupOldTransitions = () => {
@@ -36,17 +37,25 @@ export const useRealtimeCardTransitions = () => {
       
       const excess = entries.length - MAX_TRANSITIONS
       for (let i = 0; i < excess; i++) {
-        transitionMap.value.delete(entries[i][0])
+        const entry = entries[i]
+        if (entry) {
+          transitionMap.value.delete(entry[0])
+        }
       }
     }
   }
 
-  // Executar cleanup a cada 2 segundos
-  const cleanupInterval = setInterval(cleanupOldTransitions, 2000)
+  // Executar cleanup a cada 2 segundos (apenas no browser)
+  if (typeof window !== 'undefined') {
+    cleanupInterval = setInterval(cleanupOldTransitions, 2000)
+  }
 
   // Função para parar o cleanup
   const stopCleanup = () => {
-    clearInterval(cleanupInterval)
+    if (cleanupInterval) {
+      clearInterval(cleanupInterval)
+      cleanupInterval = null
+    }
   }
 
   // Iniciar transição de entrada
