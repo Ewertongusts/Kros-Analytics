@@ -1,53 +1,40 @@
 import { ref } from 'vue'
-import type { Task } from './useTasks'
 
 export const useAdvancedTransitions = () => {
   const syncingTasks = ref<Set<string>>(new Set())
 
-  // 1. Animar coluna receptora
-  const animateColumnReceiving = (columnId: string) => {
-    console.log(`🎬 [COLUMN_RECEIVING] Iniciando para coluna: ${columnId}`)
-    
+  // Helper para adicionar classe com timeout automático
+  const addClassWithTimeout = (selector: string, className: string, duration: number = 600) => {
     try {
-      const column = document.querySelector(`[data-column="${columnId}"]`)
-      if (!column) {
-        console.warn(`⚠️ [COLUMN_RECEIVING] Coluna não encontrada: ${columnId}`)
-        return
-      }
+      const element = document.querySelector(selector)
+      if (!element) return
       
-      column.classList.add('column-receiving')
-      console.log(`✅ [COLUMN_RECEIVING] Classe adicionada`)
+      element.classList.add(className)
       
-      const timeoutId = setTimeout(() => {
+      setTimeout(() => {
         try {
-          if (column && column.parentElement) {
-            column.classList.remove('column-receiving')
-            console.log(`✅ [COLUMN_RECEIVING] Classe removida`)
+          if (element && element.parentElement) {
+            element.classList.remove(className)
           }
         } catch (e) {
-          console.error('❌ [COLUMN_RECEIVING] Erro ao remover:', e)
+          console.error(`Erro ao remover classe ${className}:`, e)
         }
-      }, 600)
-      
-      column.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        column.classList.remove('column-receiving')
-      }, { once: true })
+      }, duration)
     } catch (error) {
-      console.error(`❌ [COLUMN_RECEIVING] Erro:`, error)
+      console.error(`Erro ao adicionar classe ${className}:`, error)
     }
+  }
+
+  // 1. Animar coluna receptora
+  const animateColumnReceiving = (columnId: string) => {
+    addClassWithTimeout(`[data-column="${columnId}"]`, 'column-receiving', 600)
   }
 
   // 2. Animar cards vizinhos
   const animateNearbyCards = (columnId: string, excludeTaskId: string) => {
-    console.log(`🎬 [NEARBY_CARDS] Animando cards próximos na coluna: ${columnId}`)
-    
     try {
       const cards = document.querySelectorAll(`[data-column="${columnId}"] [data-task]`)
-      if (cards.length === 0) {
-        console.warn(`⚠️ [NEARBY_CARDS] Nenhum card encontrado na coluna: ${columnId}`)
-        return
-      }
+      if (cards.length === 0) return
       
       cards.forEach((card, index) => {
         try {
@@ -56,219 +43,73 @@ export const useAdvancedTransitions = () => {
             const element = card as HTMLElement
             element.style.animationDelay = `${index * 50}ms`
             
-            const timeoutId = setTimeout(() => {
+            setTimeout(() => {
               try {
                 if (card && card.parentElement) {
                   card.classList.remove('card-reordering')
                 }
               } catch (e) {
-                console.error('❌ [NEARBY_CARDS] Erro ao remover:', e)
+                console.error('Erro ao remover card-reordering:', e)
               }
             }, 250)
-            
-            card.addEventListener('error', () => {
-              clearTimeout(timeoutId)
-              card.classList.remove('card-reordering')
-            }, { once: true })
           }
         } catch (error) {
-          console.error('❌ [NEARBY_CARDS] Erro ao processar card:', error)
+          console.error('Erro ao processar card:', error)
         }
       })
-      
-      console.log(`✅ [NEARBY_CARDS] Concluído`)
     } catch (error) {
-      console.error(`❌ [NEARBY_CARDS] Erro:`, error)
+      console.error('Erro em animateNearbyCards:', error)
     }
   }
 
   // 3. Adicionar ripple effect ao soltar
   const addRippleEffect = (taskId: string) => {
-    console.log(`🌊 [RIPPLE] Iniciando para task: ${taskId}`)
-    
-    try {
-      const card = document.querySelector(`[data-task="${taskId}"]`)
-      if (!card) {
-        console.warn(`⚠️ [RIPPLE] Card não encontrado: ${taskId}`)
-        return
-      }
-      
-      card.classList.add('card-ripple')
-      console.log(`✅ [RIPPLE] Classe adicionada`)
-      
-      const timeoutId = setTimeout(() => {
-        try {
-          if (card && card.parentElement) {
-            card.classList.remove('card-ripple')
-            console.log(`✅ [RIPPLE] Classe removida`)
-          }
-        } catch (e) {
-          console.error('❌ [RIPPLE] Erro ao remover:', e)
-        }
-      }, 600)
-      
-      card.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        card.classList.remove('card-ripple')
-      }, { once: true })
-    } catch (error) {
-      console.error(`❌ [RIPPLE] Erro:`, error)
-    }
+    addClassWithTimeout(`[data-task="${taskId}"]`, 'card-ripple', 600)
   }
 
   // 4. Adicionar glow ao soltar
   const addDropGlow = (taskId: string) => {
-    console.log(`✨ [DROP_GLOW] Iniciando para task: ${taskId}`)
-    
-    try {
-      const card = document.querySelector(`[data-task="${taskId}"]`)
-      if (!card) {
-        console.warn(`⚠️ [DROP_GLOW] Card não encontrado: ${taskId}`)
-        return
-      }
-      
-      card.classList.add('card-dropped-glow')
-      console.log(`✅ [DROP_GLOW] Classe adicionada`)
-      
-      const timeoutId = setTimeout(() => {
-        try {
-          if (card && card.parentElement) {
-            card.classList.remove('card-dropped-glow')
-            console.log(`✅ [DROP_GLOW] Classe removida`)
-          }
-        } catch (e) {
-          console.error('❌ [DROP_GLOW] Erro ao remover:', e)
-        }
-      }, 600)
-      
-      card.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        card.classList.remove('card-dropped-glow')
-      }, { once: true })
-    } catch (error) {
-      console.error(`❌ [DROP_GLOW] Erro:`, error)
-    }
+    addClassWithTimeout(`[data-task="${taskId}"]`, 'card-dropped-glow', 600)
   }
 
   // 5. Animar coluna se expandindo
   const animateColumnExpand = (columnId: string) => {
-    console.log(`📏 [COLUMN_EXPAND] Iniciando para coluna: ${columnId}`)
-    
-    try {
-      const column = document.querySelector(`[data-column="${columnId}"]`)
-      if (!column) {
-        console.warn(`⚠️ [COLUMN_EXPAND] Coluna não encontrada: ${columnId}`)
-        return
-      }
-      
-      column.classList.add('column-expanding')
-      console.log(`✅ [COLUMN_EXPAND] Classe adicionada`)
-      
-      const timeoutId = setTimeout(() => {
-        try {
-          if (column && column.parentElement) {
-            column.classList.remove('column-expanding')
-            console.log(`✅ [COLUMN_EXPAND] Classe removida`)
-          }
-        } catch (e) {
-          console.error('❌ [COLUMN_EXPAND] Erro ao remover:', e)
-        }
-      }, 300)
-      
-      column.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        column.classList.remove('column-expanding')
-      }, { once: true })
-    } catch (error) {
-      console.error(`❌ [COLUMN_EXPAND] Erro:`, error)
-    }
+    addClassWithTimeout(`[data-column="${columnId}"]`, 'column-expanding', 300)
   }
 
   // 6. Adicionar morphing animation
   const addMorphingAnimation = (taskId: string) => {
-    console.log(`🔄 [MORPHING] Iniciando para task: ${taskId}`)
-    
-    try {
-      const card = document.querySelector(`[data-task="${taskId}"]`)
-      if (!card) {
-        console.warn(`⚠️ [MORPHING] Card não encontrado: ${taskId}`)
-        return
-      }
-      
-      card.classList.add('card-morphing')
-      console.log(`✅ [MORPHING] Classe adicionada`)
-      
-      const timeoutId = setTimeout(() => {
-        try {
-          if (card && card.parentElement) {
-            card.classList.remove('card-morphing')
-            console.log(`✅ [MORPHING] Classe removida`)
-          }
-        } catch (e) {
-          console.error('❌ [MORPHING] Erro ao remover:', e)
-        }
-      }, 400)
-      
-      card.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        card.classList.remove('card-morphing')
-      }, { once: true })
-    } catch (error) {
-      console.error(`❌ [MORPHING] Erro:`, error)
-    }
+    addClassWithTimeout(`[data-task="${taskId}"]`, 'card-morphing', 400)
   }
 
   // 7. Bounce customizado por prioridade
   const addCustomBounce = (taskId: string, priority: string) => {
-    console.log(`🎾 [BOUNCE] Iniciando para task: ${taskId}, prioridade: ${priority}`)
-    
     try {
       const card = document.querySelector(`[data-task="${taskId}"]`)
-      if (!card) {
-        console.warn(`⚠️ [BOUNCE] Card não encontrado: ${taskId}`)
-        return
-      }
+      if (!card) return
       
-      if (priority === 'alta') {
-        card.classList.add('bounce-high')
-      } else if (priority === 'media') {
-        card.classList.add('bounce-medium')
-      } else {
-        card.classList.add('bounce-low')
-      }
-
-      console.log(`✅ [BOUNCE] Classe adicionada`)
+      const bounceClass = priority === 'alta' ? 'bounce-high' : priority === 'media' ? 'bounce-medium' : 'bounce-low'
+      card.classList.add(bounceClass)
       
-      const timeoutId = setTimeout(() => {
+      setTimeout(() => {
         try {
           if (card && card.parentElement) {
             card.classList.remove('bounce-high', 'bounce-medium', 'bounce-low')
-            console.log(`✅ [BOUNCE] Classe removida`)
           }
         } catch (e) {
-          console.error('❌ [BOUNCE] Erro ao remover:', e)
+          console.error('Erro ao remover bounce:', e)
         }
       }, 600)
-      
-      card.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        card.classList.remove('bounce-high', 'bounce-medium', 'bounce-low')
-      }, { once: true })
     } catch (error) {
-      console.error(`❌ [BOUNCE] Erro:`, error)
+      console.error('Erro em addCustomBounce:', error)
     }
   }
 
   // 8. Mostrar indicador de posição
   const showPositionIndicator = (position: 'above' | 'below', taskId: string) => {
-    console.log(`📍 [POSITION] Mostrando indicador ${position} para task: ${taskId}`)
-    
     try {
       const card = document.querySelector(`[data-task="${taskId}"]`)
-      if (!card) {
-        console.warn(`⚠️ [POSITION] Card não encontrado: ${taskId}`)
-        return
-      }
+      if (!card) return
 
       const indicator = document.createElement('div')
       indicator.className = 'position-indicator'
@@ -279,77 +120,49 @@ export const useAdvancedTransitions = () => {
       } else {
         card.parentElement?.insertBefore(indicator, card.nextSibling)
       }
-
-      console.log(`✅ [POSITION] Indicador criado`)
       
-      const timeoutId = setTimeout(() => {
+      setTimeout(() => {
         try {
           if (indicator && indicator.parentElement) {
             indicator.remove()
-            console.log(`✅ [POSITION] Indicador removido`)
           }
         } catch (e) {
-          console.error('❌ [POSITION] Erro ao remover:', e)
+          console.error('Erro ao remover indicador:', e)
         }
       }, 200)
-      
-      indicator.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        if (indicator.parentElement) {
-          indicator.remove()
-        }
-      }, { once: true })
     } catch (error) {
-      console.error(`❌ [POSITION] Erro:`, error)
+      console.error('Erro em showPositionIndicator:', error)
     }
   }
 
   // 9. Animar parallax effect
   const addParallaxEffect = (taskId: string, offsetX: number, offsetY: number) => {
-    console.log(`🎨 [PARALLAX] Iniciando para task: ${taskId}, offset: (${offsetX}, ${offsetY})`)
-    
     try {
-      const card = document.querySelector(`[data-task="${taskId}"]`)
-      if (!card) {
-        console.warn(`⚠️ [PARALLAX] Card não encontrado: ${taskId}`)
-        return
-      }
+      const card = document.querySelector(`[data-task="${taskId}"]`) as HTMLElement
+      if (!card) return
       
-      const element = card as HTMLElement
-      element.style.setProperty('--parallax-x', `${offsetX}px`)
-      element.style.setProperty('--parallax-y', `${offsetY}px`)
-      element.classList.add('card-parallax')
+      card.style.setProperty('--parallax-x', `${offsetX}px`)
+      card.style.setProperty('--parallax-y', `${offsetY}px`)
+      card.classList.add('card-parallax')
 
-      console.log(`✅ [PARALLAX] Classe adicionada`)
-      
-      const timeoutId = setTimeout(() => {
+      setTimeout(() => {
         try {
-          if (element && element.parentElement) {
-            element.classList.remove('card-parallax')
-            element.style.removeProperty('--parallax-x')
-            element.style.removeProperty('--parallax-y')
-            console.log(`✅ [PARALLAX] Classe removida`)
+          if (card && card.parentElement) {
+            card.classList.remove('card-parallax')
+            card.style.removeProperty('--parallax-x')
+            card.style.removeProperty('--parallax-y')
           }
         } catch (e) {
-          console.error('❌ [PARALLAX] Erro ao remover:', e)
+          console.error('Erro ao remover parallax:', e)
         }
       }, 300)
-      
-      element.addEventListener('error', () => {
-        clearTimeout(timeoutId)
-        element.classList.remove('card-parallax')
-        element.style.removeProperty('--parallax-x')
-        element.style.removeProperty('--parallax-y')
-      }, { once: true })
     } catch (error) {
-      console.error(`❌ [PARALLAX] Erro:`, error)
+      console.error('Erro em addParallaxEffect:', error)
     }
   }
 
   // 10. Stagger animation para múltiplos cards
   const addStaggerAnimation = (taskIds: string[], animationClass: string) => {
-    console.log(`⏱️ [STAGGER] Iniciando para ${taskIds.length} tasks`)
-    
     try {
       taskIds.forEach((id, index) => {
         try {
@@ -357,29 +170,22 @@ export const useAdvancedTransitions = () => {
           if (card) {
             card.classList.add(animationClass, `stagger-${Math.min(index + 1, 5)}`)
             
-            const timeoutId = setTimeout(() => {
+            setTimeout(() => {
               try {
                 if (card && card.parentElement) {
                   card.classList.remove(animationClass, `stagger-${Math.min(index + 1, 5)}`)
                 }
               } catch (e) {
-                console.error('❌ [STAGGER] Erro ao remover:', e)
+                console.error('Erro ao remover stagger:', e)
               }
             }, 400 + (index * 100))
-            
-            card.addEventListener('error', () => {
-              clearTimeout(timeoutId)
-              card.classList.remove(animationClass, `stagger-${Math.min(index + 1, 5)}`)
-            }, { once: true })
           }
         } catch (error) {
-          console.error(`❌ [STAGGER] Erro ao processar task ${id}:`, error)
+          console.error(`Erro ao processar task ${id}:`, error)
         }
       })
-      
-      console.log(`✅ [STAGGER] Concluído`)
     } catch (error) {
-      console.error(`❌ [STAGGER] Erro:`, error)
+      console.error('Erro em addStaggerAnimation:', error)
     }
   }
 
@@ -402,9 +208,7 @@ export const useAdvancedTransitions = () => {
   const transitionToState = (taskId: string, state: 'idle' | 'dragging' | 'entering' | 'settling') => {
     const card = document.querySelector(`[data-task="${taskId}"]`)
     if (card) {
-      // Remover estados anteriores
       card.classList.remove('state-idle', 'state-dragging', 'state-entering', 'state-settling')
-      // Adicionar novo estado
       card.classList.add(`state-${state}`)
     }
   }
@@ -417,38 +221,23 @@ export const useAdvancedTransitions = () => {
     priority: string
   ) => {
     try {
-      // 1. Mostrar sync
       showSyncIndicator(taskId)
-
-      // 2. Animar coluna de origem
       animateNearbyCards(fromColumnId, taskId)
-
-      // 3. Animar coluna de destino
       animateColumnReceiving(toColumnId)
       animateColumnExpand(toColumnId)
 
-      // 4. Aguardar um pouco
       await new Promise(resolve => setTimeout(resolve, 300))
 
-      // 5. Adicionar morphing
       addMorphingAnimation(taskId)
 
-      // 6. Aguardar entrada
       await new Promise(resolve => setTimeout(resolve, 400))
 
-      // 7. Adicionar bounce customizado
       addCustomBounce(taskId, priority)
-
-      // 8. Adicionar ripple
       addRippleEffect(taskId)
-
-      // 9. Adicionar glow
       addDropGlow(taskId)
 
-      // 10. Aguardar conclusão
       await new Promise(resolve => setTimeout(resolve, 600))
 
-      // 11. Esconder sync
       hideSyncIndicator(taskId)
     } catch (error) {
       console.error('Erro na transição:', error)

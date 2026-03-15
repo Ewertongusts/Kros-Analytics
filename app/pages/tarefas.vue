@@ -297,7 +297,6 @@ const { tags: tagDefinitions, fetchTags } = useTags()
 
 const {
   tasks: handlerTasks,
-  loading,
   fetchTasks: handlerFetchTasks,
   isTaskModalOpen,
   selectedTask,
@@ -311,11 +310,11 @@ const {
   duplicateTask
 } = useTaskHandlers()
 
-const { draggedTask, dragSource, dragOverTaskId, dragOverPosition, handleDragStart, handleDragEnd, handleDragOver, handleDragLeave, handleDrop } = useTaskDragDrop()
-const { canUndo, canRedo, addToHistory, undo: undoHistory, redo: redoHistory } = useTaskHistory()
-const { columns: customColumns, fetchColumns, addColumn, updateColumn, deleteColumn, moveColumn, clearLocalStorage } = useKanbanColumns()
-const { draggedColumnId, dragOverColumnId, dragOverSide, isDraggingColumn, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
-const { selectedTaskIds, toggleTaskSelection, isTaskSelected, selectAll, deselectAll, selectedCount, getSelectedTaskIds } = useTaskSelection()
+const { dragOverTaskId, dragOverPosition, handleDragStart, handleDragEnd, handleDragOver, handleDragLeave, handleDrop } = useTaskDragDrop()
+const { addToHistory, undo: undoHistory, redo: redoHistory } = useTaskHistory()
+const { columns: customColumns, fetchColumns, addColumn, updateColumn, deleteColumn, moveColumn } = useKanbanColumns()
+const { draggedColumnId, dragOverColumnId, dragOverSide, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
+const { toggleTaskSelection, isTaskSelected, deselectAll, selectedCount, getSelectedTaskIds } = useTaskSelection()
 const { 
   startEntering, 
   startExiting, 
@@ -326,28 +325,11 @@ const {
   isSettling 
 } = useRealtimeCardTransitions()
 const {
-  animateColumnReceiving,
-  animateNearbyCards,
-  addRippleEffect,
   addDropGlow,
-  animateColumnExpand,
-  addMorphingAnimation,
-  addCustomBounce,
-  showPositionIndicator,
-  addParallaxEffect,
-  addStaggerAnimation,
-  showSyncIndicator,
-  hideSyncIndicator,
   isSyncing,
-  transitionToState,
   executeFullTransition
 } = useAdvancedTransitions()
 
-const searchQuery = ref('')
-const priorityFilter = ref('')
-const statusFilter = ref('')
-const handlerLoading = ref(false)
-const showFilters = ref(false)
 const kanbanHeight = ref(50)
 const isRenameModalOpen = ref(false)
 const columnToRename = ref<any>(null)
@@ -426,35 +408,51 @@ const handleTaskDragStart = (task: Task, source: string) => {
   handleDragStart(task, source)
 }
 
+const dropTimeoutId = ref<NodeJS.Timeout | null>(null)
+
+const resetDropFlag = () => {
+  isProcessingDrop.value = false
+  if (dropTimeoutId.value) {
+    clearTimeout(dropTimeoutId.value)
+    dropTimeoutId.value = null
+  }
+}
+
 const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) => {
-  console.log(`🎯 [DROP] Iniciando drop para coluna: ${targetColumnId}`)
-  
   // Prevenir múltiplos drops simultâneos
   if (isProcessingDrop.value) {
-    console.warn('⚠️ [DROP] Drop já em processamento')
     return
   }
   
   isProcessingDrop.value = true
   
+  // Reset automático após 5 segundos (segurança contra travamento)
+  dropTimeoutId.value = setTimeout(() => {
+    console.warn('⚠️ [DROP] Timeout - resetando flag de processamento')
+    resetDropFlag()
+  }, 5000)
+  
   try {
     // Obter a tarefa sendo arrastada
     const draggedTaskData = e.dataTransfer?.getData('application/json')
     if (!draggedTaskData) {
-      console.warn(`⚠️ [DROP] Sem dados de drag`)
       handleDrop(e, targetColumnId, moveTask)
       return
     }
 
-    const task = JSON.parse(draggedTaskData)
+    let task
+    try {
+      task = JSON.parse(draggedTaskData)
+    } catch (parseError) {
+      console.error('❌ [DROP] Erro ao fazer parse dos dados:', parseError)
+      handleDrop(e, targetColumnId, moveTask)
+      return
+    }
+
     const fromColumnId = task.column_id
-    
-    console.log(`📦 [DROP] Task: ${task.id}, De: ${fromColumnId}, Para: ${targetColumnId}`)
     
     // Se está mudando de coluna, iniciar transição completa
     if (fromColumnId !== targetColumnId) {
-      console.log(`🔄 [DROP] Mudando de coluna`)
-      
       try {
         // Executar transição completa com todas as animações avançadas
         await executeFullTransition(
@@ -463,7 +461,6 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
           targetColumnId,
           task.priority || 'media'
         )
-        console.log(`✅ [DROP] Transição completa`)
       } catch (transitionError) {
         console.error('❌ [DROP] Erro na transição:', transitionError)
       }
@@ -471,7 +468,6 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
       try {
         // Fazer o drop
         handleDrop(e, targetColumnId, moveTask)
-        console.log(`✅ [DROP] Drop executado`)
       } catch (dropError) {
         console.error('❌ [DROP] Erro ao fazer drop:', dropError)
       }
@@ -487,14 +483,11 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
             startSettling(task.id, targetColumnId)
           }, 400)
         }, 300)
-        
-        console.log(`✅ [DROP] Transições de entrada/saída iniciadas`)
       } catch (stateError) {
         console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
       }
     } else {
       // Mesma coluna, apenas fazer o drop
-      console.log(`📍 [DROP] Mesma coluna`)
       handleDrop(e, targetColumnId, moveTask)
     }
   } catch (error) {
@@ -505,8 +498,7 @@ const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) 
       console.error('❌ [DROP] Erro no fallback:', fallbackError)
     }
   } finally {
-    isProcessingDrop.value = false
-    console.log(`✅ [DROP] Concluído`)
+    resetDropFlag()
   }
 }
 
@@ -607,11 +599,16 @@ const handleKeyDown = (e: KeyboardEvent) => {
 }
 
 let unsubscribe: (() => void) | null = null
+let keydownListener: ((e: KeyboardEvent) => void) | null = null
+let resizeListener: (() => void) | null = null
 
 onMounted(async () => {
   try {
     calculateKanbanHeight()
-    window.addEventListener('resize', calculateKanbanHeight)
+    
+    // Usar referência para poder remover depois
+    resizeListener = calculateKanbanHeight
+    window.addEventListener('resize', resizeListener)
 
     await fetchColumns()
     await fetchCompanies()
@@ -636,18 +633,42 @@ onMounted(async () => {
     }
 
     // Keyboard shortcuts
-    window.addEventListener('keydown', handleKeyDown)
+    keydownListener = handleKeyDown
+    window.addEventListener('keydown', keydownListener)
   } catch (error) {
     console.error('Erro ao montar página de tarefas:', error)
   }
 })
 
 onUnmounted(() => {
+  // Limpar subscription
   if (unsubscribe) {
     unsubscribe()
+    unsubscribe = null
   }
-  window.removeEventListener('keydown', handleKeyDown)
-  window.removeEventListener('resize', calculateKanbanHeight)
+  
+  // Limpar event listeners
+  if (keydownListener) {
+    window.removeEventListener('keydown', keydownListener)
+    keydownListener = null
+  }
+  
+  if (resizeListener) {
+    window.removeEventListener('resize', resizeListener)
+    resizeListener = null
+  }
+  
+  // Limpar scroll interval se estiver ativo
+  if (scrollInterval) {
+    clearInterval(scrollInterval)
+    scrollInterval = null
+  }
+  
+  // Limpar drop timeout se estiver ativo
+  if (dropTimeoutId.value) {
+    clearTimeout(dropTimeoutId.value)
+    dropTimeoutId.value = null
+  }
 })
 </script>
 

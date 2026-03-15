@@ -1,5 +1,4 @@
-import { ref, computed, watch } from 'vue'
-import type { Task } from './useTasks'
+import { ref, computed } from 'vue'
 
 export interface CardTransitionState {
   taskId: string
@@ -11,10 +10,47 @@ export interface CardTransitionState {
 
 export const useRealtimeCardTransitions = () => {
   const transitionMap = ref<Map<string, CardTransitionState>>(new Map())
+  const MAX_TRANSITIONS = 500
+  const TRANSITION_TIMEOUT = 5000 // 5 segundos
+
+  // Cleanup periódico de transições antigas
+  const cleanupOldTransitions = () => {
+    const now = Date.now()
+    const entriesToDelete: string[] = []
+
+    transitionMap.value.forEach((state, taskId) => {
+      // Se transição está há mais de 5 segundos, remover
+      if (now - state.timestamp > TRANSITION_TIMEOUT) {
+        entriesToDelete.push(taskId)
+      }
+    })
+
+    entriesToDelete.forEach(taskId => {
+      transitionMap.value.delete(taskId)
+    })
+
+    // Se exceder limite, remover as mais antigas
+    if (transitionMap.value.size > MAX_TRANSITIONS) {
+      const entries = Array.from(transitionMap.value.entries())
+        .sort((a, b) => a[1].timestamp - b[1].timestamp)
+      
+      const excess = entries.length - MAX_TRANSITIONS
+      for (let i = 0; i < excess; i++) {
+        transitionMap.value.delete(entries[i][0])
+      }
+    }
+  }
+
+  // Executar cleanup a cada 2 segundos
+  const cleanupInterval = setInterval(cleanupOldTransitions, 2000)
+
+  // Função para parar o cleanup
+  const stopCleanup = () => {
+    clearInterval(cleanupInterval)
+  }
 
   // Iniciar transição de entrada
   const startEntering = (taskId: string, toColumn: string) => {
-    console.log(`🎬 Starting ENTER transition for task ${taskId} to column ${toColumn}`)
     transitionMap.value.set(taskId, {
       taskId,
       state: 'entering',
@@ -25,7 +61,6 @@ export const useRealtimeCardTransitions = () => {
 
   // Iniciar transição de saída
   const startExiting = (taskId: string, fromColumn: string) => {
-    console.log(`🎬 Starting EXIT transition for task ${taskId} from column ${fromColumn}`)
     transitionMap.value.set(taskId, {
       taskId,
       state: 'exiting',
@@ -36,7 +71,6 @@ export const useRealtimeCardTransitions = () => {
 
   // Iniciar transição de acomodação
   const startSettling = (taskId: string, toColumn: string) => {
-    console.log(`🎬 Starting SETTLE transition for task ${taskId} in column ${toColumn}`)
     transitionMap.value.set(taskId, {
       taskId,
       state: 'settling',
@@ -47,7 +81,6 @@ export const useRealtimeCardTransitions = () => {
 
   // Completar transição
   const completeTransition = (taskId: string) => {
-    console.log(`✅ Transition complete for task ${taskId}`)
     transitionMap.value.delete(taskId)
   }
 
@@ -102,6 +135,7 @@ export const useRealtimeCardTransitions = () => {
     isExiting,
     isSettling,
     clearAll,
-    getActiveTransitions
+    getActiveTransitions,
+    stopCleanup
   }
 }

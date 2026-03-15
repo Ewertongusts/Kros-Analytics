@@ -2,14 +2,29 @@ import { ref } from 'vue'
 
 export const useNextLevelTransitions = () => {
   const particles = ref<HTMLElement[]>([])
+  const MAX_PARTICLES = 100
   
   // Cleanup periódico de partículas removidas do DOM
   const cleanupParticles = () => {
     particles.value = particles.value.filter(p => document.body.contains(p))
+    
+    // Se exceder limite, remover as mais antigas
+    if (particles.value.length > MAX_PARTICLES) {
+      const excess = particles.value.length - MAX_PARTICLES
+      particles.value.slice(0, excess).forEach(p => {
+        try { p.remove() } catch (e) {}
+      })
+      particles.value = particles.value.slice(excess)
+    }
   }
   
-  // Executar cleanup a cada 5 segundos
-  setInterval(cleanupParticles, 5000)
+  // Executar cleanup a cada 2 segundos
+  const cleanupInterval = setInterval(cleanupParticles, 2000)
+  
+  // Função para parar o cleanup (para onUnmounted)
+  const stopCleanup = () => {
+    clearInterval(cleanupInterval)
+  }
 
   // 1. Liquid Swipe Animation
   const addLiquidSwipe = (taskId: string) => {
@@ -380,6 +395,7 @@ export const useNextLevelTransitions = () => {
     addUndoAnimation,
     executeNextLevelTransition,
     particles,
-    cleanupParticles
+    cleanupParticles,
+    stopCleanup
   }
 }
