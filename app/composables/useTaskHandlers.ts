@@ -125,7 +125,9 @@ export const useTaskHandlers = () => {
         priority: task.priority,
         due_date: task.due_date,
         company_id: task.company_id,
-        assigned_to: task.assigned_to
+        assigned_to: task.assigned_to,
+        column_id: task.column_id,
+        position: task.position
       }
       
       console.log('📝 Dados da tarefa duplicada:', duplicatedTask)
