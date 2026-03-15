@@ -14,16 +14,22 @@
       @drag="handleDrag"
       @dragover="handleDragOver"
       @dragend="handleDragEnd"
+      @animationend="handleAnimationEnd"
       :style="{ 
         backgroundColor: isOrphan ? 'rgba(24, 24, 27, 0.5)' : '#1c1c1e',
         backdropFilter: isOrphan ? 'blur(8px)' : 'none'
       }"
       :class="[
-        'group relative p-3.5 rounded-lg transition-all duration-200 hover:shadow-xl hover:shadow-black/40 cursor-grab active:cursor-grabbing aspect-[4/3]',
-        isOrphan ? 'border border-orange-500/40 hover:border-orange-500/60' : 'border border-white/10 hover:border-white/20',
+        'group relative p-3.5 rounded-lg cursor-grab active:cursor-grabbing aspect-[4/3]',
+        'transition-all duration-300 ease-out',
+        'border border-white/10 hover:border-white/20',
+        isOrphan ? 'border-orange-500/40 hover:border-orange-500/60' : '',
         { 'invisible': isDragging },
-        isDragOver ? 'ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20' : '',
-        isSelected ? 'ring-2 ring-green-500/50 shadow-lg shadow-green-500/20' : ''
+        isDragOver ? 'ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/30 scale-[1.02] card-drag-over-morph' : 'hover:shadow-xl hover:shadow-black/40',
+        isSelected ? 'ring-2 ring-green-500/50 shadow-lg shadow-green-500/20 spring-scale' : '',
+        props.isEntering ? 'card-entering' : '',
+        props.isExiting ? 'card-exiting' : '',
+        props.isSettling ? 'card-settling' : ''
       ]"
     >
       <!-- Checkbox de Seleção -->
@@ -34,6 +40,13 @@
           @change="$emit('select', task.id)"
           class="w-4 h-4 rounded cursor-pointer"
         />
+      </div>
+
+      <!-- Indicador de Sincronização -->
+      <div v-if="isSyncing" class="absolute top-2 right-2 z-10">
+        <svg class="w-4 h-4 sync-spinner text-blue-400">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
       </div>
       <!-- Tags -->
       <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1.5 mb-2.5">
@@ -203,9 +216,11 @@ const props = defineProps<{
   isDragOver?: boolean
   dragOverPosition?: 'above' | 'below' | null
   isSelected?: boolean
+  isEntering?: boolean
+  isExiting?: boolean
+  isSettling?: boolean
+  isSyncing?: boolean
 }>()
-
-const emit = defineEmits(['edit', 'delete', 'duplicate', 'dragstart', 'dragend', 'select'])
 
 // Debug
 console.log('🔍 KTaskCard props:', { task: props.task.title, isOrphan: props.isOrphan })
@@ -322,6 +337,15 @@ const handleDragOver = (e: DragEvent) => {
 const handleDragEnd = () => {
   console.log('🛑 DRAG END - Resetting state')
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
+  
+  // Adicionar ripple effect ao soltar
+  if (cardElement.value) {
+    cardElement.value.classList.add('ripple-effect')
+    setTimeout(() => {
+      cardElement.value?.classList.remove('ripple-effect')
+    }, 600)
+  }
+  
   resetDragState()
   emit('dragend')
 }
@@ -331,6 +355,14 @@ const handleDocumentDragEnd = () => {
   if (isDragging.value) {
     console.warn('⚠️ Document dragend fired - resetting')
     resetDragState()
+  }
+}
+
+// Handler para quando animação termina
+const handleAnimationEnd = () => {
+  if (props.isEntering || props.isSettling) {
+    console.log('✅ Animation complete for task:', props.task.id)
+    emit('transition-complete')
   }
 }
 
@@ -347,3 +379,89 @@ onUnmounted(() => {
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
 })
 </script>
+
+
+<style scoped>
+/* Transições profissionais para cards */
+.group {
+  --transition-duration: 300ms;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animação de entrada suave */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animação de reordenação suave */
+@keyframes reorder {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Aplicar animação de entrada */
+.group {
+  animation: slideInUp var(--transition-duration) var(--transition-timing) forwards;
+}
+
+/* Transição suave para drag-over */
+.group:has(+ .group[class*="ring-blue"]) {
+  transform: translateY(4px);
+}
+
+/* Easing profissional para todas as transições */
+:deep(.transition-all) {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sombra dinâmica durante hover */
+.group:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Transição suave para seleção */
+.group[class*="ring-green"] {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+}
+
+/* Transição suave para drag-over com scale */
+.group[class*="scale-\[1\.02\]"] {
+  transition: all 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Indicador de drag-over suave */
+.h-1 {
+  animation: slideIn 200ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+</style>

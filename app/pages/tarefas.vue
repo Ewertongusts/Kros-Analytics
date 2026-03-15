@@ -12,6 +12,7 @@
         <div 
           v-for="(column, index) in displayColumns"
           :key="column.column_id"
+          :data-column="column.column_id"
           @dragover="(e) => {
             handleColumnDragOver(column.column_id, e, customColumns)
             handleDragOverWithScroll(e)
@@ -23,7 +24,7 @@
               handleTaskDropWithPosition(e, column.column_id)
             }
           }"
-          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200 relative"
+          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-300 ease-out relative"
           :class="[
             draggedColumnId === column.column_id ? 'opacity-50' : ''
           ]"
@@ -32,21 +33,21 @@
               displayColumns.findIndex(c => c.column_id === draggedColumnId) < index ? '-12px' : 
               displayColumns.findIndex(c => c.column_id === draggedColumnId) > index ? '12px' : '0px'
             })` : 'translateX(0px)',
-            transition: 'transform 0.2s ease-out'
+            transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)'
           }"
         >
           <!-- Indicador de inserção à esquerda (antes de 50%) -->
           <div 
             v-if="dragOverColumnId === column.column_id && dragOverSide === 'left' && draggedColumnId !== column.column_id"
-            class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl transition-opacity duration-150 shadow-lg"
-            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 12px var(--kros-blue, #FF0000)' }"
+            class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl transition-all duration-200 shadow-lg column-indicator"
+            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 16px var(--kros-blue, #FF0000)' }"
           ></div>
           
           <!-- Indicador de inserção à direita (depois de 50%) -->
           <div 
             v-if="dragOverColumnId === column.column_id && dragOverSide === 'right' && draggedColumnId !== column.column_id"
-            class="absolute right-0 top-0 bottom-0 w-1.5 rounded-r-xl transition-opacity duration-150 shadow-lg"
-            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 12px var(--kros-blue, #FF0000)' }"
+            class="absolute right-0 top-0 bottom-0 w-1.5 rounded-r-xl transition-all duration-200 shadow-lg column-indicator"
+            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 16px var(--kros-blue, #FF0000)' }"
           ></div>
           <!-- Header da Coluna -->
           <div 
@@ -103,22 +104,28 @@
             <TasksKTaskCard
               v-for="task in getTasksInColumn(column.column_id)"
               :key="task.id"
+              :data-task="task.id"
               :task="task"
               :is-drag-over="dragOverTaskId === task.id"
               :drag-over-position="dragOverPosition"
               :is-selected="isTaskSelected(task.id!)"
+              :is-entering="isEntering(task.id!)"
+              :is-exiting="isExiting(task.id!)"
+              :is-settling="isSettling(task.id!)"
+              :is-syncing="isSyncing(task.id!)"
               @edit="openTaskModal"
-              @delete="(t) => deleteTask(t.id!)"
+              @delete="(t: Task) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
               @select="toggleTaskSelection"
               @dragstart="handleTaskDragStart(task, column.status)"
               @dragend="handleDragEndWithScroll"
-              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
+              @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
               @dragleave="handleDragLeave"
               @drop="(e: DragEvent) => {
                 handleTaskDropWithPosition(e, column.column_id)
                 handleDragEndWithScroll()
               }"
+              @transition-complete="completeTransition(task.id!)"
             />
             <div v-if="getTasksInColumn(column.column_id).length === 0" class="flex items-center justify-center py-6 text-white/20">
               <div class="text-center">
@@ -169,23 +176,29 @@
             <TasksKTaskCard
               v-for="task in orphanTasks"
               :key="task.id"
+              :data-task="task.id"
               :task="task"
               :is-orphan="true"
               :is-drag-over="dragOverTaskId === task.id"
               :drag-over-position="dragOverPosition"
               :is-selected="isTaskSelected(task.id!)"
+              :is-entering="isEntering(task.id!)"
+              :is-exiting="isExiting(task.id!)"
+              :is-settling="isSettling(task.id!)"
+              :is-syncing="isSyncing(task.id!)"
               @edit="openTaskModal"
-              @delete="(t) => deleteTask(t.id!)"
+              @delete="(t: Task) => deleteTask(t.id!)"
               @duplicate="duplicateTask"
               @select="toggleTaskSelection"
               @dragstart="handleTaskDragStart(task, task.status || 'todo')"
               @dragend="handleDragEndWithScroll"
-              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
+              @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
               @dragleave="handleDragLeave"
               @drop="(e: DragEvent) => {
                 handleTaskDropWithPosition(e, task.status || 'todo')
                 handleDragEndWithScroll()
               }"
+              @transition-complete="completeTransition(task.id!)"
             />
           </div>
         </div>
@@ -267,10 +280,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, onUnmounted } from 'vue'
 import type { Task } from '~/composables/useTasks'
+import '~/components/tasks/kanban-transitions.css'
 import { useTaskHandlers } from '~/composables/useTaskHandlers'
 import { useTaskDragDrop } from '~/composables/useTaskDragDrop'
 import { useTaskHistory } from '~/composables/useTaskHistory'
 import { useColumnDragDrop } from '~/composables/useColumnDragDrop'
+import { useRealtimeCardTransitions } from '~/composables/useRealtimeCardTransitions'
+import { useAdvancedTransitions } from '~/composables/useAdvancedTransitions'
 
 definePageMeta({
   middleware: 'auth'
@@ -300,6 +316,32 @@ const { canUndo, canRedo, addToHistory, undo: undoHistory, redo: redoHistory } =
 const { columns: customColumns, fetchColumns, addColumn, updateColumn, deleteColumn, moveColumn, clearLocalStorage } = useKanbanColumns()
 const { draggedColumnId, dragOverColumnId, dragOverSide, isDraggingColumn, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
 const { selectedTaskIds, toggleTaskSelection, isTaskSelected, selectAll, deselectAll, selectedCount, getSelectedTaskIds } = useTaskSelection()
+const { 
+  startEntering, 
+  startExiting, 
+  startSettling, 
+  completeTransition, 
+  isEntering, 
+  isExiting, 
+  isSettling 
+} = useRealtimeCardTransitions()
+const {
+  animateColumnReceiving,
+  animateNearbyCards,
+  addRippleEffect,
+  addDropGlow,
+  animateColumnExpand,
+  addMorphingAnimation,
+  addCustomBounce,
+  showPositionIndicator,
+  addParallaxEffect,
+  addStaggerAnimation,
+  showSyncIndicator,
+  hideSyncIndicator,
+  isSyncing,
+  transitionToState,
+  executeFullTransition
+} = useAdvancedTransitions()
 
 const searchQuery = ref('')
 const priorityFilter = ref('')
@@ -309,6 +351,7 @@ const showFilters = ref(false)
 const kanbanHeight = ref(50)
 const isRenameModalOpen = ref(false)
 const columnToRename = ref<any>(null)
+const isProcessingDrop = ref(false) // Previne race conditions em drops simultâneos
 
 const calculateKanbanHeight = () => {
   // Medir a distância real do topo até o kanban
@@ -384,7 +427,87 @@ const handleTaskDragStart = (task: Task, source: string) => {
 }
 
 const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) => {
-  await handleDrop(e, targetColumnId, moveTask)
+  console.log(`🎯 [DROP] Iniciando drop para coluna: ${targetColumnId}`)
+  
+  // Prevenir múltiplos drops simultâneos
+  if (isProcessingDrop.value) {
+    console.warn('⚠️ [DROP] Drop já em processamento')
+    return
+  }
+  
+  isProcessingDrop.value = true
+  
+  try {
+    // Obter a tarefa sendo arrastada
+    const draggedTaskData = e.dataTransfer?.getData('application/json')
+    if (!draggedTaskData) {
+      console.warn(`⚠️ [DROP] Sem dados de drag`)
+      handleDrop(e, targetColumnId, moveTask)
+      return
+    }
+
+    const task = JSON.parse(draggedTaskData)
+    const fromColumnId = task.column_id
+    
+    console.log(`📦 [DROP] Task: ${task.id}, De: ${fromColumnId}, Para: ${targetColumnId}`)
+    
+    // Se está mudando de coluna, iniciar transição completa
+    if (fromColumnId !== targetColumnId) {
+      console.log(`🔄 [DROP] Mudando de coluna`)
+      
+      try {
+        // Executar transição completa com todas as animações avançadas
+        await executeFullTransition(
+          task.id,
+          fromColumnId,
+          targetColumnId,
+          task.priority || 'media'
+        )
+        console.log(`✅ [DROP] Transição completa`)
+      } catch (transitionError) {
+        console.error('❌ [DROP] Erro na transição:', transitionError)
+      }
+      
+      try {
+        // Fazer o drop
+        handleDrop(e, targetColumnId, moveTask)
+        console.log(`✅ [DROP] Drop executado`)
+      } catch (dropError) {
+        console.error('❌ [DROP] Erro ao fazer drop:', dropError)
+      }
+      
+      try {
+        // Iniciar transições de entrada/saída
+        startExiting(task.id, fromColumnId)
+        
+        setTimeout(() => {
+          startEntering(task.id, targetColumnId)
+          
+          setTimeout(() => {
+            startSettling(task.id, targetColumnId)
+          }, 400)
+        }, 300)
+        
+        console.log(`✅ [DROP] Transições de entrada/saída iniciadas`)
+      } catch (stateError) {
+        console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
+      }
+    } else {
+      // Mesma coluna, apenas fazer o drop
+      console.log(`📍 [DROP] Mesma coluna`)
+      handleDrop(e, targetColumnId, moveTask)
+    }
+  } catch (error) {
+    console.error('❌ [DROP] Erro geral:', error)
+    try {
+      handleDrop(e, targetColumnId, moveTask)
+    } catch (fallbackError) {
+      console.error('❌ [DROP] Erro no fallback:', fallbackError)
+    }
+  } finally {
+    isProcessingDrop.value = false
+    console.log(`✅ [DROP] Concluído`)
+  }
 }
 
 const deleteSelectedTasks = async () => {

@@ -69,7 +69,7 @@ export const useTaskHandlers = () => {
     }
   }
 
-  const moveTask = async (
+  const moveTask = (
     taskId: string,
     newColumnId: string,
     targetTaskId?: string,
@@ -92,7 +92,7 @@ export const useTaskHandlers = () => {
 
         // Reordenar localmente
         const draggedIndex = tasksInColumn.findIndex(t => t.id === taskId)
-        if (draggedIndex !== -1) {
+        if (draggedIndex !== -1 && draggedIndex !== newPosition) {
           const reordered = tasksInColumn.filter(t => t.id !== taskId)
           reordered.splice(newPosition, 0, task)
 
@@ -115,7 +115,7 @@ export const useTaskHandlers = () => {
           }, 0)
         }
       }
-    } else {
+    } else if (task.column_id !== newColumnId) {
       // Se está mudando de coluna, atualizar o column_id localmente primeiro
       task.column_id = newColumnId
       

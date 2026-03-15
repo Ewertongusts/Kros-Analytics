@@ -19,12 +19,16 @@ export const useTaskDragDrop = () => {
     dragOverPosition.value = null
   }
 
-  const handleDragOver = (e: DragEvent, taskId?: string) => {
+  const handleDragOver = (
+    e: DragEvent,
+    taskId?: string,
+    moveTaskFn?: (taskId: string, columnId: string, targetTaskId?: string, position?: 'above' | 'below') => void
+  ) => {
     e.preventDefault()
     e.dataTransfer!.dropEffect = 'move'
     
     // Se houver um taskId, detectar se está acima ou abaixo
-    if (taskId && e.currentTarget) {
+    if (taskId && e.currentTarget && draggedTask.value && moveTaskFn) {
       const target = e.currentTarget as HTMLElement
       const rect = target.getBoundingClientRect()
       const midpoint = rect.height / 2
@@ -35,6 +39,10 @@ export const useTaskDragDrop = () => {
       if (dragOverTaskId.value !== taskId || dragOverPosition.value !== newPosition) {
         dragOverTaskId.value = taskId
         dragOverPosition.value = newPosition
+        
+        // IMPORTANTE: Reordenar DURANTE o drag para abrir espaço
+        const columnId = draggedTask.value.column_id || 'orphan'
+        moveTaskFn(draggedTask.value.id!, columnId, taskId, newPosition)
       }
     }
   }
@@ -44,14 +52,14 @@ export const useTaskDragDrop = () => {
     dragOverPosition.value = null
   }
 
-  const handleDrop = async (
+  const handleDrop = (
     e: DragEvent,
     targetStatus: 'todo' | 'in_progress' | 'done' | string,
-    moveTask: (taskId: string, status: string, targetTaskId?: string, position?: 'above' | 'below') => Promise<void>
+    moveTask: (taskId: string, status: string, targetTaskId?: string, position?: 'above' | 'below') => void
   ) => {
     e.preventDefault()
     if (draggedTask.value) {
-      await moveTask(
+      moveTask(
         draggedTask.value.id!,
         targetStatus,
         dragOverTaskId.value || undefined,
