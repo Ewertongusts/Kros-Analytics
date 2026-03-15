@@ -221,7 +221,7 @@
                   </svg>
                 </button>
                 <button
-                  @click="removeColumn(column.id)"
+                  @click="removeColumn(column.column_id)"
                   class="p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
                   title="Remover coluna"
                 >
@@ -259,11 +259,11 @@
         <!-- Coluna de Tarefas Órfãs (se houver) -->
         <div 
           v-if="orphanTasks.length > 0"
-          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-orange-500/30 transition-all duration-200"
+          class="flex-shrink-0 w-[220px] rounded-xl bg-transparent border border-orange-500/30 transition-all duration-200"
           @dragover="handleDragOverWithScroll"
         >
           <!-- Header da Coluna -->
-          <div class="p-2.5 border-b border-white/5 bg-orange-500/10">
+          <div class="p-2.5 border-b border-orange-500/30 bg-orange-500/5 rounded-t-xl">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-1.5 flex-1">
                 <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
@@ -282,6 +282,7 @@
               v-for="task in orphanTasks"
               :key="task.id"
               :task="task"
+              :is-orphan="true"
               @edit="openTaskModal"
               @delete="(t) => deleteTask(t.id!)"
               @duplicate="duplicateTask"

@@ -7,8 +7,15 @@
       @dragstart="handleDragStart"
       @drag="handleDrag"
       @dragend="handleDragEnd"
-      :class="{ 'invisible': isDragging }"
-      class="group relative p-3.5 bg-[#1c1c1e] border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 hover:shadow-xl hover:shadow-black/40 cursor-grab active:cursor-grabbing aspect-[4/3]"
+      :style="{ 
+        backgroundColor: isOrphan ? 'rgba(24, 24, 27, 0.5)' : '#1c1c1e',
+        backdropFilter: isOrphan ? 'blur(8px)' : 'none'
+      }"
+      :class="[
+        'group relative p-3.5 rounded-lg transition-all duration-200 hover:shadow-xl hover:shadow-black/40 cursor-grab active:cursor-grabbing aspect-[4/3]',
+        isOrphan ? 'border border-orange-500/40 hover:border-orange-500/60' : 'border border-white/10 hover:border-white/20',
+        { 'invisible': isDragging }
+      ]"
     >
       <!-- Tags -->
       <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1.5 mb-2.5">
@@ -168,9 +175,13 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   task: any
+  isOrphan?: boolean
 }>()
 
 const emit = defineEmits(['edit', 'delete', 'duplicate', 'dragstart', 'dragend'])
+
+// Debug
+console.log('🔍 KTaskCard props:', { task: props.task.title, isOrphan: props.isOrphan })
 
 const cardElement = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
