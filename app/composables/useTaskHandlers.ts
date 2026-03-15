@@ -96,21 +96,34 @@ export const useTaskHandlers = () => {
           const reordered = tasksInColumn.filter(t => t.id !== taskId)
           reordered.splice(newPosition, 0, task)
 
-          // Atualizar posições no banco
+          // Atualizar posições localmente PRIMEIRO (UI responde imediatamente)
           for (let i = 0; i < reordered.length; i++) {
             const reorderedTask = reordered[i]
             if (reorderedTask?.id) {
-              await updateTask(reorderedTask.id, { position: i })
+              reorderedTask.position = i
             }
           }
+
+          // Atualizar no banco em background (sem bloquear UI)
+          setTimeout(() => {
+            for (let i = 0; i < reordered.length; i++) {
+              const reorderedTask = reordered[i]
+              if (reorderedTask?.id) {
+                updateTask(reorderedTask.id, { position: i })
+              }
+            }
+          }, 0)
         }
       }
     } else {
-      // Se está mudando de coluna, atualizar o column_id
-      await updateTask(taskId, { column_id: newColumnId })
+      // Se está mudando de coluna, atualizar o column_id localmente primeiro
+      task.column_id = newColumnId
+      
+      // Atualizar no banco em background (sem bloquear UI)
+      setTimeout(() => {
+        updateTask(taskId, { column_id: newColumnId })
+      }, 0)
     }
-
-    await fetchTasks()
   }
 
   const duplicateTask = async (task: Task) => {
