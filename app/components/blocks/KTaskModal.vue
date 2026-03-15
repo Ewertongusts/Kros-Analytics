@@ -83,7 +83,7 @@
             v-model="form.company_id"
             class="w-full px-3 py-2 bg-[#1c1c1e] border border-white/10 rounded-lg text-sm text-white focus:border-white/20 focus:outline-none transition-all"
           >
-            <option :value="null">Nenhuma</option>
+            <option :value="undefined">Nenhuma</option>
             <option v-for="company in companies" :key="company.id" :value="company.id">
               {{ company.name }}
             </option>
@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import type { Task } from '~/composables/useTasks'
 
 const props = defineProps<{
@@ -125,7 +125,7 @@ const props = defineProps<{
   companies?: any[]
   submitting?: boolean
   tagDefinitions?: any[]
-  defaultStatus?: 'todo' | 'in_progress' | 'done'
+  defaultColumnId?: string
 }>()
 
 const emit = defineEmits(['close', 'save'])
@@ -133,10 +133,11 @@ const emit = defineEmits(['close', 'save'])
 const form = ref<Task>({
   title: '',
   description: '',
-  status: props.defaultStatus || 'todo',
+  status: 'todo',
   priority: 'media',
   due_date: '',
-  company_id: null
+  company_id: undefined,
+  column_id: props.defaultColumnId
 })
 
 watch(() => props.task, (newTask) => {
@@ -146,13 +147,20 @@ watch(() => props.task, (newTask) => {
     form.value = {
       title: '',
       description: '',
-      status: props.defaultStatus || 'todo',
+      status: 'todo',
       priority: 'media',
       due_date: '',
-      company_id: null
+      company_id: undefined,
+      column_id: props.defaultColumnId
     }
   }
 }, { immediate: true })
+
+watch(() => props.defaultColumnId, (newColumnId) => {
+  if (!props.task) {
+    form.value.column_id = newColumnId
+  }
+})
 
 const handleSave = () => {
   if (!form.value.title) return

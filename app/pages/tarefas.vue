@@ -8,198 +8,6 @@
     <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700" :style="{ paddingTop: `calc(100vh - ${kanbanHeight}px)` }">
       <!-- Kanban Board - Fixed no topo -->
       <div class="flex gap-3 overflow-x-auto items-start fixed left-0 right-0 z-40" :style="{ top: `${kanbanHeight}px`, height: `calc(100vh - ${kanbanHeight}px)`, paddingLeft: '120px', paddingRight: '40px' }">
-        <!-- A Fazer -->
-        <div 
-          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200"
-          :class="dragSource === 'todo' ? 'ring-2 ring-blue-500/30 shadow-lg shadow-blue-500/10' : ''"
-          @dragover="handleDragOverWithScroll"
-          @drop="handleTaskDrop($event, 'todo')"
-        >
-          <!-- Header da Coluna -->
-          <div class="p-2.5 border-b border-white/5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5">
-                <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                <h3 class="font-semibold text-white text-xs">New Request</h3>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 bg-white/5 text-white/60 rounded text-[10px] font-medium">
-                  {{ filteredTodoTasks.length }}
-                </span>
-                <button
-                  @click="openTaskModal(undefined, 'todo')"
-                  class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                  title="Nova tarefa"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cards Container -->
-          <div class="p-2 space-y-2 min-h-[100px]">
-            <TasksKTaskCard
-              v-for="task in filteredTodoTasks"
-              :key="task.id"
-              :task="task"
-              :is-drag-over="dragOverTaskId === task.id"
-              :drag-over-position="dragOverPosition"
-              :is-selected="isTaskSelected(task.id!)"
-              @edit="openTaskModal"
-              @delete="(t) => deleteTask(t.id!)"
-              @duplicate="duplicateTask"
-              @select="toggleTaskSelection"
-              @dragstart="handleTaskDragStart(task, 'todo')"
-              @dragend="handleDragEndWithScroll"
-              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
-              @dragleave="handleDragLeave"
-              @drop="(e: DragEvent) => {
-                handleTaskDropWithPosition(e, 'todo')
-                handleDragEndWithScroll()
-              }"
-            />
-            <div v-if="filteredTodoTasks.length === 0" class="flex items-center justify-center py-6 text-white/20">
-              <div class="text-center">
-                <svg class="w-6 h-6 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-[10px]">Nenhuma tarefa</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Em Andamento -->
-        <div 
-          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200"
-          :class="dragSource === 'in_progress' ? 'ring-2 ring-yellow-500/30 shadow-lg shadow-yellow-500/10' : ''"
-          @dragover="handleDragOverWithScroll"
-          @drop="handleTaskDrop($event, 'in_progress')"
-        >
-          <!-- Header da Coluna -->
-          <div class="p-2.5 border-b border-white/5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5">
-                <div class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
-                <h3 class="font-semibold text-white text-xs">In Progress</h3>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 bg-white/5 text-white/60 rounded text-[10px] font-medium">
-                  {{ filteredInProgressTasks.length }}
-                </span>
-                <button
-                  @click="openTaskModal(undefined, 'in_progress')"
-                  class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                  title="Nova tarefa"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cards Container -->
-          <div class="p-2 space-y-2 min-h-[100px]">
-            <TasksKTaskCard
-              v-for="task in filteredInProgressTasks"
-              :key="task.id"
-              :task="task"
-              :is-drag-over="dragOverTaskId === task.id"
-              :drag-over-position="dragOverPosition"
-              :is-selected="isTaskSelected(task.id!)"
-              @edit="openTaskModal"
-              @delete="(t) => deleteTask(t.id!)"
-              @duplicate="duplicateTask"
-              @select="toggleTaskSelection"
-              @dragstart="handleTaskDragStart(task, 'in_progress')"
-              @dragend="handleDragEndWithScroll"
-              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
-              @dragleave="handleDragLeave"
-              @drop="(e: DragEvent) => {
-                handleTaskDropWithPosition(e, 'in_progress')
-                handleDragEndWithScroll()
-              }"
-            />
-            <div v-if="filteredInProgressTasks.length === 0" class="flex items-center justify-center py-6 text-white/20">
-              <div class="text-center">
-                <svg class="w-6 h-6 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <p class="text-[10px]">Nenhuma tarefa</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Concluído -->
-        <div 
-          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200"
-          :class="dragSource === 'done' ? 'ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-500/10' : ''"
-          @dragover="handleDragOverWithScroll"
-          @drop="handleTaskDrop($event, 'done')"
-        >
-          <!-- Header da Coluna -->
-          <div class="p-2.5 border-b border-white/5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5">
-                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                <h3 class="font-semibold text-white text-xs">Complete</h3>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 bg-white/5 text-white/60 rounded text-[10px] font-medium">
-                  {{ filteredDoneTasks.length }}
-                </span>
-                <button
-                  @click="openTaskModal(undefined, 'done')"
-                  class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                  title="Nova tarefa"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cards Container -->
-          <div class="p-2 space-y-2 min-h-[100px]">
-            <TasksKTaskCard
-              v-for="task in filteredDoneTasks"
-              :key="task.id"
-              :task="task"
-              :is-drag-over="dragOverTaskId === task.id"
-              :drag-over-position="dragOverPosition"
-              :is-selected="isTaskSelected(task.id!)"
-              @edit="openTaskModal"
-              @delete="(t) => deleteTask(t.id!)"
-              @duplicate="duplicateTask"
-              @select="toggleTaskSelection"
-              @dragstart="handleTaskDragStart(task, 'done')"
-              @dragend="handleDragEndWithScroll"
-              @dragover="(e: DragEvent) => handleDragOver(e, task.id)"
-              @dragleave="handleDragLeave"
-              @drop="(e: DragEvent) => {
-                handleTaskDropWithPosition(e, 'done')
-                handleDragEndWithScroll()
-              }"
-            />
-            <div v-if="filteredDoneTasks.length === 0" class="flex items-center justify-center py-6 text-white/20">
-              <div class="text-center">
-                <svg class="w-6 h-6 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-[10px]">Nenhuma tarefa</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Colunas Customizadas -->
         <div 
           v-for="(column, index) in displayColumns"
@@ -212,7 +20,7 @@
           @drop="(e) => {
             handleColumnDrop(column.column_id, customColumns, moveColumn, e)
             if (!e.dataTransfer?.types.includes('column-drag')) {
-              handleTaskDrop(e, column.status as any)
+              handleTaskDropWithPosition(e, column.column_id)
             }
           }"
           class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-200 relative"
@@ -257,10 +65,10 @@
               </div>
               <div class="flex items-center gap-1.5">
                 <span class="px-1.5 py-0.5 bg-white/5 text-white/60 rounded text-[10px] font-medium">
-                  {{ handlerTasks.filter(t => t.status === column.status).length }}
+                  {{ getTasksInColumn(column.column_id).length }}
                 </span>
                 <button
-                  @click="openTaskModal(undefined, column.status as any)"
+                  @click="openTaskModal(undefined, column.column_id)"
                   class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
                   title="Nova tarefa"
                 >
@@ -312,7 +120,7 @@
                 handleDragEndWithScroll()
               }"
             />
-            <div v-if="handlerTasks.filter(t => t.status === column.status).length === 0" class="flex items-center justify-center py-6 text-white/20">
+            <div v-if="getTasksInColumn(column.column_id).length === 0" class="flex items-center justify-center py-6 text-white/20">
               <div class="text-center">
                 <svg class="w-6 h-6 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -400,7 +208,7 @@
         :companies="companies"
         :tag-definitions="tagDefinitions"
         :submitting="loadingAction"
-        :default-status="defaultStatus"
+        :default-column-id="defaultColumnId"
         @close="closeTaskModal"
         @save="handleSaveTask"
       />
@@ -478,7 +286,7 @@ const {
   isTaskModalOpen,
   selectedTask,
   loadingAction,
-  defaultStatus,
+  defaultColumnId,
   openTaskModal,
   closeTaskModal,
   handleSaveTask,
@@ -524,48 +332,11 @@ const addNewColumn = () => {
   })
 }
 
-const todoTasks = computed(() => {
-  const result = handlerTasks.value.filter(t => t.status === 'todo').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  console.log('📋 todoTasks computed:', result.length, result)
-  return result
-})
-const inProgressTasks = computed(() => {
-  const result = handlerTasks.value.filter(t => t.status === 'in_progress').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  console.log('📋 inProgressTasks computed:', result.length, result)
-  return result
-})
-const doneTasks = computed(() => {
-  const result = handlerTasks.value.filter(t => t.status === 'done').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  console.log('📋 doneTasks computed:', result.length, result)
-  return result
-})
 
-// Filtros aplicados
-const filteredTasks = computed(() => {
-  return handlerTasks.value.filter(task => {
-    const matchSearch = !searchQuery.value || 
-      task.title?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
-    
-    const matchPriority = !priorityFilter.value || task.priority === priorityFilter.value
-    const matchStatus = !statusFilter.value || task.status === statusFilter.value
-    
-    return matchSearch && matchPriority && matchStatus
-  }).sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-})
 
-const filteredTodoTasks = computed(() => filteredTasks.value.filter(t => t.status === 'todo'))
-const filteredInProgressTasks = computed(() => {
-  const result = filteredTasks.value.filter(t => t.status === 'in_progress')
-  console.log('📊 [filteredInProgressTasks] resultado:', result)
-  return result
-})
-const filteredDoneTasks = computed(() => filteredTasks.value.filter(t => t.status === 'done'))
-
-// Tarefas órfãs (com status que não corresponde a nenhuma coluna)
+// Tarefas órfãs (tarefas sem column_id atribuído)
 const orphanTasks = computed(() => {
-  const validStatuses = ['todo', 'in_progress', 'done', ...customColumns.value.map(c => c.status)]
-  return handlerTasks.value.filter(t => !validStatuses.includes(t.status || ''))
+  return handlerTasks.value.filter(t => !t.column_id)
 })
 
 // Colunas para exibição
@@ -610,10 +381,6 @@ const syncData = async () => {
 
 const handleTaskDragStart = (task: Task, source: string) => {
   handleDragStart(task, source)
-}
-
-const handleTaskDrop = async (e: DragEvent, targetStatus: string) => {
-  await handleDrop(e, targetStatus as any, moveTask)
 }
 
 const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) => {

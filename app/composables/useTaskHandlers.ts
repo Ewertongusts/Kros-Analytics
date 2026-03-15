@@ -8,18 +8,18 @@ export const useTaskHandlers = () => {
   const isTaskModalOpen = ref(false)
   const selectedTask = ref<Task | null>(null)
   const loadingAction = ref(false)
-  const defaultStatus = ref<'todo' | 'in_progress' | 'done'>('todo')
+  const defaultColumnId = ref<string>('')
 
-  const openTaskModal = (task?: Task, status?: 'todo' | 'in_progress' | 'done') => {
+  const openTaskModal = (task?: Task, columnId?: string) => {
     selectedTask.value = task || null
-    defaultStatus.value = status || 'todo'
+    defaultColumnId.value = columnId || ''
     isTaskModalOpen.value = true
   }
 
   const closeTaskModal = () => {
     isTaskModalOpen.value = false
     selectedTask.value = null
-    defaultStatus.value = 'todo'
+    defaultColumnId.value = ''
   }
 
   const handleSaveTask = async (taskData: Partial<Task>) => {
@@ -31,13 +31,15 @@ export const useTaskHandlers = () => {
         await updateTask(selectedTask.value.id, taskData)
       } else {
         console.log('➕ Criando nova tarefa')
-        // Se for nova tarefa, usar o status padrão da coluna
-        const tasksInStatus = tasks.value.filter(t => t.status === (taskData.status || defaultStatus.value))
-        const newPosition = tasksInStatus.length
+        // Se for nova tarefa, usar o column_id padrão
+        const tasksInColumn = defaultColumnId.value 
+          ? tasks.value.filter(t => t.column_id === defaultColumnId.value)
+          : []
+        const newPosition = tasksInColumn.length
         
         const newTask = { 
           ...taskData, 
-          status: taskData.status || defaultStatus.value,
+          column_id: defaultColumnId.value || undefined,
           position: newPosition
         } as Task
         console.log('📋 Dados da nova tarefa:', newTask)
@@ -144,7 +146,7 @@ export const useTaskHandlers = () => {
     isTaskModalOpen,
     selectedTask,
     loadingAction,
-    defaultStatus,
+    defaultColumnId,
     openTaskModal,
     closeTaskModal,
     handleSaveTask,

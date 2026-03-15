@@ -70,6 +70,8 @@ export const useTasks = () => {
         due_date: task.due_date ? new Date(task.due_date).toISOString() : null,
         company_id: task.company_id || null,
         assigned_to: task.assigned_to || null,
+        column_id: task.column_id || null,
+        position: task.position || 0,
         created_by: userId,
         created_at: new Date().toISOString()
       }
