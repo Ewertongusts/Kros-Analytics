@@ -6,6 +6,7 @@ export const useTaskDragDrop = () => {
   const dragSource = ref<string>('')
   const dragOverTaskId = ref<string | null>(null)
   const dragOverPosition = ref<'above' | 'below' | null>(null)
+  let dragOverTimeoutId: ReturnType<typeof setTimeout> | null = null
 
   const handleDragStart = (task: Task, source: string) => {
     draggedTask.value = task
@@ -17,6 +18,7 @@ export const useTaskDragDrop = () => {
     dragSource.value = ''
     dragOverTaskId.value = null
     dragOverPosition.value = null
+    if (dragOverTimeoutId) clearTimeout(dragOverTimeoutId)
   }
 
   const handleDragOver = (
@@ -26,6 +28,9 @@ export const useTaskDragDrop = () => {
   ) => {
     e.preventDefault()
     e.dataTransfer!.dropEffect = 'move'
+    
+    // Limpar timeout anterior
+    if (dragOverTimeoutId) clearTimeout(dragOverTimeoutId)
     
     // Se houver um taskId, detectar se está acima ou abaixo
     if (taskId && e.currentTarget && draggedTask.value && moveTaskFn) {
@@ -46,11 +51,18 @@ export const useTaskDragDrop = () => {
         moveTaskFn(draggedTask.value.id!, columnId, taskId, newPosition)
       }
     }
+    
+    // Timeout de 5s para limpar indicadores se drag for interrompido
+    dragOverTimeoutId = setTimeout(() => {
+      dragOverTaskId.value = null
+      dragOverPosition.value = null
+    }, 5000)
   }
 
   const handleDragLeave = () => {
     dragOverTaskId.value = null
     dragOverPosition.value = null
+    if (dragOverTimeoutId) clearTimeout(dragOverTimeoutId)
   }
 
   const handleDrop = (

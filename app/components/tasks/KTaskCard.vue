@@ -231,6 +231,8 @@ const dragX = ref(0)
 const dragY = ref(0)
 const cardWidth = ref(0)
 let dragTimeoutId: ReturnType<typeof setTimeout> | null = null
+let dragCloneTimeoutId: ReturnType<typeof setTimeout> | null = null
+let dragOverTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 // Reset drag state function
 const resetDragState = () => {
@@ -307,12 +309,23 @@ const handleDragStart = (e: DragEvent) => {
   const emptyImage = new Image()
   e.dataTransfer?.setDragImage(emptyImage, 0, 0)
   
-  // Set timeout to force reset if dragend doesn't fire
+  // Remove previous timeouts
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
+  if (dragCloneTimeoutId) clearTimeout(dragCloneTimeoutId)
+  
+  // Timeout to force reset if dragend doesn't fire (1 second)
   dragTimeoutId = setTimeout(() => {
     console.warn('⚠️ Drag timeout - forcing reset')
     resetDragState()
   }, 1000)
+  
+  // Timeout to remove clone if it gets stuck (10 seconds)
+  dragCloneTimeoutId = setTimeout(() => {
+    if (isDragging.value) {
+      console.warn('⚠️ Clone timeout - forcing reset')
+      resetDragState()
+    }
+  }, 10000)
   
   emit('dragstart', props.task)
 }
@@ -337,6 +350,7 @@ const handleDragOver = (e: DragEvent) => {
 const handleDragEnd = () => {
   console.log('🛑 DRAG END - Resetting state')
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
+  if (dragCloneTimeoutId) clearTimeout(dragCloneTimeoutId)
   
   // Reset IMEDIATAMENTE para evitar que o card fique invisível
   resetDragState()
@@ -379,6 +393,8 @@ onUnmounted(() => {
     document.removeEventListener('dragend', handleDocumentDragEnd)
   }
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
+  if (dragCloneTimeoutId) clearTimeout(dragCloneTimeoutId)
+  if (dragOverTimeoutId) clearTimeout(dragOverTimeoutId)
 })
 </script>
 

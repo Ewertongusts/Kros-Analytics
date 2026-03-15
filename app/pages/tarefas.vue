@@ -538,8 +538,8 @@ const handleDragOverWithScroll = (e: DragEvent) => {
   if (!container) return
   
   const rect = container.getBoundingClientRect()
-  const scrollSpeed = 15
-  const edgeSize = 100 // pixels da borda para ativar scroll
+  const scrollSpeed = 8 // Reduzido de 15 para 8
+  const edgeSize = 150 // Aumentado de 100 para 150
   
   // Limpar intervalo anterior
   if (scrollInterval) {
