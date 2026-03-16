@@ -1,5 +1,5 @@
 <template>
-  <div class="w-80 border-r border-white/10 bg-black/20 p-3">
+  <div class="w-80 border-l border-white/10 bg-black/20 p-3">
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-sm font-semibold text-white">Compromissos da Semana</h3>
       <KCalendarAddTaskButton @click="$emit('add-task')" />

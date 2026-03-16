@@ -68,7 +68,7 @@
       </div>
     </td>
     <td :class="['whitespace-nowrap', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
-       <div v-if="payment.last_alert_at" class="flex flex-col">
+       <div v-if="payment.last_alert_at" class="flex flex-col cursor-pointer hover:opacity-80 transition-opacity" @click="$emit('open-alert-details', payment)">
           <div class="flex items-center gap-1.5">
             <span :class="['text-[10px] font-black uppercase tracking-tight', isUrgentAlert ? 'text-red-500 animate-pulse' : 'text-white/80']">
               {{ formatTimeAgo(payment.last_alert_at) }}
@@ -127,7 +127,8 @@ const emit = defineEmits([
   'update-subscription-status',
   'open-client-details',
   'open-plan-details',
-  'update-tags'
+  'update-tags',
+  'open-alert-details'
 ])
 
 const { 

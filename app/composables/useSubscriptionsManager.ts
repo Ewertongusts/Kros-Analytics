@@ -26,6 +26,7 @@ export type SubscriptionWithDetails = Subscription & {
   customer_email?: string
   plan_name?: string
   plan_billing_cycle?: string
+  last_alert_at?: string | null
 }
 
 export const useSubscriptionsManager = () => {
@@ -80,6 +81,27 @@ export const useSubscriptionsManager = () => {
         plan_name: sub.plan?.name,
         plan_billing_cycle: sub.plan?.billing_cycle
       }))
+      
+      // Buscar last_alert_at de payments para cada assinatura
+      for (let i = 0; i < subscriptions.value.length; i++) {
+        try {
+          const { data: payment } = await supabase
+            .from('payments')
+            .select('last_alert_at')
+            .eq('company_id', subscriptions.value[i].customer_id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+          
+          if (payment && payment.last_alert_at) {
+            subscriptions.value[i].last_alert_at = payment.last_alert_at
+            console.log(`📅 [fetchSubscriptions] ${subscriptions.value[i].customer_name}: last_alert_at = ${payment.last_alert_at}`)
+          }
+        } catch (err) {
+          // Ignorar erro se não encontrar pagamento
+          console.log(`⚠️ [fetchSubscriptions] ${subscriptions.value[i].customer_name}: sem pagamentos`)
+        }
+      }
       
       console.log('✅ [useSubscriptionsManager] fetchSubscriptions: subscriptions.value atualizado:', subscriptions.value.length)
       console.log('📋 [useSubscriptionsManager] Dados das assinaturas:', subscriptions.value)

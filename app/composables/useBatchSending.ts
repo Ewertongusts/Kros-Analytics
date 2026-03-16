@@ -164,6 +164,16 @@ export const useBatchSending = () => {
         sentStatus.value[payment.id] = 'success'
         successfulSends.push(payment.company_name)
 
+        // Atualizar last_alert_at no banco de dados
+        try {
+          await supabase
+            .from('payments')
+            .update({ last_alert_at: new Date().toISOString() })
+            .eq('company_id', payment.company_id)
+        } catch (err) {
+          console.error('Erro ao atualizar last_alert_at:', err)
+        }
+
       } catch (err: any) {
         errors.value.push({ company: payment.company_name, error: err.message })
         sentStatus.value[payment.id] = 'error'

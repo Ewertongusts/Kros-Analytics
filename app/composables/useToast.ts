@@ -40,10 +40,10 @@ export const useToast = () => {
     showToast({ type: 'info', message, description })
   }
 
-  const confirm = (message: string, title?: string, variant?: 'default' | 'whatsapp'): Promise<boolean> => {
+  const confirm = (message: string, title?: string, variant?: 'default' | 'whatsapp', phone?: string): Promise<boolean> => {
     return new Promise((resolve) => {
       if (confirmInstance.value) {
-        confirmInstance.value.show(message, title, resolve, variant)
+        confirmInstance.value.show(message, title, resolve, variant, phone)
       } else {
         // Fallback para confirm nativo se o componente não estiver montado
         resolve(window.confirm(message))

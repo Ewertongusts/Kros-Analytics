@@ -28,7 +28,8 @@ export const useSaleActions = () => {
     const confirmed = await confirm(
       `Deseja enviar o comprovante de venda para ${clientName}?`,
       'Confirmar envio via WhatsApp',
-      'whatsapp'
+      'whatsapp',
+      phone
     )
     
     if (!confirmed) return

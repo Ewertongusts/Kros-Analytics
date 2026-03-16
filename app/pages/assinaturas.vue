@@ -397,6 +397,7 @@ const adaptedSubscriptions = computed(() => {
       payment_status_class: getStatusClass(paymentStatus), // Classes CSS
       payment_status_icon: getStatusIcon(paymentStatus), // Ícone
       status: sub.status, // Manter status original para o modal
+      last_alert_at: sub.last_alert_at || null, // Data e hora do último alerta
       _key: `${sub.id}-${sub.status}-${paymentStatus}-${sub.updated_at || Date.now()}` // Key única para forçar re-render
     }
   })

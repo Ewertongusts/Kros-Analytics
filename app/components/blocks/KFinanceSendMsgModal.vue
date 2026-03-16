@@ -211,6 +211,16 @@ const handleSend = async () => {
       const { success } = useToast()
       success('Mensagem enviada', `Cobrança enviada para ${props.payment.company_name}`)
       
+      // Atualizar last_alert_at no banco de dados
+      try {
+        await (useSupabaseClient() as any)
+          .from('payments')
+          .update({ last_alert_at: new Date().toISOString() })
+          .eq('company_id', props.payment.company_id)
+      } catch (err) {
+        console.error('Erro ao atualizar last_alert_at:', err)
+      }
+      
       // Cria log
       await (useSupabaseClient() as any).from('message_logs').insert({
          company_name: props.payment.company_name,

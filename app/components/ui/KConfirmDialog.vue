@@ -45,6 +45,10 @@
             <div class="flex-1 min-w-0">
               <h3 class="text-lg font-bold text-white mb-2">{{ title }}</h3>
               <p class="text-sm text-white/70">{{ message }}</p>
+              <div v-if="phoneNumber" class="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                <p class="text-xs text-white/50 mb-1">Número do cliente:</p>
+                <p class="text-sm font-semibold text-green-400">{{ phoneNumber }}</p>
+              </div>
             </div>
           </div>
           
@@ -78,12 +82,14 @@ const isOpen = ref(false)
 const message = ref('')
 const title = ref('Confirmar ação')
 const variant = ref<'default' | 'whatsapp'>('default')
+const phoneNumber = ref('')
 const resolveCallback = ref<((value: boolean) => void) | null>(null)
 
-const show = (msg: string, ttl: string | undefined, resolve: (value: boolean) => void, variantType?: 'default' | 'whatsapp') => {
+const show = (msg: string, ttl: string | undefined, resolve: (value: boolean) => void, variantType?: 'default' | 'whatsapp', phone?: string) => {
   message.value = msg
   title.value = ttl || 'Confirmar ação'
   variant.value = variantType || 'default'
+  phoneNumber.value = phone || ''
   resolveCallback.value = resolve
   isOpen.value = true
 }
