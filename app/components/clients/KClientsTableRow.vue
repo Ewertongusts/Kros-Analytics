@@ -2,12 +2,29 @@
   <tr class="group/row bg-white/[0.02] hover:bg-white/[0.04] transition-all rounded-2xl border border-transparent hover:border-white/10" :class="{ 'bg-kros-blue/10 border-kros-blue/30': isSelected }">
     <!-- Checkbox -->
     <td class="px-4 py-5 first:rounded-l-2xl">
-      <input 
-        type="checkbox"
-        :checked="isSelected"
-        @change="$emit('toggle-select', company.id)"
-        class="w-5 h-5 rounded-md border-2 border-white/20 bg-gradient-to-br from-white/5 to-white/[0.02] text-kros-blue focus:ring-2 focus:ring-kros-blue/50 focus:ring-offset-0 cursor-pointer transition-all hover:border-white/30 checked:border-kros-blue checked:shadow-lg checked:shadow-kros-blue/20"
-      />
+      <div class="relative">
+        <input 
+          type="checkbox"
+          :checked="isSelected"
+          @change="$emit('toggle-select', company.id)"
+          class="sr-only"
+          :id="`select-${company.id}`"
+        />
+        <label 
+          :for="`select-${company.id}`"
+          class="flex items-center justify-center w-4 h-4 bg-[#2a2a2d] border border-white/20 rounded cursor-pointer transition-colors"
+          :class="isSelected ? 'btn-primary border-transparent' : 'hover:border-white/30'"
+        >
+          <svg 
+            v-if="isSelected" 
+            class="w-2.5 h-2.5 text-white" 
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        </label>
+      </div>
     </td>
 
     <!-- Status -->
