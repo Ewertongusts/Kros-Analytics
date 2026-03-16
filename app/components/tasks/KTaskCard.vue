@@ -1,11 +1,5 @@
 <template>
   <div>
-    <!-- Indicador acima (quando drag está acima) -->
-    <div 
-      v-if="isDragOver && dragOverPosition === 'above'"
-      class="h-1 bg-blue-500 rounded mb-2 shadow-lg shadow-blue-500/50"
-    ></div>
-
     <!-- Card Original -->
     <div 
       ref="cardElement"
@@ -25,8 +19,7 @@
         'border border-white/10 hover:border-white/20',
         isOrphan ? 'border-orange-500/40 hover:border-orange-500/60' : '',
         { 'invisible': isDragging },
-        isDragOver ? 'ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/30 scale-[1.02] card-drag-over-morph' : 'hover:shadow-xl hover:shadow-black/40',
-        isSelected ? 'ring-2 ring-green-500/50 shadow-lg shadow-green-500/20 spring-scale' : '',
+        isSelected ? 'ring-2 ring-green-500/50 shadow-lg shadow-green-500/20 spring-scale' : 'hover:shadow-xl hover:shadow-black/40',
         props.isEntering ? 'card-entering' : '',
         props.isExiting ? 'card-exiting' : '',
         props.isSettling ? 'card-settling' : ''
@@ -134,12 +127,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Indicador abaixo (quando drag está abaixo) -->
-    <div 
-      v-if="isDragOver && dragOverPosition === 'below'"
-      class="h-1 bg-blue-500 rounded mt-2 shadow-lg shadow-blue-500/50"
-    ></div>
 
     <!-- Clone Flutuante -->
     <Teleport to="body">
