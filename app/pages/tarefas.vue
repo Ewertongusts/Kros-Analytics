@@ -178,8 +178,8 @@
                   <input
                     v-if="selectedCount > 0"
                     type="checkbox"
-                    :checked="isOrphanTasksFullySelected"
-                    @click.stop="toggleColumnTasks(orphanTasks.map(t => t.id!))"
+                    :checked="orphanCheckboxModel"
+                    @change="orphanCheckboxModel = $event.target.checked"
                     class="w-4 h-4 rounded-md cursor-pointer appearance-none transition-all flex-shrink-0"
                     :style="getColumnCheckboxStyle('orphan')"
                   />
@@ -401,7 +401,8 @@ const {
   getSelectedTaskIds,
   toggleColumnTasks,
   isColumnFullySelected,
-  isColumnPartiallySelected
+  isColumnPartiallySelected,
+  selectedTaskIds
 } = useTaskSelection()
 
 const toggleTaskSelection = (taskId: string) => {
@@ -454,16 +455,35 @@ const isColumnFullySelectedComputed = (columnId: string) => {
   return isColumnFullySelected(taskIds)
 }
 
-const isOrphanTasksFullySelected = computed(() => {
-  const taskIds = orphanTasks.value.map(t => t.id!)
-  return isColumnFullySelected(taskIds)
-})
+
 
 const isColumnPartiallySelectedComputed = (columnId: string) => {
   const tasksInColumn = getTasksInColumn(columnId)
   const taskIds = tasksInColumn.map(t => t.id!)
   return isColumnPartiallySelected(taskIds)
 }
+
+const orphanCheckboxModel = computed({
+  get: () => {
+    const taskIds = orphanTasks.value.map(t => t.id!)
+    const selectedArray = Array.from(selectedTaskIds.value)
+    const result = taskIds.length > 0 && taskIds.every(id => selectedTaskIds.value.has(id))
+    return result
+  },
+  set: (value: boolean) => {
+    const taskIds = orphanTasks.value.map(t => t.id!)
+    if (value) {
+      taskIds.forEach(id => selectedTaskIds.value.add(id))
+    } else {
+      taskIds.forEach(id => selectedTaskIds.value.delete(id))
+    }
+    // Force re-render after state change
+    nextTick(() => {
+      // Trigger re-render
+    })
+  }
+})
+
 const { 
   startEntering, 
   startExiting, 
@@ -515,7 +535,7 @@ const orphanTasks = computed(() => {
   const validColumnIds = customColumns.value.map(c => c.column_id)
   
   return handlerTasks.value.filter(t => {
-    return !validColumnIds.includes(t.column_id || '')
+    return !validColumnIds.includes(t.column_id || '') && !isExiting(t.id!)
   })
 })
 
