@@ -10,15 +10,29 @@
           class="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50"
         />
       </div>
-      <select
-        v-model="filterStatus"
-        class="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50"
-      >
-        <option value="">Todos os status</option>
-        <option value="todo">A Fazer</option>
-        <option value="in_progress">Em Progresso</option>
-        <option value="done">Concluído</option>
-      </select>
+      <div class="flex items-center gap-2">
+        <select
+          v-model="filterStatus"
+          class="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50"
+        >
+          <option value="">Todos os status</option>
+          <option value="todo">A Fazer</option>
+          <option value="in_progress">Em Progresso</option>
+          <option value="done">Concluído</option>
+        </select>
+        
+        <!-- Botão Nova Tarefa -->
+        <button
+          @click="handleAddTask"
+          class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+          title="Nova tarefa"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Nova Tarefa
+        </button>
+      </div>
     </div>
 
     <!-- Tabela de tarefas -->
@@ -43,7 +57,7 @@
               </button>
             </th>
             <th class="px-4 py-3 text-left font-semibold text-white/80">Tarefa</th>
-            <th class="px-4 py-3 text-left font-semibold text-white/80 w-24">Status</th>
+            <th class="px-4 py-3 text-left font-semibold text-white/80 w-32">Status</th>
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-20">Prioridade</th>
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-24">Coluna</th>
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-24">Vencimento</th>
@@ -180,6 +194,7 @@ const props = defineProps<Props>()
 defineEmits<{
   edit: [task: Task]
   delete: [task: Task]
+  'add-task': []
 }>()
 
 const searchQuery = ref('')
@@ -197,6 +212,10 @@ const filteredTasks = computed(() => {
 const allSelected = computed(() => {
   return filteredTasks.value.length > 0 && filteredTasks.value.every(t => props.isTaskSelected(t.id!))
 })
+
+const handleAddTask = () => {
+  emit('add-task')
+}
 
 const toggleSelectAll = () => {
   filteredTasks.value.forEach(task => {
