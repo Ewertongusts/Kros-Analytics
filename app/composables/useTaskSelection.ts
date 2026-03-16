@@ -19,6 +19,36 @@ export const useTaskSelection = () => {
     taskIds.forEach(id => selectedTaskIds.value.add(id))
   }
 
+  const selectColumnTasks = (taskIds: string[]) => {
+    taskIds.forEach(id => selectedTaskIds.value.add(id))
+  }
+
+  const deselectColumnTasks = (taskIds: string[]) => {
+    taskIds.forEach(id => selectedTaskIds.value.delete(id))
+  }
+
+  const toggleColumnTasks = (taskIds: string[]) => {
+    const allSelected = taskIds.every(id => selectedTaskIds.value.has(id))
+    if (allSelected) {
+      deselectColumnTasks(taskIds)
+    } else {
+      selectColumnTasks(taskIds)
+    }
+  }
+
+  const isColumnFullySelected = (taskIds: string[]) => {
+    return taskIds.length > 0 && taskIds.every(id => selectedTaskIds.value.has(id))
+  }
+
+  const isColumnPartiallySelected = (taskIds: string[]) => {
+    if (taskIds.length === 0) return false
+    const hasSome = taskIds.some(id => selectedTaskIds.value.has(id))
+    const hasAll = taskIds.every(id => selectedTaskIds.value.has(id))
+    const result = hasSome && !hasAll
+    console.log(`  isColumnPartiallySelected: hasSome=${hasSome}, hasAll=${hasAll}, result=${result}`)
+    return result
+  }
+
   const deselectAll = () => {
     selectedTaskIds.value.clear()
   }
@@ -32,6 +62,11 @@ export const useTaskSelection = () => {
     toggleTaskSelection,
     isTaskSelected,
     selectAll,
+    selectColumnTasks,
+    deselectColumnTasks,
+    toggleColumnTasks,
+    isColumnFullySelected,
+    isColumnPartiallySelected,
     deselectAll,
     selectedCount,
     getSelectedTaskIds

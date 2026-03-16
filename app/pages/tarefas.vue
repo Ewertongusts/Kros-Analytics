@@ -66,7 +66,16 @@
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5 flex-1 cursor-grab active:cursor-grabbing" :class="{ 'opacity-50': draggedColumnId === column.column_id }">
-                  <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <!-- Checkbox Select All (aparece quando há seleções) -->
+                  <input
+                    v-if="selectedCount > 0"
+                    type="checkbox"
+                    :checked="isColumnFullySelectedComputed(column.column_id)"
+                    @click.stop="toggleColumnTasks(getTasksInColumn(column.column_id).map(t => t.id!))"
+                    class="w-4 h-4 rounded-md cursor-pointer appearance-none transition-all flex-shrink-0"
+                    :style="getColumnCheckboxStyle(column.column_id)"
+                  />
+                  <svg v-else class="w-4 h-4 text-white/30 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm4-8h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2z" />
                   </svg>
                   <div class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: column.color }"></div>
@@ -237,9 +246,65 @@
     <TasksKTasksBulkActionsBar 
       v-if="selectedCount > 0"
       :selected-count="selectedCount"
-      @delete-selected="deleteSelectedTasks"
-      @clear-selection="deselectAll"
+      @transfer="openBulkTransferModal"
+      @delete="deleteSelectedTasks"
+      @clear="deselectAll"
     />
+
+    <!-- Bulk Transfer Modal -->
+    <TasksKBulkTransferModal
+      :is-open="isBulkTransferModalOpen"
+      :columns="customColumns"
+      :selected-count="selectedCount"
+      :selected-task-ids="getSelectedTaskIds()"
+      :tasks="handlerTasks"
+      @close="isBulkTransferModalOpen = false"
+      @transfer="handleBulkTransfer"
+    />
+
+    <!-- Botões Flutuantes de Ações -->
+    <div v-if="selectedCount > 0" class="fixed bottom-8 right-8 flex flex-col gap-3 z-50">
+      <!-- Contador de seleção -->
+      <div class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold">
+        {{ selectedCount }} selecionado(s)
+      </div>
+      
+      <!-- Botão Transferir -->
+      <button
+        @click="openBulkTransferModal"
+        class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
+        style="background-color: #8b5cf6"
+        title="Transferir para coluna"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </button>
+
+      <!-- Botão Deletar -->
+      <button
+        @click="deleteSelectedTasks"
+        class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
+        style="background-color: #ef4444"
+        title="Deletar selecionados"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+
+      <!-- Botão Limpar seleção -->
+      <button
+        @click="deselectAll"
+        class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
+        style="background-color: #ef4444"
+        title="Limpar seleção"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
 
     <TasksKRenameColumnModal
       :is-open="isRenameModalOpen"
@@ -261,49 +326,6 @@
       @save="handleSaveTask"
     />
 
-    <!-- Botão Flutuante de Ações -->
-    <div v-if="selectedCount > 0" class="fixed bottom-8 right-8 flex flex-col gap-3 z-50">
-      <!-- Contador de seleção -->
-      <div class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold">
-        {{ selectedCount }} selecionado(s)
-      </div>
-      
-      <!-- Botão Deletar -->
-      <button
-        @click="deleteSelectedTasks"
-        :style="{ backgroundColor: '#ef4444' }"
-        class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
-        title="Deletar selecionados"
-      >
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </button>
-
-      <!-- Botão Limpar seleção -->
-      <button
-        @click="deselectAll"
-        :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
-        class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
-        title="Limpar seleção"
-      >
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Botão Flutuante de Ações (quando nenhuma tarefa selecionada) -->
-    <button
-      v-else
-      :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
-      class="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90 z-50"
-      title="Ações"
-    >
-      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-      </svg>
-    </button>
   </LayoutsKPageLayout>
 </template>
 
@@ -346,7 +368,70 @@ const { dragOverTaskId, dragOverPosition, handleDragStart, handleDragEnd, handle
 const { addToHistory, undo: undoHistory, redo: redoHistory } = useTaskHistory()
 const { columns: customColumns, fetchColumns, addColumn, updateColumn, deleteColumn, moveColumn } = useKanbanColumns()
 const { draggedColumnId, dragOverColumnId, dragOverSide, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
-const { toggleTaskSelection, isTaskSelected, deselectAll, selectedCount, getSelectedTaskIds } = useTaskSelection()
+const { 
+  toggleTaskSelection: originalToggleTaskSelection, 
+  isTaskSelected, 
+  deselectAll, 
+  selectedCount, 
+  getSelectedTaskIds,
+  toggleColumnTasks,
+  isColumnFullySelected,
+  isColumnPartiallySelected
+} = useTaskSelection()
+
+const toggleTaskSelection = (taskId: string) => {
+  originalToggleTaskSelection(taskId)
+}
+
+const checkmarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
+const encodedSvg = encodeURIComponent(checkmarkSvg)
+
+const getColumnCheckboxStyle = (columnId: string) => {
+  const tasksInColumn = getTasksInColumn(columnId)
+  const taskIds = tasksInColumn.map(t => t.id!)
+  
+  if (taskIds.length === 0) {
+    return {
+      backgroundColor: 'transparent',
+      border: '2px solid rgba(255, 255, 255, 0.3)',
+      backgroundImage: 'none'
+    }
+  }
+  
+  const isFullySelected = isColumnFullySelected(taskIds)
+  
+  // Se está totalmente selecionado, mostrar preenchido
+  if (isFullySelected) {
+    return {
+      backgroundColor: 'var(--kros-blue, #3b82f6)',
+      border: 'none',
+      backgroundImage: `url('data:image/svg+xml,${encodedSvg}')`,
+      backgroundSize: 'contain',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      opacity: '1'
+    }
+  }
+  
+  // Se não está totalmente selecionado, mostrar vazio
+  return {
+    backgroundColor: 'transparent',
+    border: '2px solid rgba(255, 255, 255, 0.3)',
+    backgroundImage: 'none'
+  }
+}
+
+const isColumnFullySelectedComputed = (columnId: string) => {
+  const tasksInColumn = getTasksInColumn(columnId)
+  const taskIds = tasksInColumn.map(t => t.id!)
+  return isColumnFullySelected(taskIds)
+}
+
+const isColumnPartiallySelectedComputed = (columnId: string) => {
+  const tasksInColumn = getTasksInColumn(columnId)
+  const taskIds = tasksInColumn.map(t => t.id!)
+  return isColumnPartiallySelected(taskIds)
+}
 const { 
   startEntering, 
   startExiting, 
@@ -367,6 +452,7 @@ const isRenameModalOpen = ref(false)
 const columnToRename = ref<any>(null)
 const isProcessingDrop = ref(false)
 const viewMode = ref<'kanban' | 'list' | 'grid' | 'calendar'>('kanban')
+const isBulkTransferModalOpen = ref(false)
 
 const calculateKanbanHeight = () => {
   const kanbanContainer = document.querySelector('.overflow-x-auto')
@@ -602,6 +688,42 @@ const deleteSelectedTasks = async () => {
     deselectAll()
   } catch (error) {
     // Erro ao deletar tarefas
+  } finally {
+    loadingAction.value = false
+  }
+}
+
+const openBulkTransferModal = () => {
+  isBulkTransferModalOpen.value = true
+}
+
+const handleBulkTransfer = async (targetColumnId: string) => {
+  const selectedIds = getSelectedTaskIds()
+  if (selectedIds.length === 0) return
+
+  loadingAction.value = true
+  try {
+    for (const id of selectedIds) {
+      const task = handlerTasks.value.find(t => t.id === id)
+      if (task) {
+        startExiting(id, task.column_id || '')
+        await nextTick()
+        await new Promise(resolve => setTimeout(resolve, 150))
+        
+        moveTask(id, targetColumnId)
+        
+        await new Promise(resolve => setTimeout(resolve, 100))
+        startEntering(id, targetColumnId)
+        
+        setTimeout(() => {
+          startSettling(id, targetColumnId)
+        }, 400)
+      }
+    }
+    deselectAll()
+    isBulkTransferModalOpen.value = false
+  } catch (error) {
+    console.error('Erro ao transferir tarefas:', error)
   } finally {
     loadingAction.value = false
   }

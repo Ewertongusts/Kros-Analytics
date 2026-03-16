@@ -35,12 +35,13 @@
       ]"
     >
       <!-- Checkbox de Seleção -->
-      <div class="absolute top-2 left-2 z-10">
+      <div class="absolute top-2 right-2 z-50">
         <input
           type="checkbox"
           :checked="isSelected"
-          @change="$emit('select', task.id)"
-          class="w-4 h-4 rounded cursor-pointer"
+          @click.stop="$emit('select', task.id)"
+          class="w-5 h-5 rounded-md cursor-pointer appearance-none transition-all"
+          :style="getCheckboxStyle()"
         />
       </div>
 
@@ -281,6 +282,20 @@ const formatDateShort = (date: string) => {
   if (diffDays < 7) return `${diffDays}d`
   
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(d)
+}
+
+const getCheckboxStyle = () => {
+  const checkmarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
+  const encodedSvg = encodeURIComponent(checkmarkSvg)
+  
+  return {
+    backgroundColor: props.isSelected ? 'var(--kros-blue, #3b82f6)' : 'transparent',
+    border: props.isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+    backgroundImage: props.isSelected ? `url('data:image/svg+xml,${encodedSvg}')` : 'none',
+    backgroundSize: 'contain',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat'
+  }
 }
 
 const getInitials = (name: string) => {

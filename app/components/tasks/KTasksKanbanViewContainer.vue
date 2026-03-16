@@ -33,7 +33,7 @@
         @task-edit="$emit('open-task-modal', $event)"
         @task-delete="$emit('delete-task', $event)"
         @task-duplicate="$emit('duplicate-task', $event)"
-        @task-select="toggleTaskSelection"
+        @task-select="handleTaskSelection"
         @column-add-task="$emit('open-task-modal', undefined, $event)"
         @column-rename="renameColumn"
         @column-remove="removeColumn"
@@ -79,7 +79,7 @@
         @task-edit="$emit('open-task-modal', $event)"
         @task-delete="$emit('delete-task', $event)"
         @task-duplicate="$emit('duplicate-task', $event)"
-        @task-select="toggleTaskSelection"
+        @task-select="handleTaskSelection"
         @transition-complete="completeTransition"
       />
     </div>
@@ -104,11 +104,30 @@
       @close="isRenameModalOpen = false"
       @save="handleRenameColumnSave"
     />
+
+    <!-- Bulk Actions Bar -->
+    <TasksKBulkActionsBar
+      :selected-count="selectedCount"
+      @transfer="openBulkTransferModal"
+      @delete="handleBulkDelete"
+      @clear="deselectAll"
+    />
+
+    <!-- Bulk Transfer Modal -->
+    <TasksKBulkTransferModal
+      :is-open="isBulkTransferModalOpen"
+      :selected-task-ids="getSelectedTaskIds()"
+      :columns="displayColumns"
+      :tasks="props.tasks"
+      :get-tasks-in-column="getTasksInColumn"
+      @close="closeBulkTransferModal"
+      @transfer="handleBulkTransfer"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref, nextTick, watch } from 'vue'
 import type { Task } from '~/composables/useTasks'
 import { useTaskDragDrop } from '~/composables/useTaskDragDrop'
 import { useColumnDragDrop } from '~/composables/useColumnDragDrop'
@@ -116,6 +135,7 @@ import { useRealtimeCardTransitions } from '~/composables/useRealtimeCardTransit
 import { useAdvancedTransitions } from '~/composables/useAdvancedTransitions'
 import { useKanbanColumns } from '~/composables/useKanbanColumns'
 import { useTaskSelection } from '~/composables/useTaskSelection'
+import { useBulkTaskTransfer } from '~/composables/useBulkTaskTransfer'
 
 const props = defineProps<{
   tasks: Task[]
@@ -139,10 +159,26 @@ const emit = defineEmits<{
 
 const { dragOverTaskId, dragOverPosition, handleDragStart, handleDragEnd, handleDragOver, handleDragLeave } = useTaskDragDrop()
 const { draggedColumnId, dragOverColumnId, dragOverSide, handleColumnDragStart, handleColumnDragOver, handleColumnDragLeave, handleColumnDrop, handleColumnDragEnd } = useColumnDragDrop()
-const { toggleTaskSelection, isTaskSelected } = useTaskSelection()
+const { toggleTaskSelection, isTaskSelected, getSelectedTaskIds, deselectAll, selectedTaskIds } = useTaskSelection()
 const { startEntering, startExiting, startSettling, completeTransition, isEntering, isExiting, isSettling } = useRealtimeCardTransitions()
 const { isSyncing, executeFullTransition } = useAdvancedTransitions()
 const { columns: customColumns, addColumn, updateColumn, deleteColumn, moveColumn } = useKanbanColumns()
+const { isBulkTransferModalOpen, openBulkTransferModal, closeBulkTransferModal } = useBulkTaskTransfer()
+
+// Computed para contar selecionadas (reativo)
+const selectedCount = computed(() => selectedTaskIds.value.size)
+
+// Debug: Log quando task é selecionada
+const handleTaskSelection = (taskId: string) => {
+  console.log('✅ Task selecionada:', taskId)
+  toggleTaskSelection(taskId)
+  console.log('📊 Total selecionadas:', selectedCount.value)
+}
+
+// Watch para monitorar mudanças na seleção
+watch(selectedTaskIds, (newVal) => {
+  console.log('👀 Seleção mudou:', newVal.size, 'tarefas')
+}, { deep: true })
 
 const kanbanHeight = ref(70)
 const isRenameModalOpen = ref(false)
@@ -324,4 +360,55 @@ const handleDragOverWithScroll = (e: DragEvent) => {
     }, 16)
   }
 }
+
+const handleBulkTransfer = async (targetColumnId: string, taskIds: string[]) => {
+  try {
+    for (const taskId of taskIds) {
+      const task = props.tasks.find(t => t.id === taskId)
+      if (!task) continue
+      
+      const fromColumnId = task.column_id || ''
+      
+      if (fromColumnId && fromColumnId !== targetColumnId) {
+        startExiting(taskId, fromColumnId)
+        await nextTick()
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        await executeFullTransition(
+          taskId,
+          fromColumnId,
+          targetColumnId,
+          task.priority || 'media'
+        )
+        
+        startEntering(taskId, targetColumnId)
+        setTimeout(() => {
+          startSettling(taskId, targetColumnId)
+        }, 300)
+      }
+    }
+    
+    deselectAll()
+    closeBulkTransferModal()
+  } catch (error) {
+    console.error('❌ Erro ao transferir tarefas em lote:', error)
+  }
+}
+
+const handleBulkDelete = async () => {
+  const selectedIds = getSelectedTaskIds()
+  const confirmed = confirm(`Deseja deletar ${selectedIds.length} ${selectedIds.length === 1 ? 'tarefa' : 'tarefas'}?`)
+  if (!confirmed) return
+  
+  try {
+    for (const taskId of selectedIds) {
+      emit('delete-task', taskId)
+    }
+    
+    deselectAll()
+  } catch (error) {
+    console.error('❌ Erro ao deletar tarefas em lote:', error)
+  }
+}
+
 </script>
