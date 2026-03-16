@@ -13,11 +13,6 @@
         @toggle-status="handleTogglePaymentStatus"
         @toggle-autobilling="handleToggleAutoBilling"
         @batch-autobilling="handleBatchAutoBilling"
-        @batch-mark-paid="handleBatchMarkPaid"
-        @batch-mark-pending="handleBatchMarkPending"
-        @batch-suspend="handleBatchSuspend"
-        @batch-reactivate="handleBatchReactivate"
-        @batch-cancel="handleBatchCancel"
         @batch-delete="handleBatchDelete"
         @delete-success="handleDeleteSuccess"
         @edit-subscription="handleEditSubscription"
@@ -142,11 +137,6 @@ const { subscriptions, fetchSubscriptions } = useSubscriptionsManager()
 const { 
   batchProgressModal, 
   batchDeleteModal,
-  handleBatchMarkPaid,
-  handleBatchMarkPending,
-  handleBatchSuspend,
-  handleBatchReactivate,
-  handleBatchCancel,
   handleBatchDelete,
   handleConfirmBatchDelete,
   handleConfirmBatchAutoBilling

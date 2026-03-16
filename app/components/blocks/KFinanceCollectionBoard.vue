@@ -313,7 +313,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details', 'open-plan-details', 'update-payments', 'open-alert-details'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details', 'open-plan-details', 'update-payments', 'open-alert-details'])
 
 const handleExportDebug = (format: any) => {
   emit('export', format)
@@ -402,41 +402,6 @@ const batchAction = async (type: string) => {
       openBatchMsgModal(validatedPayments)
     }
   } else if (type === 'auto-billing-on') {
-    emit('batch-autobilling', selectedPayments)
-  } else if (type === 'auto-billing-off') {
-    const confirmed = await confirm(`Deseja desativar a cobrança automática para as ${selectedIds.value.length} empresas selecionadas?`, 'Desativar cobrança automática')
-    if (!confirmed) return
-    for (const p of selectedPayments) {
-      emit('toggle-autobilling', p)
-    }
-    clearSelection()
-  } else if (type === 'suspend') {
-    const confirmed = await confirm(
-      `Deseja suspender ${selectedIds.value.length} assinatura${selectedIds.value.length > 1 ? 's' : ''}? Os contratos ficarão pausados temporariamente.`,
-      'Suspender Assinaturas'
-    )
-    if (!confirmed) return
-    console.log('Emitindo batch-suspend com', selectedPayments.length, 'assinaturas')
-    emit('batch-suspend', selectedPayments)
-    clearSelection()
-  } else if (type === 'reactivate') {
-    const confirmed = await confirm(
-      `Deseja reativar ${selectedIds.value.length} assinatura${selectedIds.value.length > 1 ? 's' : ''}? Os contratos voltarão ao status ativo.`,
-      'Reativar Assinaturas'
-    )
-    if (!confirmed) return
-    console.log('Emitindo batch-reactivate com', selectedPayments.length, 'assinaturas')
-    emit('batch-reactivate', selectedPayments)
-    clearSelection()
-  } else if (type === 'cancel') {
-    const confirmed = await confirm(
-      `⚠️ ATENÇÃO: Deseja cancelar ${selectedIds.value.length} assinatura${selectedIds.value.length > 1 ? 's' : ''}? Esta ação encerrará os contratos permanentemente.`,
-      'Cancelar Assinaturas'
-    )
-    if (!confirmed) return
-    emit('batch-cancel', selectedPayments)
-    clearSelection()
-  } else if (type === 'delete') {
     console.log('Emitindo evento batch-delete com', selectedPayments.length, 'assinaturas')
     emit('batch-delete', selectedPayments)
     clearSelection()

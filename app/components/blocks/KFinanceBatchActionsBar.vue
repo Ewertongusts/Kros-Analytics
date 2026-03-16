@@ -10,65 +10,6 @@
         <div class="h-6 w-px bg-white/10"></div>
         
         <div class="flex items-center gap-2">
-          <!-- Ações de Pagamento -->
-          <button 
-            @click="$emit('batch-action', 'mark-paid')"
-            class="group/paid relative p-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all"
-            aria-label="Marcar pagamentos selecionados como pago"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover/paid:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
-              <p class="text-[9px] font-bold text-white uppercase tracking-wider">Marcar Pago</p>
-            </div>
-          </button>
-          
-          <button 
-            @click="$emit('batch-action', 'mark-pending')"
-            class="group/pending relative p-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-all"
-            aria-label="Estornar pagamentos selecionados para pendente"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#111112] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover/pending:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
-              <p class="text-[9px] font-bold text-white uppercase tracking-wider">Estornar</p>
-            </div>
-          </button>
-          
-          <div class="h-6 w-px bg-white/10"></div>
-          
-          <!-- Ações de Assinatura -->
-          <button 
-            @click="$emit('batch-action', 'suspend')"
-            class="group/suspend relative p-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 rounded-lg transition-all"
-            aria-label="Suspender assinaturas selecionadas"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#111112] border border-yellow-500/30 rounded-lg shadow-xl opacity-0 group-hover/suspend:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
-              <p class="text-[9px] font-bold text-yellow-400 uppercase tracking-wider">Suspender</p>
-            </div>
-          </button>
-          
-          <button 
-            @click="$emit('batch-action', 'reactivate')"
-            class="group/reactivate relative p-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 rounded-lg transition-all"
-            aria-label="Reativar assinaturas selecionadas"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#111112] border border-emerald-500/30 rounded-lg shadow-xl opacity-0 group-hover/reactivate:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
-              <p class="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Reativar</p>
-            </div>
-          </button>
-          
-          <button 
-            @click="$emit('batch-action', 'cancel')"
-            class="group/cancel relative p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-all"
-            aria-label="Cancelar assinaturas selecionadas"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#111112] border border-red-500/30 rounded-lg shadow-xl opacity-0 group-hover/cancel:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
-              <p class="text-[9px] font-bold text-red-400 uppercase tracking-wider">Cancelar</p>
-            </div>
-          </button>
-          
           <div class="h-6 w-px bg-white/10"></div>
           
           <button 

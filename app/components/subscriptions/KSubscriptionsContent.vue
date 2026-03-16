@@ -105,11 +105,6 @@
         @toggle-status="$emit('toggle-status', $event)" 
         @toggle-autobilling="$emit('toggle-autobilling', $event)" 
         @batch-autobilling="$emit('batch-autobilling', $event)"
-        @batch-mark-paid="$emit('batch-mark-paid', $event)"
-        @batch-mark-pending="$emit('batch-mark-pending', $event)"
-        @batch-suspend="$emit('batch-suspend', $event)"
-        @batch-reactivate="$emit('batch-reactivate', $event)"
-        @batch-cancel="$emit('batch-cancel', $event)"
         @batch-delete="$emit('batch-delete', $event)"
         @delete-success="$emit('delete-success', $event)"
         @edit-subscription="$emit('edit-subscription', $event)"
@@ -165,11 +160,6 @@ const emit = defineEmits<{
   'toggle-status': [payment: any]
   'toggle-autobilling': [payment: any]
   'batch-autobilling': [payments: any[]]
-  'batch-mark-paid': [payments: any[]]
-  'batch-mark-pending': [payments: any[]]
-  'batch-suspend': [payments: any[]]
-  'batch-reactivate': [payments: any[]]
-  'batch-cancel': [payments: any[]]
   'batch-delete': [payments: any[]]
   'delete-success': [id: string]
   'edit-subscription': [subscription: any]
