@@ -106,8 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { Task } from '~/composables/useTasks'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -125,19 +124,51 @@ const emit = defineEmits<{
 const selectedColumn = ref<any>(null)
 const isTransferring = ref(false)
 
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    selectedColumn.value = null
+  }
+})
+
 const originColumn = computed(() => {
   if (!props.selectedTaskIds || !props.tasks || props.selectedTaskIds.length === 0) {
     return null
   }
   
-  // Pegar a coluna da primeira tarefa selecionada
-  const firstTaskId = props.selectedTaskIds[0]
-  const firstTask = props.tasks.find(t => t.id === firstTaskId)
+  // Pegar todas as tarefas selecionadas
+  const selectedTasks = props.selectedTaskIds
+    .map(id => props.tasks!.find(t => t.id === id))
+    .filter(t => t !== undefined)
   
-  if (!firstTask) return null
+  if (selectedTasks.length === 0) return null
+  
+  // Pegar o column_id da primeira tarefa
+  const firstColumnId = selectedTasks[0]!.column_id
+  
+  // Se a primeira tarefa não tem column_id, é órfã
+  if (!firstColumnId) {
+    return {
+      column_id: 'orphan',
+      name: 'Tarefas Órfãs',
+      color: '#f97316',
+      status: 'orphan'
+    }
+  }
   
   // Encontrar a coluna correspondente
-  return props.columns.find(c => c.column_id === firstTask.column_id)
+  const found = props.columns.find(c => c.column_id === firstColumnId)
+  
+  // Se não encontrou a coluna, retornar um objeto genérico
+  if (!found) {
+    return {
+      column_id: firstColumnId,
+      name: 'Tarefas Órfãs',
+      color: '#f97316',
+      status: 'orphan'
+    }
+  }
+  
+  return found
 })
 
 const selectColumn = (column: any) => {

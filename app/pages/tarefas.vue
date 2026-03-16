@@ -178,7 +178,7 @@
                   <input
                     v-if="selectedCount > 0"
                     type="checkbox"
-                    :checked="isColumnFullySelected(orphanTasks.map(t => t.id!))"
+                    :checked="isOrphanTasksFullySelected"
                     @click.stop="toggleColumnTasks(orphanTasks.map(t => t.id!))"
                     class="w-4 h-4 rounded-md cursor-pointer appearance-none transition-all flex-shrink-0"
                     :style="getColumnCheckboxStyle('orphan')"
@@ -453,6 +453,11 @@ const isColumnFullySelectedComputed = (columnId: string) => {
   const taskIds = tasksInColumn.map(t => t.id!)
   return isColumnFullySelected(taskIds)
 }
+
+const isOrphanTasksFullySelected = computed(() => {
+  const taskIds = orphanTasks.value.map(t => t.id!)
+  return isColumnFullySelected(taskIds)
+})
 
 const isColumnPartiallySelectedComputed = (columnId: string) => {
   const tasksInColumn = getTasksInColumn(columnId)
