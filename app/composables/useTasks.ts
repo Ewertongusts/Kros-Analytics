@@ -98,6 +98,12 @@ export const useTasks = () => {
         .eq('id', id)
 
       if (error) throw error
+
+      // Atualizar o estado local
+      const taskIndex = tasks.value.findIndex(t => t.id === id)
+      if (taskIndex !== -1) {
+        tasks.value[taskIndex] = { ...tasks.value[taskIndex], ...updates }
+      }
       
       return { success: true }
     } catch (err: any) {

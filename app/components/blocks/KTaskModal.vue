@@ -60,7 +60,7 @@
               class="w-full px-2 py-2 bg-[#1c1c1e] border border-white/10 rounded-lg text-xs text-white focus:border-white/20 focus:outline-none transition-all"
             >
               <option value="todo">A Fazer</option>
-              <option value="in_progress">Andamento</option>
+              <option value="in_progress">Em Progresso</option>
               <option value="done">Concluído</option>
             </select>
           </div>
@@ -142,7 +142,11 @@ const form = ref<Task>({
 
 watch(() => props.task, (newTask) => {
   if (newTask) {
-    form.value = { ...newTask }
+    form.value = { 
+      ...newTask,
+      // Garantir que a data seja formatada corretamente para o input date
+      due_date: newTask.due_date ? new Date(newTask.due_date).toISOString().split('T')[0] : ''
+    }
   } else {
     form.value = {
       title: '',
@@ -164,6 +168,17 @@ watch(() => props.defaultColumnId, (newColumnId) => {
 
 const handleSave = () => {
   if (!form.value.title) return
-  emit('save', form.value)
+  
+  // Garantir que a data seja formatada corretamente
+  const taskData = { ...form.value }
+  if (taskData.due_date) {
+    // Converter para formato ISO se necessário
+    const date = new Date(taskData.due_date)
+    if (!isNaN(date.getTime())) {
+      taskData.due_date = date.toISOString().split('T')[0] // YYYY-MM-DD
+    }
+  }
+  
+  emit('save', taskData)
 }
 </script>

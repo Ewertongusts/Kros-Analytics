@@ -233,6 +233,7 @@
         :toggle-task-selection="toggleTaskSelection"
         @edit="openTaskModal"
         @delete="handleDeleteTask"
+        @add-task="openTaskModal(undefined, getDefaultColumnId())"
       />
 
       <!-- Grid View -->
@@ -579,6 +580,15 @@ const handleRenameColumnSave = (newName: string, newColor: string) => {
     isRenameModalOpen.value = false
     columnToRename.value = null
   }
+}
+
+const getDefaultColumnId = () => {
+  // Priorizar a coluna "A Fazer" se existir
+  const todoColumn = customColumns.value.find(col => col.column_id === 'col_todo' || col.status === 'todo')
+  if (todoColumn) return todoColumn.column_id
+  
+  // Caso contrário, usar a primeira coluna disponível
+  return customColumns.value[0]?.column_id || 'col_todo'
 }
 
 const syncData = async () => {

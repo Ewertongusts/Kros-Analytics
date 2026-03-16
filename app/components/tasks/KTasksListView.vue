@@ -270,16 +270,36 @@ const getColumnName = (columnId?: string) => {
 
 const formatDate = (date: string) => {
   if (!date) return '-'
-  const d = new Date(date)
-  const today = new Date()
-  const diffDays = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
   
-  if (diffDays === 0) return 'Hoje'
-  if (diffDays === 1) return 'Amanhã'
-  if (diffDays === -1) return 'Ontem'
-  if (diffDays < 0) return `${Math.abs(diffDays)}d atrás`
-  if (diffDays < 7) return `${diffDays}d`
-  
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(d)
+  try {
+    const d = new Date(date)
+    
+    // Verificar se a data é válida
+    if (isNaN(d.getTime())) return '-'
+    
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Zerar horas para comparação apenas de datas
+    
+    const taskDate = new Date(d)
+    taskDate.setHours(0, 0, 0, 0) // Zerar horas para comparação apenas de datas
+    
+    const diffTime = taskDate.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'Hoje'
+    if (diffDays === 1) return 'Amanhã'
+    if (diffDays === -1) return 'Ontem'
+    if (diffDays < 0) return `${Math.abs(diffDays)}d atrás`
+    if (diffDays < 7) return `${diffDays}d`
+    
+    return new Intl.DateTimeFormat('pt-BR', { 
+      day: '2-digit', 
+      month: 'short',
+      timeZone: 'America/Sao_Paulo'
+    }).format(d)
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return '-'
+  }
 }
 </script>
