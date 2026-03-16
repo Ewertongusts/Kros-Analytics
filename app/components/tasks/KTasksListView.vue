@@ -191,7 +191,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   edit: [task: Task]
   delete: [task: Task]
   'add-task': []
