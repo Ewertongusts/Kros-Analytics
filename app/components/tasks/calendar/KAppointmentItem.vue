@@ -4,17 +4,16 @@
       <div class="flex-1 min-w-0">
         <h4 class="text-xs font-medium text-white truncate">{{ appointment.title }}</h4>
         <p class="text-xs text-white/60 mt-0.5">{{ formatAppointmentDate(appointment.due_date) }}</p>
+        <KCalendarPriorityBadge :priority="appointment.priority" />
       </div>
-      <div class="px-1.5 py-0.5 rounded text-xs font-medium" :class="getStatusColor(appointment.status)">
-        {{ getStatusLabel(appointment.status) }}
-      </div>
+      <KCalendarStatusBadge :status="appointment.status" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Task } from '~/composables/useTasks'
-import { formatAppointmentDate, getStatusLabel, getStatusColor } from '~/utils/calendarUtils'
+import { formatAppointmentDate } from '~/utils/calendarUtils'
 
 defineProps<{ appointment: Task }>()
 defineEmits<{ select: [] }>()
