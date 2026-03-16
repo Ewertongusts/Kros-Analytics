@@ -60,6 +60,7 @@
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-32">Status</th>
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-20">Prioridade</th>
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-24">Coluna</th>
+            <th class="px-4 py-3 text-left font-semibold text-white/80 w-24">Criação</th>
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-24">Vencimento</th>
             <th class="px-4 py-3 text-left font-semibold text-white/80 w-20">Ações</th>
           </tr>
@@ -128,6 +129,14 @@
             <!-- Coluna -->
             <td class="px-4 py-3">
               <span class="text-white/60 text-xs">{{ getColumnName(task.column_id) }}</span>
+            </td>
+
+            <!-- Criação -->
+            <td class="px-4 py-3">
+              <span v-if="task.created_at" class="text-white/60 text-xs">
+                {{ formatDate(task.created_at) }}
+              </span>
+              <span v-else class="text-white/30 text-xs">-</span>
             </td>
 
             <!-- Vencimento -->
