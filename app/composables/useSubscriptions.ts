@@ -81,7 +81,6 @@ export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
           amount: subscription.amount,
           due_date: new Date().toISOString(),
           status: 'pending',
-          sale_type: 'plano',
           notes: `Fatura gerada automaticamente para ${subscription.company_name}`
         } as any)
         .select()
