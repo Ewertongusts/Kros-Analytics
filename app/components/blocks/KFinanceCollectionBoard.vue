@@ -137,6 +137,7 @@
             @open-client-details="$emit('open-client-details', $event)"
             @open-plan-details="handleOpenPlanDetails"
             @update-tags="handleUpdateTags"
+            @open-alert-details="handleOpenAlertDetails"
           />
         </tbody>
       </table>
@@ -312,7 +313,7 @@ const props = defineProps<{
   activeSubTab: string
 }>()
 
-const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details', 'open-plan-details', 'update-payments'])
+const emit = defineEmits(['toggle-status', 'toggle-autobilling', 'batch-autobilling', 'batch-mark-paid', 'batch-mark-pending', 'batch-suspend', 'batch-reactivate', 'batch-cancel', 'batch-delete', 'delete-success', 'edit-subscription', 'open-logs', 'open-history', 'update:activeSubTab', 'sync', 'config', 'export', 'open-client-details', 'open-plan-details', 'update-payments', 'open-alert-details'])
 
 const handleExportDebug = (format: any) => {
   emit('export', format)
@@ -542,6 +543,12 @@ const handleEdit = (payment: any) => {
 
 const handleOpenPlanDetails = (payment: any) => {
   emit('open-plan-details', payment)
+}
+
+const handleOpenAlertDetails = (payment: any) => {
+  console.log('📅 [handleOpenAlertDetails] Abrindo detalhes do alerta:', payment.last_alert_at)
+  // Por enquanto, apenas emitir o evento para a página pai
+  emit('open-alert-details', payment)
 }
 
 onMounted(async () => {

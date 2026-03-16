@@ -79,7 +79,8 @@ export const useSubscriptionsManager = () => {
         customer_whatsapp: sub.customer?.whatsapp || '',
         tags: sub.customer?.tags || [],
         plan_name: sub.plan?.name,
-        plan_billing_cycle: sub.plan?.billing_cycle
+        plan_billing_cycle: sub.plan?.billing_cycle,
+        last_alert_at: null // Será preenchido depois
       }))
       
       // Buscar last_alert_at de payments para cada assinatura

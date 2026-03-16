@@ -103,7 +103,8 @@ const fetchLogs = async () => {
             .limit(100)
             
         if (props.paymentId) {
-            query = query.eq('payment_id', props.paymentId)
+            // paymentId aqui é na verdade company_id
+            query = query.eq('company_id', props.paymentId)
         }
 
         const { data, error } = await query

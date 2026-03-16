@@ -38,6 +38,7 @@
         @config="navigateTo('/clientes')"
         @open-client-details="handleOpenClientDetails"
         @open-plan-details="handleOpenPlanDetails"
+        @open-alert-details="handleOpenAlertDetails"
         @update-payments="handleUpdatePayments"
         @export="(format) => { exportPayments(subscriptions, format); success('Exportado com sucesso', `Arquivo ${format.toUpperCase()} baixado`) }"
       />
@@ -503,6 +504,26 @@ const handleOpenPlanDetails = async (payment: any) => {
     planDetailsModal.payment = payment
     planDetailsModal.isOpen = true
   }
+}
+
+const handleOpenAlertDetails = (payment: any) => {
+  if (!payment.last_alert_at) {
+    const { warning } = useToast()
+    warning('Sem alertas', 'Nenhum alerta foi enviado para esta assinatura ainda')
+    return
+  }
+  
+  const { info } = useToast()
+  const alertDate = new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(new Date(payment.last_alert_at))
+  
+  info('Último Alerta', `Enviado em ${alertDate} para ${payment.company_name}`)
 }
 
 const handleEditClient = () => {
