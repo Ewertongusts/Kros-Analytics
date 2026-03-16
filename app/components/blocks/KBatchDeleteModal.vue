@@ -2,7 +2,7 @@
   <UiKModal :is-open="isOpen" size="md" @close="close">
     <UiKModalHeader title="⚠️ APAGAR ASSINATURAS" />
 
-    <div class="space-y-6">
+    <form @submit.prevent="handleConfirm" class="space-y-6">
       <!-- Aviso -->
       <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
         <div class="flex items-start gap-3">
@@ -77,10 +77,11 @@
         loading-text="APAGANDO..."
         :loading="loading"
         :disabled="confirmText !== `APAGAR ${subscriptions.length}`"
+        submit-type="submit"
         @cancel="close"
         @confirm="handleConfirm"
       />
-    </div>
+    </form>
   </UiKModal>
 </template>
 
@@ -113,8 +114,14 @@ const copyToClipboard = async () => {
 
 const handleConfirm = () => {
   if (confirmText.value === `APAGAR ${props.subscriptions.length}`) {
+    console.log('✅ [KBatchDeleteModal] Confirmação válida, emitindo evento confirm')
+    console.log('✅ [KBatchDeleteModal] Assinaturas a deletar:', props.subscriptions.map(s => ({ id: s.id, name: s.customer_name })))
     loading.value = true
     emit('confirm')
+  } else {
+    console.log('❌ [KBatchDeleteModal] Confirmação inválida')
+    console.log('❌ [KBatchDeleteModal] Esperado:', `APAGAR ${props.subscriptions.length}`)
+    console.log('❌ [KBatchDeleteModal] Recebido:', confirmText.value)
   }
 }
 

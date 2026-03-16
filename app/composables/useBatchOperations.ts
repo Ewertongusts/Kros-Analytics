@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue'
 
-export const useBatchOperations = () => {
+export const useBatchOperations = (onBatchDeleteComplete?: () => Promise<void>) => {
   const { success, error: showError } = useToast()
   const { subscriptions, fetchSubscriptions, batchSuspend, batchReactivate, batchCancel, batchDelete } = useSubscriptionsManager()
 
@@ -184,10 +184,15 @@ export const useBatchOperations = () => {
     batchProgressModal.isOpen = true
 
     const ids = batchDeleteModal.subscriptions.map(s => s.id)
+    console.log('🗑️ [handleConfirmBatchDelete] Iniciando exclusão de', ids.length, 'assinaturas:', ids)
+    
     const result = await batchDelete(ids, (current) => {
+      console.log('🗑️ [handleConfirmBatchDelete] Progresso:', current, '/', batchDeleteModal.subscriptions.length)
       batchProgressModal.processed = current
     })
 
+    console.log('🗑️ [handleConfirmBatchDelete] Resultado:', result)
+    
     batchProgressModal.successCount = result.successCount
     batchProgressModal.failureCount = result.failureCount
     batchProgressModal.processed = batchDeleteModal.subscriptions.length
@@ -204,6 +209,11 @@ export const useBatchOperations = () => {
     }
 
     await fetchSubscriptions()
+    
+    // Chamar callback se fornecido (para atualizar stats e outros dados)
+    if (onBatchDeleteComplete) {
+      await onBatchDeleteComplete()
+    }
   }
 
   const handleBatchDelete = (subs: any[]) => {

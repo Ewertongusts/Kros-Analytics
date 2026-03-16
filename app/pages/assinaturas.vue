@@ -149,7 +149,10 @@ const {
   handleBatchDelete,
   handleConfirmBatchDelete,
   handleConfirmBatchAutoBilling
-} = useBatchOperations()
+} = useBatchOperations(async () => {
+  // Callback executado após deletar assinaturas
+  await Promise.all([fetchStats(), fetchSubscriptions()])
+})
 
 const refreshKey = ref(0)
 const selectedHistoryIds = ref<string[]>([])
