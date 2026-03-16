@@ -142,7 +142,8 @@
     <TasksKTasksCalendarView
       v-else-if="viewMode === 'calendar'"
       :tasks="tasks"
-      @open-task-modal="openTaskModal"
+      @select="openTaskModal"
+      @add-task="openTaskModal(undefined, getDefaultColumnId())"
     />
 
     <!-- Bulk Actions Bar -->
@@ -263,6 +264,16 @@ const allColumns = computed(() => {
 const getTasksInColumn = (columnId: string | undefined) => {
   if (!columnId) return []
   return tasks.value.filter(t => t.column_id === columnId).sort((a, b) => (a.position || 0) - (b.position || 0))
+}
+
+// Get default column ID (first column or 'A Fazer')
+const getDefaultColumnId = () => {
+  // Priorizar a coluna "A Fazer" se existir
+  const todoColumn = allColumns.value.find(col => col.column_id === 'col_todo' || col.status === 'todo')
+  if (todoColumn) return todoColumn.column_id
+  
+  // Caso contrário, usar a primeira coluna disponível
+  return allColumns.value[0]?.column_id || 'col_todo'
 }
 
 // Format date helper
