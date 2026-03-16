@@ -79,7 +79,7 @@ export const useAnalytics = () => {
             console.log('🔍 [fetchStats] Filtros: companies.is_active = true')
             
             const { data: paymentsData, error: paymentsError } = await (supabase.from('payments') as any)
-                .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags, billing_cycle)')
+                .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags, billing_cycle)')
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 
@@ -164,6 +164,9 @@ export const useAnalytics = () => {
                 }
 
                 const payments = (paymentsData as any[]).map(p => {
+                    // Debug log
+                    console.log(`📦 [fetchStats] Payment ${p.id}: cron_enabled=${p.cron_enabled}, auto_billing_enabled=${p.auto_billing_enabled}`)
+                    
                     const companyInfo = companiesMap.get(p.company_id)
                     let enrichedStatus = p.status
 
@@ -209,7 +212,9 @@ export const useAnalytics = () => {
                         last_alert_at: lastAlertsMap.get(p.id) || null,
                         company_ltv: companyInfo?.ltv || 0,
                         company_created_at: companyInfo?.created_at || p.due_date,
-                        company_rep: companyInfo?.representative_name || ''
+                        company_rep: companyInfo?.representative_name || '',
+                        // Debug: ensure cron_enabled is preserved
+                        cron_enabled: p.cron_enabled || false
                     }
                 })
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

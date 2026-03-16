@@ -304,6 +304,7 @@ export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
     try {
       // Se é desativar
       if (cronData.action === 'disable') {
+        console.log('🔴 [handleConfirmAutoBilling] Desativando CRON para payment:', payment.id)
         const res = await $fetch('/api/subscriptions/cron-schedule', {
           method: 'POST',
           body: {
@@ -312,12 +313,18 @@ export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
           }
         })
 
+        console.log('✅ [handleConfirmAutoBilling] Resposta da API:', res)
         success('Cobrança desativada', 'Automação foi desativada com sucesso')
-        await fetchStats(true, false)
+        console.log('🔄 [handleConfirmAutoBilling] Chamando fetchStats e fetchSubscriptions...')
+        await Promise.all([fetchStats(true, false), fetchSubscriptionsFn?.()])
+        console.log('✅ [handleConfirmAutoBilling] Dados atualizados')
         return
       }
 
       // Se é ativar/agendar
+      console.log('🟢 [handleConfirmAutoBilling] Agendando CRON para payment:', payment.id)
+      console.log('🟢 [handleConfirmAutoBilling] Dados:', cronData)
+      
       const res = await $fetch('/api/subscriptions/cron-schedule', {
         method: 'POST',
         body: {
@@ -328,6 +335,8 @@ export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
           message: cronData.message
         }
       })
+
+      console.log('✅ [handleConfirmAutoBilling] Resposta da API:', res)
 
       success(
         'Cobrança agendada',
@@ -347,7 +356,9 @@ export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
         }
       })
 
-      await fetchStats(true, false)
+      console.log('🔄 [handleConfirmAutoBilling] Chamando fetchStats e fetchSubscriptions...')
+      await Promise.all([fetchStats(true, false), fetchSubscriptionsFn?.()])
+      console.log('✅ [handleConfirmAutoBilling] Dados atualizados')
     } catch (err: any) {
       error('Erro ao agendar', err.message || 'Não foi possível agendar a cobrança')
     }

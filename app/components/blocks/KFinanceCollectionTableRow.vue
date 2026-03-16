@@ -86,6 +86,7 @@
       <FinanceCollectionKCollectionRowActions
         :status="payment.status"
         :auto-billing-enabled="payment.auto_billing_enabled"
+        :cron-enabled="payment.cron_enabled"
         :payment-id="payment.id"
         :is-compact="isCompact"
         @edit="$emit('edit', payment)"
@@ -96,6 +97,8 @@
         @open-history="$emit('open-history', payment.company_id)"
         @delete="$emit('delete', payment)"
       />
+      <!-- Debug log -->
+      {{ console.log(`📊 [KFinanceCollectionTableRow] ${payment.company_name}: cron_enabled=${payment.cron_enabled}`) || '' }}
     </td>
   </tr>
 </template>

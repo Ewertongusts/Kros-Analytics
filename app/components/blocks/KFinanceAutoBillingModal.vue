@@ -8,10 +8,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
         </div>
         <h3 class="text-base font-bold uppercase tracking-tight text-white">
-          ATIVAR <span class="text-emerald-500">AUTOMAÇÃO</span>
+          {{ payment?.cron_enabled ? 'AUTOMAÇÃO ATIVA' : 'ATIVAR AUTOMAÇÃO' }}
         </h3>
         <p class="text-[8px] text-white/50 uppercase tracking-widest mt-0.5">
-          Escolha o período para envio automático
+          {{ payment?.cron_enabled ? 'Gerenciar cobrança automática' : 'Escolha o período para envio automático' }}
         </p>
 
         <!-- Recipient info card -->
@@ -22,17 +22,17 @@
         </div>
       </div>
 
-      <!-- Se já tem CRON ativo: mostrar horário agendado -->
-      <div v-if="payment?.cron_enabled && !showPeriodSelection" class="space-y-3 relative z-10">
+      <!-- Se já tem CRON ativo e NÃO está editando: mostrar status -->
+      <div v-if="payment?.cron_enabled && !isEditing" class="space-y-3 relative z-10">
         <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-          <p class="text-[8px] text-emerald-400 uppercase tracking-widest font-bold mb-2">✓ Agendado</p>
-          <div class="space-y-1 text-[10px]">
+          <p class="text-[8px] text-emerald-400 uppercase tracking-widest font-bold mb-2">✓ Automação Ativa</p>
+          <div class="space-y-1.5 text-[10px]">
             <div class="flex items-center justify-between">
               <span class="text-white/70">Horário:</span>
               <span class="text-emerald-400 font-bold">{{ payment?.cron_scheduled_time }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-white/70">Próxima:</span>
+              <span class="text-white/70">Próxima execução:</span>
               <span class="text-emerald-400 font-bold">{{ formatDate(payment?.cron_next_execution) }}</span>
             </div>
             <div class="flex items-center justify-between">
@@ -42,12 +42,18 @@
           </div>
         </div>
 
+        <!-- Template sendo usado -->
+        <div class="p-2.5 bg-white/[0.02] border border-white/10 rounded-lg">
+          <p class="text-[8px] text-white/50 uppercase tracking-widest mb-1">Mensagem</p>
+          <p class="text-[9px] text-white/80 leading-relaxed whitespace-pre-wrap break-words line-clamp-3">{{ customMessageText }}</p>
+        </div>
+
         <div class="flex gap-2">
           <button 
-            @click="showPeriodSelection = true"
+            @click="isEditing = true"
             class="flex-1 py-2 text-[9px] font-semibold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-all"
           >
-            Alterar
+            Editar
           </button>
           <button 
             @click="handleDisableCron"
@@ -59,7 +65,7 @@
         </div>
       </div>
 
-      <!-- Se não tem CRON: mostrar seleção de período -->
+      <!-- Formulário de agendamento/edição -->
       <form v-else @submit.prevent="handleConfirm" class="space-y-3 relative z-10">
         
         <!-- Seleção de Período -->
@@ -112,16 +118,16 @@
         <!-- Preview da Mensagem -->
         <div v-if="customMessageText" class="p-2.5 bg-white/[0.02] border border-white/10 rounded-lg">
           <p class="text-[8px] text-white/50 uppercase tracking-widest mb-1">Prévia da Mensagem</p>
-          <p class="text-[10px] text-white/80 leading-relaxed whitespace-pre-wrap break-words">{{ customMessageText }}</p>
+          <p class="text-[10px] text-white/80 leading-relaxed whitespace-pre-wrap break-words line-clamp-3">{{ customMessageText }}</p>
         </div>
 
         <div class="flex gap-2 pt-2 border-t border-white/5">
           <button 
             type="button"
-            @click="$emit('close')"
+            @click="isEditing ? (isEditing = false) : ($emit('close'))"
             class="flex-1 py-2 text-[9px] font-semibold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-all"
           >
-            Cancelar
+            {{ isEditing ? 'Voltar' : 'Cancelar' }}
           </button>
           <button 
             type="submit"
@@ -129,7 +135,7 @@
             class="flex-[2] btn-primary !bg-emerald-500 hover:!bg-emerald-400 py-2 rounded-lg text-[9px] font-bold text-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-1"
           >
             <svg v-if="submitting" class="animate-spin text-black" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-            <span v-else>Agendar</span>
+            <span v-else>{{ isEditing ? 'Salvar' : 'Agendar' }}</span>
           </button>
         </div>
       </form>
@@ -159,7 +165,7 @@ const selectedPeriod = ref<'morning' | 'afternoon' | 'evening' | null>(null)
 const selectedTemplateId = ref('')
 const customMessageText = ref('')
 const submitting = ref(false)
-const showPeriodSelection = ref(false)
+const isEditing = ref(false)
 
 const periodOptions = {
   morning: { label: 'Manhã', range: '7h - 11h' },
@@ -208,12 +214,11 @@ const handleDisableCron = async () => {
 
 const applyTemplate = () => {
   if (selectedTemplateId.value) {
-    const tmpl = templates.value.find(t => t.id === selectedTemplateId.value)
+    const tmpl = templates.value.find(t => t.id === selectedTemplateId.value) as any
     if (tmpl) {
       customMessageText.value = tmpl.body
     }
   } else {
-    // Usar padrão do sistema
     customMessageText.value = 'Olá {{empresa}}!\nAviso da sua mensalidade referente ao plano: {{plano}}.\n\nFatura no valor de {{valor}} com vencimento até o dia {{vencimento}}.\nObrigado!'
   }
 }
@@ -222,12 +227,15 @@ onMounted(async () => {
   await fetchCrmData()
   
   if (!props.payment?.cron_enabled) {
-    showPeriodSelection.value = true
+    isEditing.value = true
   } else {
-    showPeriodSelection.value = false
+    isEditing.value = false
   }
   
-  // Carregar mensagem padrão ou do template
+  if (props.payment?.cron_period) {
+    selectedPeriod.value = props.payment.cron_period
+  }
+  
   if (props.payment?.cron_message) {
     customMessageText.value = props.payment.cron_message
   } else if (templates.value && templates.value.length > 0) {

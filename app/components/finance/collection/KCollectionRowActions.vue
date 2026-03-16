@@ -30,9 +30,9 @@
       </svg>
     </button>
 
-    <!-- Auto Billing -->
+    <!-- Auto Billing / CRON -->
     <UiKAutoBillingBtn 
-      :is-active="autoBillingEnabled"
+      :is-active="cronEnabled || autoBillingEnabled"
       :is-compact="isCompact"
       @click="$emit('toggle-autobilling')"
     />
@@ -85,12 +85,16 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   status: string
   autoBillingEnabled: boolean
+  cronEnabled: boolean
   paymentId: string
   isCompact: boolean
 }>()
+
+// Debug log
+console.log(`🤖 [KCollectionRowActions] paymentId=${props.paymentId}, cronEnabled=${props.cronEnabled}, autoBillingEnabled=${props.autoBillingEnabled}`)
 
 defineEmits(['edit', 'toggle-status', 'toggle-autobilling', 'open-msg-modal', 'open-logs', 'open-history', 'delete'])
 </script>
