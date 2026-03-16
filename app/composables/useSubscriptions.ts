@@ -295,25 +295,61 @@ export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
     }
   }
 
-  const handleConfirmAutoBilling = async (customMessage: string) => {
+  const handleConfirmAutoBilling = async (cronData: any) => {
     const payment = autoBillingModal.value.payment
     if (!payment) return
 
     autoBillingModal.value.isOpen = false
-    const res = await toggleAutoBilling(payment.id, true, customMessage)
-    if (!res.success) {
-      error('Erro ao ativar', res.error)
-    } else {
-      success('Automação ativada', `Cobrança automática de ${payment.company_name} foi ativada`)
+
+    try {
+      // Se é desativar
+      if (cronData.action === 'disable') {
+        const res = await $fetch('/api/subscriptions/cron-schedule', {
+          method: 'POST',
+          body: {
+            paymentId: payment.id,
+            action: 'disable'
+          }
+        })
+
+        success('Cobrança desativada', 'Automação foi desativada com sucesso')
+        await fetchStats(true, false)
+        return
+      }
+
+      // Se é ativar/agendar
+      const res = await $fetch('/api/subscriptions/cron-schedule', {
+        method: 'POST',
+        body: {
+          paymentId: payment.id,
+          period: cronData.period,
+          scheduledTime: cronData.scheduledTime,
+          nextExecution: cronData.nextExecution,
+          message: cronData.message
+        }
+      })
+
+      success(
+        'Cobrança agendada',
+        `Será enviada às ${cronData.scheduledTime} no período ${cronData.period}`
+      )
+
       await addHistoryEntry({
         payment_id: payment.id,
         company_id: payment.company_id,
-        action_type: 'auto_billing_enabled',
-        description: `Cobrança automática ativada para ${payment.company_name}`,
-        metadata: { plan_name: payment.plan_name, custom_message: customMessage }
+        action_type: 'cron_scheduled',
+        description: `Cobrança automática agendada para ${payment.company_name} às ${cronData.scheduledTime}`,
+        metadata: {
+          plan_name: payment.plan_name,
+          period: cronData.period,
+          scheduled_time: cronData.scheduledTime,
+          next_execution: cronData.nextExecution
+        }
       })
-      // Atualizar dados
+
       await fetchStats(true, false)
+    } catch (err: any) {
+      error('Erro ao agendar', err.message || 'Não foi possível agendar a cobrança')
     }
   }
 
@@ -322,77 +358,93 @@ export const useSubscriptions = (fetchSubscriptionsFn?: () => Promise<any>) => {
     batchAutoBillingModal.value.isOpen = true
   }
 
-  const handleConfirmBatchAutoBilling = async (customMessage: string) => {
+  const handleConfirmBatchAutoBilling = async (cronData: any) => {
     const payments = batchAutoBillingModal.value.payments
     if (!payments.length) return
 
     batchAutoBillingModal.value.isOpen = false
-    
-    // Registrar INÍCIO da ativação em massa
-    await addHistoryEntry({
-      action_type: 'batch_autobilling_started',
-      description: `Iniciada ativação de cobrança automática para ${payments.length} empresa(s)`,
-      metadata: { 
-        total_count: payments.length,
-        companies: payments.map(p => p.company_name),
-        custom_message: customMessage
+
+    try {
+      let successes = 0
+      let errors = 0
+      const successCompanies: string[] = []
+      const failedCompanies: string[] = []
+
+      // Registrar INÍCIO
+      await addHistoryEntry({
+        action_type: 'batch_cron_scheduled_started',
+        description: `Iniciado agendamento de cobrança automática para ${payments.length} empresa(s)`,
+        metadata: {
+          total_count: payments.length,
+          companies: payments.map(p => p.company_name),
+          period: cronData.period
+        }
+      })
+
+      // Agendar cada uma
+      for (const p of payments) {
+        try {
+          await $fetch('/api/subscriptions/cron-schedule', {
+            method: 'POST',
+            body: {
+              paymentId: p.id,
+              period: cronData.period,
+              scheduledTime: cronData.scheduledTime,
+              nextExecution: cronData.nextExecution,
+              message: cronData.message
+            }
+          })
+
+          successes++
+          successCompanies.push(p.company_name)
+
+          await addHistoryEntry({
+            payment_id: p.id,
+            company_id: p.company_id,
+            action_type: 'cron_scheduled',
+            description: `Cobrança automática agendada para ${p.company_name} (ação em massa)`,
+            metadata: {
+              plan_name: p.plan_name,
+              period: cronData.period,
+              scheduled_time: cronData.scheduledTime,
+              batch: true
+            }
+          })
+        } catch (err: any) {
+          errors++
+          failedCompanies.push(p.company_name)
+        }
       }
-    })
-    
-    let errors = 0
-    let successes = 0
-    const successCompanies: string[] = []
-    const failedCompanies: string[] = []
-    
-    for (const p of payments) {
-      const res = await toggleAutoBilling(p.id, true, customMessage)
-      if (!res.success) {
-        errors++
-        failedCompanies.push(p.company_name)
+
+      // Registrar FINALIZAÇÃO
+      await addHistoryEntry({
+        action_type: 'batch_cron_scheduled_completed',
+        description: `Agendamento em massa finalizado: ${successes} agendadas, ${errors} falharam`,
+        metadata: {
+          total_count: payments.length,
+          success_count: successes,
+          error_count: errors,
+          success_companies: successCompanies,
+          failed_companies: failedCompanies,
+          period: cronData.period
+        }
+      })
+
+      if (errors > 0) {
+        warning(
+          'Agendamento parcial',
+          `Agendadas para ${successes} empresas. ${errors} erros.`
+        )
       } else {
-        successes++
-        successCompanies.push(p.company_name)
-        
-        // Registrar individualmente
-        await addHistoryEntry({
-          payment_id: p.id,
-          company_id: p.company_id,
-          action_type: 'auto_billing_enabled',
-          description: `Cobrança automática ativada para ${p.company_name} (ação em massa)`,
-          metadata: { plan_name: p.plan_name, custom_message: customMessage, batch: true }
-        })
+        success(
+          'Cobranças agendadas',
+          `${payments.length} empresas agendadas para ${cronData.scheduledTime}`
+        )
       }
-    }
 
-    // Registrar FINALIZAÇÃO da ativação em massa
-    await addHistoryEntry({
-      action_type: 'batch_autobilling_completed',
-      description: `Ativação em massa finalizada: ${successes} ativadas, ${errors} falharam`,
-      metadata: { 
-        total_count: payments.length,
-        success_count: successes,
-        error_count: errors,
-        success_companies: successCompanies,
-        failed_companies: failedCompanies,
-        custom_message: customMessage
-      }
-    })
-
-    if (errors > 0) {
-      warning('Automação parcial', `Ativada para ${payments.length - errors} empresas. ${errors} erros.`)
-    } else {
-      success('Automação ativada', `Cobrança automática ativada para ${payments.length} empresas`)
-    }
-    
-    // Aguardar um pouco para garantir que o banco processou
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // Atualizar dados - forçar refresh completo (SEM silent mode)
-    await fetchStats(true, false)
-    
-    // Atualizar subscriptions se a função foi fornecida
-    if (fetchSubscriptionsFn) {
-      await fetchSubscriptionsFn()
+      await fetchStats(true, false)
+    } catch (err: any) {
+      error('Erro ao agendar em massa', err.message)
     }
   }
 
