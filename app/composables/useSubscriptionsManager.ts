@@ -27,6 +27,11 @@ export type SubscriptionWithDetails = Subscription & {
   plan_name?: string
   plan_billing_cycle?: string
   last_alert_at?: string | null
+  cron_enabled?: boolean
+  cron_period?: string | null
+  cron_scheduled_time?: string | null
+  cron_next_execution?: string | null
+  cron_message?: string | null
 }
 
 export const useSubscriptionsManager = () => {
@@ -47,7 +52,8 @@ export const useSubscriptionsManager = () => {
         .select(`
           *,
           customer:companies!customer_id(id, name, email, tags, representative_name, whatsapp),
-          plan:plans!plan_id(id, name, price, billing_cycle)
+          plan:plans!plan_id(id, name, price, billing_cycle),
+          payments(id, cron_enabled, cron_period, cron_scheduled_time, cron_next_execution, cron_message)
         `)
       
       // Remover filtro por user_id pois a tabela subscriptions não tem essa coluna
@@ -71,17 +77,28 @@ export const useSubscriptionsManager = () => {
       await new Promise(resolve => setTimeout(resolve, 0))
       
       // Atualizar com novos dados
-      subscriptions.value = (data || []).map((sub: any) => ({
-        ...sub,
-        customer_name: sub.customer?.representative_name || sub.customer?.name,
-        customer_actual_name: sub.customer?.name,
-        customer_email: sub.customer?.email,
-        customer_whatsapp: sub.customer?.whatsapp || '',
-        tags: sub.customer?.tags || [],
-        plan_name: sub.plan?.name,
-        plan_billing_cycle: sub.plan?.billing_cycle,
-        last_alert_at: null // Será preenchido depois
-      }))
+      subscriptions.value = (data || []).map((sub: any) => {
+        // Pegar o primeiro pagamento (mais recente) para obter dados de CRON
+        const latestPayment = sub.payments?.[0]
+        
+        return {
+          ...sub,
+          customer_name: sub.customer?.representative_name || sub.customer?.name,
+          customer_actual_name: sub.customer?.name,
+          customer_email: sub.customer?.email,
+          customer_whatsapp: sub.customer?.whatsapp || '',
+          tags: sub.customer?.tags || [],
+          plan_name: sub.plan?.name,
+          plan_billing_cycle: sub.plan?.billing_cycle,
+          last_alert_at: null, // Será preenchido depois
+          // Adicionar dados de CRON do pagamento
+          cron_enabled: latestPayment?.cron_enabled || false,
+          cron_period: latestPayment?.cron_period || null,
+          cron_scheduled_time: latestPayment?.cron_scheduled_time || null,
+          cron_next_execution: latestPayment?.cron_next_execution || null,
+          cron_message: latestPayment?.cron_message || null
+        }
+      })
       
       // Buscar last_alert_at de payments para cada assinatura
       for (let i = 0; i < subscriptions.value.length; i++) {
@@ -106,6 +123,10 @@ export const useSubscriptionsManager = () => {
       
       console.log('✅ [useSubscriptionsManager] fetchSubscriptions: subscriptions.value atualizado:', subscriptions.value.length)
       console.log('📋 [useSubscriptionsManager] Dados das assinaturas:', subscriptions.value)
+      console.log('🤖 [useSubscriptionsManager] CRON por assinatura:')
+      subscriptions.value.forEach((sub, idx) => {
+        console.log(`  [${idx}] ${sub.customer_name}: cron_enabled=${sub.cron_enabled}, period=${sub.cron_period}, time=${sub.cron_scheduled_time}`)
+      })
       console.log('🏷️ [useSubscriptionsManager] Tags por assinatura:')
       subscriptions.value.forEach((sub, idx) => {
         console.log(`  [${idx}] ${sub.customer_name}: ${sub.tags?.length || 0} tags -`, sub.tags)

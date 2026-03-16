@@ -392,7 +392,13 @@ const adaptedSubscriptions = computed(() => {
       payment_status_icon: getStatusIcon(paymentStatus), // Ícone
       status: sub.status, // Manter status original para o modal
       last_alert_at: sub.last_alert_at || null, // Data e hora do último alerta
-      _key: `${sub.id}-${sub.status}-${paymentStatus}-${sub.updated_at || Date.now()}` // Key única para forçar re-render
+      // Adicionar campos de CRON
+      cron_enabled: sub.cron_enabled || false,
+      cron_period: sub.cron_period || null,
+      cron_scheduled_time: sub.cron_scheduled_time || null,
+      cron_next_execution: sub.cron_next_execution || null,
+      cron_message: sub.cron_message || null,
+      _key: `${sub.id}-${sub.status}-${paymentStatus}-${sub.cron_enabled}-${sub.updated_at || Date.now()}` // Key única para forçar re-render
     }
   })
   
