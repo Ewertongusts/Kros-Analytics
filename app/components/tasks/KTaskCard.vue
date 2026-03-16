@@ -1,5 +1,11 @@
 <template>
   <div>
+    <!-- Indicador acima (quando drag está acima) -->
+    <div 
+      v-if="isDragOver && dragOverPosition === 'above'"
+      class="h-0.5 bg-blue-500 rounded mb-1 shadow-lg shadow-blue-500/50 transition-all duration-150"
+    ></div>
+
     <!-- Card Original -->
     <div 
       ref="cardElement"
@@ -127,6 +133,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Indicador abaixo (quando drag está abaixo) -->
+    <div 
+      v-if="isDragOver && dragOverPosition === 'below'"
+      class="h-0.5 bg-blue-500 rounded mt-1 shadow-lg shadow-blue-500/50 transition-all duration-150"
+    ></div>
 
     <!-- Clone Flutuante -->
     <Teleport to="body">
