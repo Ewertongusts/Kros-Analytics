@@ -32,7 +32,7 @@
 
     <!-- Auto Billing / CRON -->
     <UiKAutoBillingBtn 
-      :is-active="cronEnabled || autoBillingEnabled"
+      :is-active="isAutoBillingActive"
       :is-compact="isCompact"
       @click="$emit('toggle-autobilling')"
     />
@@ -85,6 +85,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = defineProps<{
   status: string
   autoBillingEnabled: boolean
@@ -95,6 +97,13 @@ const props = defineProps<{
 
 // Debug log
 console.log(`🤖 [KCollectionRowActions] paymentId=${props.paymentId}, cronEnabled=${props.cronEnabled}, autoBillingEnabled=${props.autoBillingEnabled}`)
+
+// Computed para garantir reatividade
+const isAutoBillingActive = computed(() => {
+  const active = props.cronEnabled || props.autoBillingEnabled
+  console.log(`🤖 [KCollectionRowActions] isAutoBillingActive computed: ${active} (cron=${props.cronEnabled}, auto=${props.autoBillingEnabled})`)
+  return active
+})
 
 defineEmits(['edit', 'toggle-status', 'toggle-autobilling', 'open-msg-modal', 'open-logs', 'open-history', 'delete'])
 </script>

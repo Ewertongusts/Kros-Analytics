@@ -84,6 +84,7 @@
     </td>
     <td :class="['text-right sticky right-0 bg-[#0D0D0E]/80 backdrop-blur-xl group-hover/row:bg-[#151516]/90 transition-all z-10 border-l border-white/5 overflow-visible', isCompact ? 'px-2 py-3' : 'px-4 py-5']">
       <FinanceCollectionKCollectionRowActions
+        :key="`actions-${payment.id}-${payment.cron_enabled}-${payment.auto_billing_enabled}`"
         :status="payment.status"
         :auto-billing-enabled="payment.auto_billing_enabled"
         :cron-enabled="payment.cron_enabled"
