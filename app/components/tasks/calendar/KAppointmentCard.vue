@@ -53,21 +53,29 @@ const priorityColor = computed(() => {
 
 const statusColor = computed(() => {
   const status = props.appointment.status
-  return status === 'concluida' || status === 'completed' ? 'bg-green-500/20 text-green-300' :
+  return status === 'concluida' || status === 'completed' || status === 'done' ? 'bg-green-500/20 text-green-300' :
          status === 'em_progresso' || status === 'in_progress' ? 'bg-blue-500/20 text-blue-300' :
+         status === 'a_fazer' || status === 'todo' || status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
          'bg-gray-500/20 text-gray-300'
 })
 
 const statusLabel = computed(() => {
   const labels = {
+    // Status em português
     'pendente': 'Pendente',
     'em_progresso': 'Em Progresso',
-    'in_progress': 'Em Progresso',
     'concluida': 'Concluída',
-    'completed': 'Concluída',
     'cancelada': 'Cancelada',
-    'cancelled': 'Cancelada'
+    'a_fazer': 'A Fazer',
+    // Status em inglês
+    'in_progress': 'Em Progresso',
+    'completed': 'Concluída',
+    'cancelled': 'Cancelada',
+    'todo': 'A Fazer',
+    'done': 'Concluído',
+    'pending': 'Pendente'
   }
+  
   return labels[props.appointment.status as keyof typeof labels] || props.appointment.status
 })
 

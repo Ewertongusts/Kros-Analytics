@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import type { Task } from '~/composables/useTasks'
+import KAppointmentCard from './KAppointmentCard.vue'
 
 interface Props {
   appointments: Task[]
