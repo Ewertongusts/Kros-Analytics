@@ -392,8 +392,8 @@ onMounted(async () => {
     // Migrar tarefas existentes para ter column_id
     await migrateTasksColumnId()
     
-    // Não fazer fetch automático - as tarefas já estão no estado local
-    // await handlerFetchTasks()
+    // Fazer fetch das tarefas para garantir que estão carregadas
+    await handlerFetchTasks()
 
     // Real-time subscription
     try {
@@ -404,8 +404,8 @@ onMounted(async () => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'tasks' },
           () => {
-            // Desabilitar refetch automático para evitar reload
-            // handlerFetchTasks()
+            // Recarregar tarefas quando houver mudanças
+            handlerFetchTasks()
           }
         )
         .subscribe()

@@ -142,7 +142,11 @@ const form = ref<Task>({
 
 watch(() => props.task, (newTask) => {
   if (newTask) {
-    form.value = { ...newTask }
+    form.value = { 
+      ...newTask,
+      // Garantir que a data seja exibida corretamente no input date
+      due_date: newTask.due_date ? newTask.due_date.split('T')[0] : ''
+    }
   } else {
     form.value = {
       title: '',

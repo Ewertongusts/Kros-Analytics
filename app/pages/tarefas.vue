@@ -233,6 +233,7 @@
         :toggle-task-selection="toggleTaskSelection"
         @edit="openTaskModal"
         @delete="handleDeleteTask"
+        @add-task="openTaskModal(undefined, getDefaultColumnId())"
       />
 
       <!-- Grid View -->
@@ -542,6 +543,14 @@ const orphanTasks = computed(() => {
 const displayColumns = computed(() => {
   return [...customColumns.value]
 })
+
+const getDefaultColumnId = () => {
+  // Pegar a primeira coluna disponível
+  if (customColumns.value.length > 0) {
+    return customColumns.value[0].column_id
+  }
+  return undefined
+}
 
 const getTasksInColumn = (columnId: string) => {
   return handlerTasks.value

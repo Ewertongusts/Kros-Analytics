@@ -11,9 +11,11 @@ export const useTaskHandlers = () => {
   const defaultColumnId = ref<string>('')
 
   const openTaskModal = (task?: Task, columnId?: string) => {
+    console.log('🎯 [openTaskModal] Abrindo modal:', { task, columnId })
     selectedTask.value = task || null
     defaultColumnId.value = columnId || ''
     isTaskModalOpen.value = true
+    console.log('🎯 [openTaskModal] Modal aberto:', { isTaskModalOpen: isTaskModalOpen.value, defaultColumnId: defaultColumnId.value })
   }
 
   const closeTaskModal = () => {
@@ -23,11 +25,30 @@ export const useTaskHandlers = () => {
   }
 
   const handleSaveTask = async (taskData: Partial<Task>) => {
+    console.log('🚀 [handleSaveTask] Iniciando salvamento:', taskData)
     loadingAction.value = true
     try {
       if (selectedTask.value?.id) {
-        await updateTask(selectedTask.value.id, taskData)
+        // Atualizar tarefa existente
+        console.log('✏️ [handleSaveTask] Editando tarefa existente:', selectedTask.value.id)
+        console.log('📋 [handleSaveTask] Dados originais:', selectedTask.value)
+        console.log('📝 [handleSaveTask] Dados para atualização:', taskData)
+        
+        const result = await updateTask(selectedTask.value.id, taskData)
+        console.log('📊 [handleSaveTask] Resultado da atualização:', result)
+        
+        if (result.success) {
+          console.log('✅ [handleSaveTask] Tarefa atualizada com sucesso')
+          // Fazer um fetch para garantir que os dados estão sincronizados
+          console.log('🔄 [handleSaveTask] Fazendo fetch para sincronizar dados')
+          await fetchTasks()
+          console.log('✅ [handleSaveTask] Fetch concluído')
+        } else {
+          console.error('❌ [handleSaveTask] Erro ao atualizar tarefa:', result.error)
+          throw new Error(result.error)
+        }
       } else {
+        // Criar nova tarefa
         const tasksInColumn = defaultColumnId.value 
           ? tasks.value.filter(t => t.column_id === defaultColumnId.value)
           : []
@@ -38,13 +59,31 @@ export const useTaskHandlers = () => {
           column_id: defaultColumnId.value || undefined,
           position: newPosition
         } as Task
-        await createTask(newTask)
+        console.log('🆕 [handleSaveTask] Criando nova tarefa:', newTask)
+        console.log('📍 [handleSaveTask] Coluna padrão:', defaultColumnId.value)
+        console.log('📊 [handleSaveTask] Posição calculada:', newPosition)
+        
+        const result = await createTask(newTask)
+        console.log('📊 [handleSaveTask] Resultado da criação:', result)
+        
+        if (result.success) {
+          console.log('✅ [handleSaveTask] Nova tarefa criada com sucesso')
+          console.log('🔄 [handleSaveTask] Fazendo fetch para sincronizar dados')
+          await fetchTasks()
+          console.log('✅ [handleSaveTask] Fetch concluído')
+        } else {
+          console.error('❌ [handleSaveTask] Erro ao criar tarefa:', result.error)
+          throw new Error(result.error)
+        }
       }
+      console.log('🎉 [handleSaveTask] Salvamento concluído, fechando modal')
       closeTaskModal()
     } catch (error) {
-      console.error('❌ Erro ao salvar tarefa:', error)
+      console.error('❌ [handleSaveTask] Erro geral ao salvar tarefa:', error)
+      // Não fechar o modal em caso de erro para que o usuário possa tentar novamente
     } finally {
       loadingAction.value = false
+      console.log('🏁 [handleSaveTask] Processo finalizado')
     }
   }
 
