@@ -18,7 +18,7 @@
             handleTaskDropWithPosition(e, column.column_id)
           }
         }"
-        class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-300 ease-out relative"
+        class="flex-shrink-0 w-[300px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-300 ease-out relative"
         :class="[
           draggedColumnId === column.column_id ? 'opacity-50' : ''
         ]"
@@ -134,7 +134,7 @@
       </div>
 
       <!-- Botão Adicionar Coluna -->
-      <div class="flex-shrink-0 w-[220px]">
+      <div class="flex-shrink-0 w-[300px]">
         <button
           @click="$emit('add-column')"
           class="w-full p-2.5 bg-[#1a1a1c] hover:bg-white/5 border border-dashed border-white/10 hover:border-white/20 rounded-xl transition-all text-white/30 hover:text-white/50 flex items-center justify-center gap-1.5"

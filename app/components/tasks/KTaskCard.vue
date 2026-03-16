@@ -23,7 +23,7 @@
         backdropFilter: isOrphan ? 'blur(8px)' : 'none'
       }"
       :class="[
-        'group relative p-3.5 rounded-lg cursor-grab active:cursor-grabbing aspect-[4/3]',
+        'group relative p-3.5 rounded-lg cursor-grab active:cursor-grabbing aspect-[5/4]',
         'transition-all duration-300 ease-out',
         'border border-white/10 hover:border-white/20',
         isOrphan ? 'border-orange-500/40 hover:border-orange-500/60' : '',
@@ -158,7 +158,7 @@
           transform: 'scale(1.05) rotate(3deg)',
           opacity: '0.95'
         }"
-        class="p-3.5 bg-[#1c1c1e] border border-white/30 rounded-lg shadow-2xl aspect-[4/3]"
+        class="p-3.5 bg-[#1c1c1e] border border-white/30 rounded-lg shadow-2xl aspect-[5/4]"
       >
         <!-- Tags -->
         <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1.5 mb-2.5">
