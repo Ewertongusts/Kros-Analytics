@@ -73,7 +73,6 @@ useHead({
 // Watch for user authentication changes
 watch(() => user.value, async (newUser) => {
   if (newUser) {
-    console.log('👤 User authenticated, fetching white label settings...')
     await fetchSettings()
     if (settings.value.primary_color) {
       applyColors(settings.value.primary_color)
@@ -83,7 +82,6 @@ watch(() => user.value, async (newUser) => {
 
 onMounted(async () => {
   // Initialize colors from localStorage immediately
-  console.log('🚀 [onMounted] Initializing colors from localStorage...')
   initializeColorsFromStorage()
   
   // Registrar instância do Toast
