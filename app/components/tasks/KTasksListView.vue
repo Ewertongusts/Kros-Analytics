@@ -218,16 +218,19 @@ const handleAddTask = () => {
 }
 
 const toggleSelectAll = () => {
-  filteredTasks.value.forEach(task => {
-    const isSelected = props.isTaskSelected(task.id!)
-    if (!isSelected) {
-      props.toggleTaskSelection(task.id!)
-    }
-  })
-  
   if (allSelected.value) {
+    // Se todas estão selecionadas, desmarcar todas
     filteredTasks.value.forEach(task => {
-      props.toggleTaskSelection(task.id!)
+      if (props.isTaskSelected(task.id!)) {
+        props.toggleTaskSelection(task.id!)
+      }
+    })
+  } else {
+    // Se nem todas estão selecionadas, marcar todas
+    filteredTasks.value.forEach(task => {
+      if (!props.isTaskSelected(task.id!)) {
+        props.toggleTaskSelection(task.id!)
+      }
     })
   }
 }
