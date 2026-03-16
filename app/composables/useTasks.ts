@@ -24,8 +24,6 @@ export const useTasks = () => {
   const fetchTasks = async () => {
     loading.value = true
     try {
-      console.log('🔍 [fetchTasks] Iniciando busca de tarefas...')
-      console.log('👤 [fetchTasks] Usuário atual:', user.value?.id)
       const query = (supabase.from('tasks') as any)
         .select('*')
         .order('status', { ascending: true })
@@ -33,16 +31,11 @@ export const useTasks = () => {
 
       const { data, error } = await query
 
-      if (error) {
-        console.error('❌ [fetchTasks] Erro ao buscar tarefas:', error)
-        throw error
-      }
-      console.log('✅ [fetchTasks] Tarefas recebidas do banco:', data?.length || 0)
-      console.log('   Tarefas:', data?.map(t => ({ id: t.id, title: t.title, status: t.status })))
+      if (error) throw error
+      
       tasks.value = data || []
-      console.log('📦 [fetchTasks] tasks.value atualizado:', tasks.value.length)
     } catch (err: any) {
-      console.error('❌ [fetchTasks] Erro geral:', err)
+      // Erro ao buscar tarefas
     } finally {
       loading.value = false
     }
@@ -50,17 +43,11 @@ export const useTasks = () => {
 
   const createTask = async (task: Task) => {
     try {
-      console.log('👤 Verificando usuário...', user.value)
-      
-      // O ID do usuário pode estar em user.value.id ou user.value.sub
       const userId = user.value?.id || user.value?.sub
       
       if (!userId) {
-        console.error('❌ Usuário não autenticado - ID não encontrado')
         throw new Error('Usuário não autenticado')
       }
-
-      console.log('✅ ID do usuário encontrado:', userId)
 
       const taskData = {
         title: task.title,
@@ -76,24 +63,16 @@ export const useTasks = () => {
         created_at: new Date().toISOString()
       }
 
-      console.log('📤 Enviando tarefa para o banco:', taskData)
-
       const { data, error } = await (supabase.from('tasks') as any)
         .insert([taskData])
         .select()
         .single()
 
-      if (error) {
-        console.error('❌ Erro do Supabase ao criar tarefa:', error)
-        throw error
-      }
+      if (error) throw error
       
-      console.log('✅ Tarefa criada com sucesso:', data)
-      // Adicionar tarefa ao estado local em vez de fazer refetch
       tasks.value.push(data)
       return { success: true, data }
     } catch (err: any) {
-      console.error('❌ Erro ao criar tarefa:', err)
       return { success: false, error: err.message }
     }
   }
@@ -119,10 +98,10 @@ export const useTasks = () => {
         .eq('id', id)
 
       if (error) throw error
-      console.log('✅ [updateTask] Tarefa atualizada no banco:', id)
+      
       return { success: true }
     } catch (err: any) {
-      console.error('❌ [updateTask] Erro ao atualizar tarefa:', err)
+      console.error('Erro ao atualizar tarefa:', err)
       return { success: false, error: err.message }
     }
   }
@@ -134,10 +113,10 @@ export const useTasks = () => {
         .eq('id', id)
 
       if (error) throw error
-      console.log('✅ [deleteTask] Tarefa deletada do banco:', id)
+      
       return { success: true }
     } catch (err: any) {
-      console.error('❌ [deleteTask] Erro ao deletar tarefa:', err)
+      console.error('Erro ao deletar tarefa:', err)
       return { success: false, error: err.message }
     }
   }

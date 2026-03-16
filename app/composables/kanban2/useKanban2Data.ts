@@ -79,8 +79,24 @@ export const useKanban2Data = () => {
   ): Promise<void> => {
     error.value = null
 
+    console.log('[MOVE-TASK] 📤 Starting move', {
+      taskId,
+      fromColumnId,
+      toColumnId,
+      position,
+      timestamp: new Date().toISOString()
+    })
+
     try {
       const { $fetch } = useNuxtApp()
+      
+      console.log('[MOVE-TASK] 🌐 Calling API /api/tasks/move', {
+        taskId,
+        fromColumnId,
+        toColumnId,
+        position
+      })
+
       await $fetch('/api/tasks/move', {
         method: 'POST',
         body: {
@@ -91,13 +107,30 @@ export const useKanban2Data = () => {
         }
       })
 
+      console.log('[MOVE-TASK] ✅ API call successful')
+
       // Atualizar estado local
       const taskIndex = tasks.value.findIndex(t => t.id === taskId)
       if (taskIndex !== -1) {
+        console.log('[MOVE-TASK] 🔄 Updating local state', {
+          taskIndex,
+          oldColumnId: tasks.value[taskIndex].column_id,
+          newColumnId: toColumnId
+        })
         tasks.value[taskIndex].column_id = toColumnId
+        console.log('[MOVE-TASK] ✅ Local state updated')
+      } else {
+        console.warn('[MOVE-TASK] ⚠️ Task not found in local state', { taskId })
       }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erro ao mover tarefa'
+      const errorMsg = err instanceof Error ? err.message : 'Erro ao mover tarefa'
+      error.value = errorMsg
+      console.error('[MOVE-TASK] ❌ Error', {
+        error: errorMsg,
+        taskId,
+        fromColumnId,
+        toColumnId
+      })
       throw err
     }
   }

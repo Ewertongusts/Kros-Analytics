@@ -66,7 +66,6 @@ export const useExpenses = () => {
       expenses.value = data || []
     } catch (e: any) {
       error.value = e.message
-      console.error('Erro ao buscar despesas:', e)
     } finally {
       loading.value = false
     }

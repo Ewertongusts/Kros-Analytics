@@ -99,6 +99,12 @@ onMounted(async () => {
  * Inicia drag de uma tarefa
  */
 const handleTaskDragStart = (event: { task: Task; columnId: string }) => {
+  console.log('[BOARD] 🎯 handleTaskDragStart', {
+    taskId: event.task.id,
+    taskTitle: event.task.title,
+    columnId: event.columnId,
+    timestamp: new Date().toISOString()
+  })
   dragDrop.startDrag(event.task, event.columnId)
 }
 
@@ -106,6 +112,12 @@ const handleTaskDragStart = (event: { task: Task; columnId: string }) => {
  * Atualiza posição durante drag
  */
 const handleTaskDragOver = (event: { columnId: string; position: 'above' | 'below' }) => {
+  console.log('[BOARD] 📍 handleTaskDragOver', {
+    toColumnId: event.columnId,
+    position: event.position,
+    currentTaskId: dragDrop.dragState.value.taskId,
+    timestamp: new Date().toISOString()
+  })
   dragDrop.moveDrag(event.columnId, event.position)
 }
 
@@ -116,18 +128,41 @@ const handleTaskDrop = async (event: { task: Task; columnId: string }) => {
   const fromColumnId = dragDrop.dragState.value.fromColumnId || ''
   const toColumnId = event.columnId
 
+  console.log('[BOARD] 💧 handleTaskDrop', {
+    taskId: event.task.id,
+    taskTitle: event.task.title,
+    fromColumnId,
+    toColumnId,
+    sameColumn: fromColumnId === toColumnId,
+    timestamp: new Date().toISOString()
+  })
+
   // Se não mudou de coluna, apenas reordenar
   if (fromColumnId === toColumnId) {
+    console.log('[BOARD] ℹ️ Same column - just reordering, resetting drag')
     dragDrop.resetDrag()
     return
   }
 
+  console.log('[BOARD] 🔄 Different column - moving task')
+
   try {
     await dragDrop.completeDrop(async (taskId, fromCol, toCol, position) => {
+      console.log('[BOARD] 📤 Calling data.moveTask', {
+        taskId,
+        fromCol,
+        toCol,
+        position
+      })
       await data.moveTask(taskId, fromCol, toCol, position)
+      console.log('[BOARD] ✅ data.moveTask completed')
     })
+    console.log('[BOARD] ✅ Drop completed successfully')
   } catch (err) {
-    console.error('Erro ao mover tarefa:', err)
+    console.error('[BOARD] ❌ Error during drop', {
+      error: err instanceof Error ? err.message : String(err),
+      taskId: event.task.id
+    })
     dragDrop.resetDrag()
   }
 }

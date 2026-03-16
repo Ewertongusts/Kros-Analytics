@@ -257,7 +257,7 @@
       @close="clientDetailsModal.isOpen = false"
       @edit="handleEditClient"
       @toggle-status="handleToggleClientStatus"
-      @refresh-sales="async () => { console.log('📡 [vendas.vue] Evento refresh-sales recebido, chamando fetchSales()'); await fetchSales() }"
+      @refresh-sales="async () => { await fetchSales() }"
     />
 
     <!-- Card de Detalhes da Venda -->
@@ -512,7 +512,6 @@ const handleOpenClientDetails = async (sale: any) => {
       .single()
     
     if (error || !customer) {
-      console.warn('Cliente não encontrado, usando dados da venda:', error)
       // Fallback: usar dados da venda
       clientDetailsModal.company = {
         id: sale.company_id || sale.id,
@@ -530,7 +529,6 @@ const handleOpenClientDetails = async (sale: any) => {
       clientDetailsModal.company = customer
     }
   } catch (err) {
-    console.error('Erro ao buscar cliente:', err)
   }
   clientDetailsModal.isOpen = true
 }

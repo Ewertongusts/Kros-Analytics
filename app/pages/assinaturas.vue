@@ -201,8 +201,6 @@ const handleSubscriptionCreated = async () => {
 }
 
 const handleBatchTagProgress = (data: any) => {
-  console.log('handleBatchTagProgress:', data)
-  
   if (data.processed === 0) {
     // Abrir modal
     const actionText = data.action === 'add' ? 'Adicionando' : 'Removendo'
@@ -228,10 +226,6 @@ const handleBatchTagProgress = (data: any) => {
 }
 
 const handleUpdateCompanyTags = async ({ companyId, tags }: { companyId: string, tags: string[] }) => {
-  console.log('=== handleUpdateCompanyTags (assinaturas.vue) ===')
-  console.log('Company ID:', companyId)
-  console.log('Tags:', tags)
-  
   try {
     const supabase = useSupabaseClient()
     const user = useSupabaseUser()
@@ -250,11 +244,8 @@ const handleUpdateCompanyTags = async ({ companyId, tags }: { companyId: string,
       .eq('id', companyId)
     
     if (updateError) {
-      console.error('Erro ao atualizar tags:', updateError)
       return
     }
-    
-    console.log('Tags atualizadas no banco:', companyId)
     
     // Registrar no histórico
     const tagsText = tags.length > 0 ? tags.join(', ') : 'nenhuma'
@@ -271,24 +262,17 @@ const handleUpdateCompanyTags = async ({ companyId, tags }: { companyId: string,
       }
     })
     
-    console.log('Log de atualização de tags registrado')
-    
   } catch (err: any) {
-    console.error('Erro ao atualizar tags:', err)
   }
 }
 
 const handleSync = async () => {
-  console.log('handleSync chamado - recarregando assinaturas')
   await fetchSubscriptions()
   await nextTick()
-  refreshKey.value++ // Incrementar para forçar re-render
-  console.log('Assinaturas recarregadas:', subscriptions.value.length)
+  refreshKey.value++
 }
 
 const handleUpdatePayments = (updatedPayments: any[]) => {
-  console.log('🏷️ [assinaturas.vue] handleUpdatePayments:', updatedPayments.length)
-  
   // Atualizar apenas as tags dos subscriptions que foram modificados
   updatedPayments.forEach(updatedPayment => {
     const sub = subscriptions.value.find(s => s.id === updatedPayment.id)
@@ -297,8 +281,6 @@ const handleUpdatePayments = (updatedPayments: any[]) => {
       Object.assign(sub, { tags: updatedPayment.tags })
     }
   })
-  
-  console.log('✅ [assinaturas.vue] Assinaturas atualizadas')
 }
 
 // Handlers para ações em massa no histórico
@@ -347,14 +329,12 @@ const handleBatchReverseHistory = async () => {
 
 // Watcher para forçar re-render quando tags mudam
 watch(() => subscriptions.value.map(s => s.tags?.length || 0).join(','), () => {
-  console.log('🔄 [assinaturas.vue] Tags mudaram, forçando re-render')
   refreshKey.value++
 }, { deep: true })
 
 // Watcher para forçar re-render quando stats.paymentsList muda (pagamentos atualizados)
 watch(() => stats.value.paymentsList?.length || 0, (newLength, oldLength) => {
   if (newLength !== oldLength) {
-    console.log('🔄 [assinaturas.vue] Pagamentos atualizados, forçando re-render:', { oldLength, newLength })
     refreshKey.value++
   }
 })
@@ -362,22 +342,18 @@ watch(() => stats.value.paymentsList?.length || 0, (newLength, oldLength) => {
 // Watcher adicional para mudanças nos status dos pagamentos
 watch(() => stats.value.paymentsList?.map(p => `${p.id}-${p.status}`).join(','), (newVal, oldVal) => {
   if (newVal !== oldVal) {
-    console.log('🔄 [assinaturas.vue] Status de pagamentos mudou, forçando re-render')
     refreshKey.value++
   }
 }, { deep: true })
 
 const handleDeleteSuccess = (id: string) => {
-  console.log('handleDeleteSuccess chamado para ID:', id)
   // Remover do array local usando o composable
   subscriptions.value = subscriptions.value.filter(s => s.id !== id)
-  console.log('Assinaturas restantes:', subscriptions.value.length)
 }
 
 
 
 const handleEditSubscription = (subscription: any) => {
-  console.log('Editando assinatura:', subscription)
   // Abrir modal de edição com os dados da assinatura
   subscriptionModal.isOpen = true
   subscriptionModal.editingSubscription = subscription
@@ -385,10 +361,6 @@ const handleEditSubscription = (subscription: any) => {
 
 // Adaptar dados de subscriptions para o formato esperado pelo componente
 const adaptedSubscriptions = computed(() => {
-  console.log('🔄 [adaptedSubscriptions] Recalculando...')
-  console.log('📊 [adaptedSubscriptions] Subscriptions:', subscriptions.value.length)
-  console.log('📊 [adaptedSubscriptions] PaymentHistory:', paymentHistory.value.length)
-  
   const adapted = subscriptions.value.map(sub => {
     // Calcular próximo vencimento baseado no due_day
     const today = new Date()
@@ -407,9 +379,6 @@ const adaptedSubscriptions = computed(() => {
     
     // Calcular status de pagamento baseado nas faturas
     const paymentStatus = calculatePaymentStatus(sub, paymentHistory.value)
-    
-    console.log(`💳 [adaptedSubscriptions] ${sub.customer_name}: payment_status = ${paymentStatus}`)
-    console.log(`📱 [adaptedSubscriptions] ${sub.customer_name}: WhatsApp = "${sub.customer_whatsapp}"`)
     
     return {
       ...sub,
@@ -432,24 +401,11 @@ const adaptedSubscriptions = computed(() => {
     }
   })
   
-  console.log('✅ [adaptedSubscriptions] Adaptados:', adapted.length)
   return adapted
 })
 
 onMounted(async () => {
-  console.log('🚀 [assinaturas.vue] onMounted iniciado')
-  console.log('📊 [assinaturas.vue] Chamando fetchStats() e fetchSubscriptions()...')
   await Promise.all([fetchStats(), fetchSubscriptions()])
-  
-  // Log das assinaturas carregadas
-  console.log('✅ [assinaturas.vue] Assinaturas carregadas:', subscriptions.value?.length || 0)
-  console.log('📋 [assinaturas.vue] Dados das assinaturas:', subscriptions.value)
-  
-  // Log específico do WhatsApp
-  console.log('📱 [assinaturas.vue] WhatsApp por assinatura:')
-  subscriptions.value.forEach((sub: any) => {
-    console.log(`  - ${sub.customer_name}: WhatsApp = "${sub.customer_whatsapp}"`)
-  })
   
   // Registrar acesso à página
   try {
@@ -467,7 +423,6 @@ onMounted(async () => {
       }
     })
   } catch (err) {
-    console.error('Erro ao registrar acesso:', err)
   }
 })
 
@@ -477,18 +432,13 @@ const handleOpenClientDetails = async (payment: any) => {
     const supabase = useSupabaseClient()
     const customerId = payment.customer_id || payment.company_id
     
-    console.log('🔍 Abrindo detalhes do cliente:', { customerId, payment })
-    
     const { data: customer, error } = await supabase
       .from('companies')
       .select('*')
       .eq('id', customerId)
       .single()
     
-    console.log('📊 Cliente encontrado:', { customer, error })
-    
     if (error || !customer) {
-      console.warn('Cliente não encontrado, usando dados do pagamento:', error)
       // Fallback: usar dados do pagamento
       clientDetailsModal.company = {
         id: customerId,
@@ -506,7 +456,6 @@ const handleOpenClientDetails = async (payment: any) => {
       clientDetailsModal.company = customer
     }
   } catch (err) {
-    console.error('Erro ao buscar cliente:', err)
   }
   clientDetailsModal.isOpen = true
 }
@@ -515,30 +464,16 @@ const handleOpenPlanDetails = async (payment: any) => {
   try {
     const supabase = useSupabaseClient()
     
-    console.log('📋 [handleOpenPlanDetails] Payment recebido:', {
-      plan_name: payment.plan_name,
-      customer_name: payment.customer_name,
-      amount: payment.amount,
-      status: payment.status,
-      created_at: payment.created_at,
-      notes: payment.notes,
-      id: payment.id
-    })
-    
     // Buscar detalhes do plano
     let planCategory = null
     let planDescription = null
     
     if (payment.plan_name) {
-      console.log('🔍 [handleOpenPlanDetails] Buscando plano:', payment.plan_name)
-      
       const { data: planData } = await supabase
         .from('plans')
         .select('category, description')
         .eq('name', payment.plan_name)
         .limit(1)
-      
-      console.log('📊 [handleOpenPlanDetails] Dados do plano:', planData)
       
       if (planData && planData.length > 0) {
         planCategory = planData[0].category
@@ -558,12 +493,9 @@ const handleOpenPlanDetails = async (payment: any) => {
       plan_notes: planDescription
     }
     
-    console.log('✅ [handleOpenPlanDetails] Dados para modal:', modalData)
-    
     planDetailsModal.payment = modalData
     planDetailsModal.isOpen = true
   } catch (err) {
-    console.error('❌ [handleOpenPlanDetails] Erro:', err)
     planDetailsModal.payment = payment
     planDetailsModal.isOpen = true
   }
@@ -599,8 +531,6 @@ const handleReverseInvoice = async (payment: any) => {
     const supabase = useSupabaseClient()
     const user = useSupabaseUser()
     
-    console.log('↺ [handleReverseInvoice] Estornando pagamento:', payment.id)
-    
     // 1. Atualizar status para pending e limpar paid_at
     const { error: updateError } = await supabase
       .from('payments')
@@ -612,10 +542,8 @@ const handleReverseInvoice = async (payment: any) => {
     
     if (updateError) throw updateError
     
-    console.log('✅ [handleReverseInvoice] Status atualizado para pending')
-    
     // 2. Registrar em payment_history com action_type='reversed'
-    const { error: histError } = await supabase.from('payment_history').insert({
+    await supabase.from('payment_history').insert({
       company_id: payment.company_id,
       payment_id: payment.id,
       action_type: 'reversed',
@@ -629,20 +557,13 @@ const handleReverseInvoice = async (payment: any) => {
       }
     })
     
-    if (histError) {
-      console.error('❌ [handleReverseInvoice] Erro ao registrar em payment_history:', histError)
-    }
-    
     success('Pagamento estornado', `${payment.companies?.name} voltou para PENDENTE`)
     
     // 3. Atualizar dados
     await new Promise(resolve => setTimeout(resolve, 300))
     await fetchStats(true, false)
     await fetchSubscriptions()
-    
-    console.log('✅ [handleReverseInvoice] Dados atualizados')
   } catch (err: any) {
-    console.error('❌ [handleReverseInvoice] Erro ao estornar:', err)
     error('Erro ao estornar', err.message)
   }
 }

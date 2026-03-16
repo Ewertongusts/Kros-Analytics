@@ -32,20 +32,12 @@ export const useAnalytics = () => {
         try {
             // 1. EMPRESAS (fonte principal de dados)
             // Agora buscando também os pagamentos para calcular o LTV individual
-            console.log('🔍 [fetchStats] Buscando empresas...')
             const { data: companiesData } = await (supabase.from('companies') as any)
                 .select(`
                     id, is_active, created_at, monthly_price, whatsapp, name, email, 
                     representative_name, tags, plan_name, billing_cycle, billing_day,
                     payments (amount, status)
                 `)
-
-            console.log('📊 [fetchStats] Empresas encontradas:', companiesData?.length || 0)
-            if (companiesData && companiesData.length > 0) {
-                console.log('📋 [fetchStats] Primeira empresa:', companiesData[0])
-                console.log('📋 [fetchStats] Empresas ativas:', companiesData.filter((c: any) => c.is_active).length)
-                console.log('📋 [fetchStats] Empresas inativas:', companiesData.filter((c: any) => !c.is_active).length)
-            }
 
             const companiesMap = new Map()
 
@@ -90,22 +82,6 @@ export const useAnalytics = () => {
                 .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags, billing_cycle)')
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
-
-            console.log('📊 [fetchStats] Query executada')
-            console.log('📊 [fetchStats] Erro:', paymentsError)
-            console.log('📊 [fetchStats] Dados recebidos:', paymentsData)
-            console.log(`📊 [fetchStats] Pagamentos retornados: ${paymentsData?.length || 0}`)
-            
-            if (paymentsData && paymentsData.length > 0) {
-                console.log('📋 [fetchStats] Primeiros 3 pagamentos:', paymentsData.slice(0, 3))
-                console.log('📋 [fetchStats] Company IDs:', paymentsData.map((p: any) => p.company_id))
-            } else {
-                console.warn('⚠️ [fetchStats] NENHUM PAGAMENTO ENCONTRADO!')
-                console.warn('⚠️ [fetchStats] Possíveis causas:')
-                console.warn('   1. Tabela payments está vazia')
-                console.warn('   2. Nenhuma empresa está ativa (is_active = true)')
-                console.warn('   3. Erro na query')
-            }
 
             if (paymentsData) {
                 
@@ -196,25 +172,11 @@ export const useAnalytics = () => {
                     const { cycleStart, cycleEnd } = calculateBillingPeriod(billingCycle)
                     
                     const companyPaymentHistory = paymentHistoryMap.get(p.company_id) || []
-                    console.log(`🔍 [fetchStats] Verificando ${p.plan_name} (company_id: ${p.company_id}):`)
-                    console.log(`   - Ciclo: ${billingCycle} (${cycleStart.toISOString().split('T')[0]} até ${cycleEnd.toISOString().split('T')[0]})`)
-                    console.log(`   - Registros de pagamento encontrados: ${companyPaymentHistory.length}`)
-                    if (companyPaymentHistory.length > 0) {
-                        console.log(`   - Detalhes:`, companyPaymentHistory.map((ph: any) => ({
-                            action_type: ph.action_type,
-                            created_at: ph.created_at
-                        })))
-                    }
                     
                     const paidThisCycle = companyPaymentHistory.some((ph: any) => {
                         const phDate = new Date(ph.created_at)
                         return phDate >= cycleStart && phDate < cycleEnd && ph.action_type === 'paid'
                     })
-
-                    console.log(`📊 [fetchStats] ${p.plan_name} - Status DB: ${p.status}, Pago este ciclo: ${paidThisCycle}, Ciclo: ${billingCycle}`)
-                    if (paidThisCycle) {
-                        console.log(`✅ [fetchStats] Pagamento encontrado para ${p.plan_name} - Ciclo: ${billingCycle}`)
-                    }
 
                     // IMPORTANTE: Priorizar o status do banco quando paid_at é null (indica estorno)
                     // Se paid_at é null E status é pending, significa que foi estornado

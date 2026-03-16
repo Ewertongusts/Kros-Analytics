@@ -95,6 +95,11 @@ const emit = defineEmits<Emits>()
 const handleColumnDragOver = (e: DragEvent) => {
   e.preventDefault()
   e.dataTransfer!.dropEffect = 'move'
+  console.log('[COLUMN] 📍 handleColumnDragOver', {
+    columnId: props.column.id,
+    columnName: props.column.name,
+    timestamp: new Date().toISOString()
+  })
 }
 
 /**
@@ -104,8 +109,19 @@ const handleColumnDrop = (e: DragEvent) => {
   e.preventDefault()
   e.stopPropagation()
 
+  console.log('[COLUMN] 💧 handleColumnDrop', {
+    columnId: props.column.id,
+    columnName: props.column.name,
+    taskId: props.dragState.taskId,
+    timestamp: new Date().toISOString()
+  })
+
   // Drop na coluna vazia ou no espaço vazio
   if (props.dragState.taskId) {
+    console.log('[COLUMN] 📤 Emitting task-drop event', {
+      columnId: props.column.id,
+      taskId: props.dragState.taskId
+    })
     emit('task-drop', {
       task: {
         id: props.dragState.taskId,
@@ -117,6 +133,8 @@ const handleColumnDrop = (e: DragEvent) => {
       } as Task,
       columnId: props.column.id
     })
+  } else {
+    console.warn('[COLUMN] ⚠️ No taskId in dragState')
   }
 }
 

@@ -41,12 +41,21 @@ export const useKanban2DragDrop = () => {
    * @param columnId - ID da coluna de origem
    */
   const startDrag = (task: Task, columnId: string): void => {
+    console.log('[DRAG-DROP] 🚀 START DRAG', {
+      taskId: task.id,
+      taskTitle: task.title,
+      fromColumnId: columnId,
+      timestamp: new Date().toISOString()
+    })
+
     dragState.value.isDragging = true
     dragState.value.taskId = task.id || null
     dragState.value.fromColumnId = columnId
     dragState.value.toColumnId = null
     dragState.value.position = null
     dragState.value.isDropping = false
+
+    console.log('[DRAG-DROP] ✅ START DRAG STATE', dragState.value)
   }
 
   /**
@@ -55,10 +64,24 @@ export const useKanban2DragDrop = () => {
    * @param position - Posição relativa ('above' ou 'below')
    */
   const moveDrag = (toColumnId: string, position: 'above' | 'below'): void => {
-    if (!dragState.value.isDragging) return
+    if (!dragState.value.isDragging) {
+      console.warn('[DRAG-DROP] ⚠️ MOVE DRAG - Not dragging, ignoring move')
+      return
+    }
+
+    console.log('[DRAG-DROP] 📍 MOVE DRAG', {
+      taskId: dragState.value.taskId,
+      fromColumnId: dragState.value.fromColumnId,
+      toColumnId,
+      position,
+      sameColumn: dragState.value.fromColumnId === toColumnId,
+      timestamp: new Date().toISOString()
+    })
 
     dragState.value.toColumnId = toColumnId
     dragState.value.position = position
+
+    console.log('[DRAG-DROP] ✅ MOVE DRAG STATE', dragState.value)
   }
 
   /**
@@ -77,22 +100,53 @@ export const useKanban2DragDrop = () => {
     ) => Promise<void>
   ): Promise<void> => {
     if (!dragState.value.isDragging || !dragState.value.taskId) {
+      console.warn('[DRAG-DROP] ⚠️ COMPLETE DROP - Invalid state', {
+        isDragging: dragState.value.isDragging,
+        taskId: dragState.value.taskId
+      })
       return
     }
+
+    console.log('[DRAG-DROP] 💾 COMPLETE DROP - Starting', {
+      taskId: dragState.value.taskId,
+      fromColumnId: dragState.value.fromColumnId,
+      toColumnId: dragState.value.toColumnId,
+      position: dragState.value.position,
+      timestamp: new Date().toISOString()
+    })
 
     // Marcar como "dropping" para evitar múltiplos drops
     dragState.value.isDropping = true
 
     try {
+      const finalToColumnId = dragState.value.toColumnId || dragState.value.fromColumnId || ''
+      const finalPosition = dragState.value.position || 'below'
+
+      console.log('[DRAG-DROP] 📤 COMPLETE DROP - Calling moveTaskFn', {
+        taskId: dragState.value.taskId,
+        fromColumnId: dragState.value.fromColumnId,
+        toColumnId: finalToColumnId,
+        position: finalPosition
+      })
+
       // Executar a função de movimento
       await moveTaskFn(
         dragState.value.taskId,
         dragState.value.fromColumnId || '',
-        dragState.value.toColumnId || dragState.value.fromColumnId || '',
-        dragState.value.position || 'below'
+        finalToColumnId,
+        finalPosition
       )
+
+      console.log('[DRAG-DROP] ✅ COMPLETE DROP - Success')
+    } catch (error) {
+      console.error('[DRAG-DROP] ❌ COMPLETE DROP - Error', {
+        error: error instanceof Error ? error.message : String(error),
+        taskId: dragState.value.taskId
+      })
+      throw error
     } finally {
       // Sempre resetar o estado, mesmo se houver erro
+      console.log('[DRAG-DROP] 🔄 COMPLETE DROP - Resetting state')
       resetDrag()
     }
   }
@@ -101,18 +155,30 @@ export const useKanban2DragDrop = () => {
    * Reseta o estado de drag para o inicial
    */
   const resetDrag = (): void => {
+    console.log('[DRAG-DROP] 🔄 RESET DRAG', {
+      previousState: dragState.value,
+      timestamp: new Date().toISOString()
+    })
+
     dragState.value.isDragging = false
     dragState.value.taskId = null
     dragState.value.fromColumnId = null
     dragState.value.toColumnId = null
     dragState.value.position = null
     dragState.value.isDropping = false
+
+    console.log('[DRAG-DROP] ✅ RESET DRAG - Complete', dragState.value)
   }
 
   /**
    * Cancela o drag sem executar movimento
    */
   const cancelDrag = (): void => {
+    console.log('[DRAG-DROP] ❌ CANCEL DRAG', {
+      taskId: dragState.value.taskId,
+      fromColumnId: dragState.value.fromColumnId,
+      timestamp: new Date().toISOString()
+    })
     resetDrag()
   }
 

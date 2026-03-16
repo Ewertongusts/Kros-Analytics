@@ -23,15 +23,11 @@ export const useTaskHandlers = () => {
   }
 
   const handleSaveTask = async (taskData: Partial<Task>) => {
-    console.log('💾 Salvando tarefa:', taskData)
     loadingAction.value = true
     try {
       if (selectedTask.value?.id) {
-        console.log('✏️ Atualizando tarefa existente:', selectedTask.value.id)
         await updateTask(selectedTask.value.id, taskData)
       } else {
-        console.log('➕ Criando nova tarefa')
-        // Se for nova tarefa, usar o column_id padrão
         const tasksInColumn = defaultColumnId.value 
           ? tasks.value.filter(t => t.column_id === defaultColumnId.value)
           : []
@@ -42,12 +38,8 @@ export const useTaskHandlers = () => {
           column_id: defaultColumnId.value || undefined,
           position: newPosition
         } as Task
-        console.log('📋 Dados da nova tarefa:', newTask)
-        const result = await createTask(newTask)
-        console.log('✅ Resultado da criação:', result)
+        await createTask(newTask)
       }
-      // Não fazer fetch - as tarefas já estão no estado local
-      console.log('✅ Tarefa salva com sucesso')
       closeTaskModal()
     } catch (error) {
       console.error('❌ Erro ao salvar tarefa:', error)
@@ -60,12 +52,10 @@ export const useTaskHandlers = () => {
     loadingAction.value = true
     try {
       await deleteTaskApi(id)
-      // Não fazer fetch - remover do estado local
       const index = tasks.value.findIndex(t => t.id === id)
       if (index !== -1) {
         tasks.value.splice(index, 1)
       }
-      console.log('✅ Tarefa deletada com sucesso')
     } catch (error) {
       console.error('Erro ao deletar tarefa:', error)
     } finally {
@@ -80,52 +70,124 @@ export const useTaskHandlers = () => {
     position?: 'above' | 'below'
   ) => {
     try {
-      console.log('🔄 [moveTask] Iniciando movimento:', { taskId, newColumnId, targetTaskId, position })
-      
+      console.log('[MOVE-TASK] 🚀 moveTask CALLED', {
+        taskId,
+        newColumnId,
+        targetTaskId,
+        position,
+        timestamp: new Date().toISOString()
+      })
+
       const task = tasks.value.find(t => t.id === taskId)
       if (!task) {
-        console.warn('⚠️ [moveTask] Task não encontrada:', taskId)
+        console.warn('[MOVE-TASK] ⚠️ Task not found:', taskId)
         return
       }
 
-      console.log('✅ [moveTask] Task encontrada:', { id: task.id, title: task.title, currentColumn: task.column_id })
+      console.log('[MOVE-TASK] 📍 Task found', {
+        taskId: task.id,
+        taskTitle: task.title,
+        currentColumnId: task.column_id,
+        currentPosition: task.position
+      })
 
-      // Se está mudando de coluna, atualizar o column_id localmente primeiro
-      if (task.column_id !== newColumnId) {
-        console.log('📍 [moveTask] Mudando de coluna:', { from: task.column_id, to: newColumnId })
+      let newPosition = task.position ?? 0
+      const isMovingBetweenColumns = newColumnId !== task.column_id
+      
+      console.log('[MOVE-TASK] 🔍 Analyzing move', {
+        isMovingBetweenColumns,
+        hasTargetTaskId: !!targetTaskId,
+        hasPosition: !!position
+      })
+      
+      if (targetTaskId && position) {
+        // Posicionar relativo a um card específico
+        console.log('[MOVE-TASK] 📌 Using target task positioning', {
+          targetTaskId,
+          position
+        })
         
-        task.column_id = newColumnId
-        console.log('✅ [moveTask] column_id atualizado localmente')
+        const targetTask = tasks.value.find(t => t.id === targetTaskId)
+        if (targetTask) {
+          // Usar inteiros para evitar erro no banco
+          const targetPos = targetTask.position ?? 0
+          newPosition = position === 'above' ? targetPos : targetPos + 1
+          
+          console.log('[MOVE-TASK] ✅ Position calculated from target', {
+            targetTaskPosition: targetPos,
+            newPosition,
+            positionType: position
+          })
+        } else {
+          console.warn('[MOVE-TASK] ⚠️ Target task not found:', targetTaskId)
+        }
+      } else if (isMovingBetweenColumns) {
+        // Movendo entre colunas sem target específico
+        // Colocar no final da coluna de destino
+        console.log('[MOVE-TASK] 📌 Moving between columns without target - placing at end')
         
-        // Atualizar no banco em background (sem bloquear UI)
-        // Usar Promise.resolve para evitar unhandled rejection
-        Promise.resolve().then(() => {
-          try {
-            return updateTask(taskId, { column_id: newColumnId })
-          } catch (dbError) {
-            console.error('❌ [moveTask] Erro ao atualizar banco:', dbError)
-            // Não re-throw para evitar unhandled rejection
-          }
-        }).catch(err => {
-          console.error('❌ [moveTask] Erro na promise:', err)
-          // Silenciar o erro para evitar reload
+        const tasksInNewColumn = tasks.value.filter(t => t.column_id === newColumnId && t.id !== taskId)
+        if (tasksInNewColumn.length === 0) {
+          newPosition = 0
+        } else {
+          newPosition = Math.max(...tasksInNewColumn.map(t => t.position ?? 0)) + 1
+        }
+        
+        console.log('[MOVE-TASK] ✅ Position calculated for end of column', {
+          tasksInNewColumn: tasksInNewColumn.length,
+          newPosition
         })
       } else {
-        console.log('ℹ️ [moveTask] Nenhuma mudança necessária')
+        console.log('[MOVE-TASK] ℹ️ Same column reordering without target')
       }
+
+      // Garantir que é inteiro
+      newPosition = Math.floor(newPosition)
+
+      console.log('[MOVE-TASK] 💾 Updating local state', {
+        taskId,
+        oldColumnId: task.column_id,
+        newColumnId,
+        oldPosition: task.position,
+        newPosition
+      })
+
+      // Atualizar estado local imediatamente
+      task.column_id = newColumnId
+      task.position = newPosition
       
-      console.log('✅ [moveTask] Movimento completado')
+      console.log('[MOVE-TASK] 🔄 Persisting to database', {
+        taskId,
+        column_id: newColumnId,
+        position: newPosition
+      })
+      
+      // Persistir no banco de dados
+      updateTask(taskId, { 
+        column_id: newColumnId,
+        position: newPosition
+      }).then(() => {
+        console.log('[MOVE-TASK] ✅ Database update successful', {
+          taskId,
+          newColumnId,
+          newPosition
+        })
+      }).catch(err => {
+        console.error('[MOVE-TASK] ❌ Database update failed', {
+          taskId,
+          error: err?.message
+        })
+      })
     } catch (error) {
-      console.error('❌ [moveTask] Erro geral:', error)
-      console.error('❌ [moveTask] Stack:', (error as any)?.stack)
+      console.error('[MOVE-TASK] ❌ Critical error in moveTask', {
+        error: error instanceof Error ? error.message : String(error)
+      })
     }
   }
 
   const duplicateTask = async (task: Task) => {
-    console.log('🔄 Duplicando tarefa:', task)
     loadingAction.value = true
     try {
-      // Criar cópia da tarefa sem o ID e com título modificado
       const duplicatedTask: Task = {
         title: `${task.title} (cópia)`,
         description: task.description,
@@ -138,11 +200,7 @@ export const useTaskHandlers = () => {
         position: task.position
       }
       
-      console.log('📝 Dados da tarefa duplicada:', duplicatedTask)
-      const result = await createTask(duplicatedTask)
-      console.log('✅ Resultado da criação:', result)
-      // Não fazer fetch - a tarefa já está no estado local
-      console.log('✅ Tarefa duplicada com sucesso')
+      await createTask(duplicatedTask)
     } catch (error) {
       console.error('❌ Erro ao duplicar tarefa:', error)
     } finally {

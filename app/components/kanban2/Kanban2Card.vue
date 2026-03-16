@@ -95,8 +95,20 @@ const emit = defineEmits<Emits>()
 const handleDragStart = (e: DragEvent) => {
   if (!e.dataTransfer) return
 
+  console.log('[CARD] 🎯 handleDragStart', {
+    taskId: props.task.id,
+    taskTitle: props.task.title,
+    columnId: props.columnId,
+    timestamp: new Date().toISOString()
+  })
+
   e.dataTransfer.effectAllowed = 'move'
   e.dataTransfer.setData('text/plain', props.task.id || '')
+
+  console.log('[CARD] 📤 Emitting drag-start event', {
+    taskId: props.task.id,
+    columnId: props.columnId
+  })
 
   emit('drag-start', {
     task: props.task,
@@ -120,6 +132,17 @@ const handleDragOver = (e: DragEvent) => {
   const threshold = rect.top + rect.height * 0.35
   const position = e.clientY < threshold ? 'above' : 'below'
 
+  console.log('[CARD] 📍 handleDragOver', {
+    taskId: props.task.id,
+    columnId: props.columnId,
+    position,
+    clientY: e.clientY,
+    threshold,
+    rectTop: rect.top,
+    rectHeight: rect.height,
+    timestamp: new Date().toISOString()
+  })
+
   emit('drag-over', {
     columnId: props.columnId,
     position
@@ -133,6 +156,18 @@ const handleDrop = (e: DragEvent) => {
   e.preventDefault()
   e.stopPropagation()
 
+  console.log('[CARD] 💧 handleDrop', {
+    taskId: props.task.id,
+    taskTitle: props.task.title,
+    columnId: props.columnId,
+    timestamp: new Date().toISOString()
+  })
+
+  console.log('[CARD] 📤 Emitting drop event', {
+    taskId: props.task.id,
+    columnId: props.columnId
+  })
+
   emit('drop', {
     task: props.task,
     columnId: props.columnId
@@ -143,6 +178,10 @@ const handleDrop = (e: DragEvent) => {
  * Finaliza o drag
  */
 const handleDragEnd = () => {
+  console.log('[CARD] 🏁 handleDragEnd', {
+    taskId: props.task.id,
+    timestamp: new Date().toISOString()
+  })
   // Limpeza se necessário
 }
 

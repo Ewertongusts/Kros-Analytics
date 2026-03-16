@@ -76,7 +76,7 @@ export const useBatchSending = () => {
         }
       })
     } catch (err) {
-      console.error('Erro ao registrar início da campanha:', err)
+      // Erro ao registrar início da campanha
     }
 
     for (let i = 0; i < payments.length; i++) {
@@ -165,7 +165,6 @@ export const useBatchSending = () => {
         successfulSends.push(payment.company_name)
 
       } catch (err: any) {
-        console.error(`Erro ao enviar para ${payment.company_name}:`, err)
         errors.value.push({ company: payment.company_name, error: err.message })
         sentStatus.value[payment.id] = 'error'
         failedSends.push(payment.company_name)
@@ -246,7 +245,7 @@ export const useBatchSending = () => {
         }
       })
     } catch (err) {
-      console.error('Erro ao registrar finalização da campanha:', err)
+      // Erro ao registrar finalização da campanha
     }
 
     submitting.value = false

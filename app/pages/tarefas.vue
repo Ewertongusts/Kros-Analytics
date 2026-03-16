@@ -126,12 +126,9 @@
                 @duplicate="duplicateTask"
                 @select="toggleTaskSelection"
                 @dragstart="handleTaskDragStart(task, column.status)"
-                @dragend="handleDragEndWithScroll"
                 @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
-                @dragleave="handleDragLeave"
                 @drop="(e: DragEvent) => {
                   handleTaskDropWithPosition(e, column.column_id)
-                  handleDragEndWithScroll()
                 }"
                 @transition-complete="completeTransition(task.id!)"
               />
@@ -198,12 +195,9 @@
                 @duplicate="duplicateTask"
                 @select="toggleTaskSelection"
                 @dragstart="handleTaskDragStart(task, task.column_id || 'orphan')"
-                @dragend="handleDragEndWithScroll"
                 @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
-                @dragleave="handleDragLeave"
                 @drop="(e: DragEvent) => {
                   handleTaskDropWithPosition(e, task.column_id || 'orphan')
-                  handleDragEndWithScroll()
                 }"
                 @transition-complete="completeTransition(task.id!)"
               />
@@ -397,19 +391,10 @@ const addNewColumn = () => {
 
 const orphanTasks = computed(() => {
   const validColumnIds = customColumns.value.map(c => c.column_id)
-  console.log(`\n🔍 [orphanTasks] Procurando tarefas órfãs...`)
-  console.log(`   columnIds válidos: ${validColumnIds.join(', ')}`)
   
-  const orphans = handlerTasks.value.filter(t => {
-    const isOrphan = !validColumnIds.includes(t.column_id || '')
-    if (isOrphan) {
-      console.log(`   ❌ Tarefa órfã: "${t.title}" (column_id: "${t.column_id}")`)
-    }
-    return isOrphan
+  return handlerTasks.value.filter(t => {
+    return !validColumnIds.includes(t.column_id || '')
   })
-  
-  console.log(`   📊 Total de tarefas órfãs: ${orphans.length}\n`)
-  return orphans
 })
 
 const displayColumns = computed(() => {
@@ -417,48 +402,15 @@ const displayColumns = computed(() => {
 })
 
 const getTasksInColumn = (columnId: string) => {
-  // Encontrar a coluna
-  const column = customColumns.value.find(c => c.column_id === columnId)
-  
-  if (!column) {
-    console.warn(`❌ [getTasksInColumn] Coluna não encontrada para columnId: ${columnId}`)
-    return []
-  }
-  
-  console.log(`\n📊 [getTasksInColumn] Filtrando tarefas para coluna: "${column.name}"`)
-  console.log(`   columnId: ${columnId}`)
-  console.log(`   Total de tarefas no sistema: ${handlerTasks.value.length}`)
-  
-  // Log detalhado de cada tarefa
-  handlerTasks.value.forEach((t, idx) => {
-    const columnMatch = t.column_id === columnId
-    const notExiting = !isExiting(t.id!)
-    const matches = columnMatch && notExiting
-    
-    console.log(`   [${idx}] "${t.title}" (id: ${t.id})`)
-    console.log(`       - column_id: "${t.column_id}" (esperado: "${columnId}") - Match: ${columnMatch}`)
-    console.log(`       - isExiting: ${isExiting(t.id!)} - NotExiting: ${notExiting}`)
-    console.log(`       - RESULTADO: ${matches ? '✅ INCLUÍDA' : '❌ EXCLUÍDA'}`)
-  })
-  
-  const filtered = handlerTasks.value
-    .filter(t => {
-      const columnMatch = t.column_id === columnId
-      const notExiting = !isExiting(t.id!)
-      return columnMatch && notExiting
-    })
+  return handlerTasks.value
+    .filter(t => t.column_id === columnId && !isExiting(t.id!))
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  
-  console.log(`   📈 RESULTADO FINAL: ${filtered.length} tarefas para coluna "${column.name}"\n`)
-  return filtered
 }
 
 const removeColumn = async (columnId: string) => {
   const confirmed = confirm('Deseja remover esta coluna? As tarefas não serão deletadas.')
   if (confirmed) {
     await deleteColumn(columnId)
-    // Não precisa refetch - as tarefas já estão no estado local
-    console.log('✅ Coluna removida')
   }
 }
 
@@ -505,133 +457,132 @@ const resetDropFlag = () => {
 
 const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) => {
   try {
-    // Prevenir comportamento padrão do navegador IMEDIATAMENTE
     e.preventDefault()
     e.stopPropagation()
     
+    console.log('[TAREFAS-PAGE] 💧 handleTaskDropWithPosition START', {
+      targetColumnId,
+      dragOverTaskId: dragOverTaskId.value,
+      dragOverPosition: dragOverPosition.value,
+      isProcessingDrop: isProcessingDrop.value,
+      timestamp: new Date().toISOString()
+    })
+    
     if (isProcessingDrop.value) {
-      console.warn('⚠️ [DROP] Já está processando um drop, ignorando')
+      console.warn('[TAREFAS-PAGE] ⚠️ Already processing drop, ignoring')
       return
     }
     
     isProcessingDrop.value = true
-    console.log('🎯 [DROP] Iniciando drop para coluna:', targetColumnId)
     
     dropTimeoutId.value = setTimeout(() => {
-      console.warn('⚠️ [DROP] Timeout - resetando flag de processamento')
       resetDropFlag()
     }, 5000)
     
     try {
-      // Validar que temos dados de drag
       const draggedTaskData = e.dataTransfer?.getData('application/json')
       if (!draggedTaskData) {
-        console.warn('⚠️ [DROP] Sem dados de drag, ignorando')
+        console.warn('[TAREFAS-PAGE] ⚠️ No dragged task data found')
         resetDropFlag()
         return
       }
 
-      // Parse dos dados com validação
       let task: any
       try {
         task = JSON.parse(draggedTaskData)
-        console.log('✅ [DROP] Task parseada:', { id: task.id, title: task.title, fromColumn: task.column_id })
       } catch (parseError) {
-        console.error('❌ [DROP] Erro ao fazer parse dos dados:', parseError)
+        console.error('[TAREFAS-PAGE] ❌ Failed to parse task data:', parseError)
         resetDropFlag()
         return
       }
 
-      // Validar que task tem ID
       if (!task.id) {
-        console.error('❌ [DROP] Task sem ID:', task)
+        console.warn('[TAREFAS-PAGE] ⚠️ Task has no ID')
         resetDropFlag()
         return
       }
 
       const fromColumnId = task.column_id
       
-      // Se está mudando de coluna
+      console.log('[TAREFAS-PAGE] 📤 Task data parsed', {
+        taskId: task.id,
+        taskTitle: task.title,
+        fromColumnId,
+        targetColumnId,
+        sameColumn: fromColumnId === targetColumnId,
+        dragOverTaskId: dragOverTaskId.value,
+        dragOverPosition: dragOverPosition.value,
+        hasPositioningInfo: !!(dragOverTaskId.value && dragOverPosition.value)
+      })
+      
       if (fromColumnId !== targetColumnId) {
-        console.log('📍 [DROP] Movendo de coluna:', { from: fromColumnId, to: targetColumnId })
-        
+        console.log('[TAREFAS-PAGE] 🔄 Different column - starting animation sequence')
         try {
-          console.log('1️⃣ [DROP] Iniciando exit animation')
           startExiting(task.id, fromColumnId)
           
           await nextTick()
-          console.log('2️⃣ [DROP] Vue re-renderizou')
-          
           await new Promise(resolve => setTimeout(resolve, 150))
-          console.log('3️⃣ [DROP] Aguardou 150ms')
           
-          console.log('4️⃣ [DROP] Chamando moveTask')
+          // ✅ CAPTURAR dragOverTaskId ANTES de resetar
+          const capturedDragOverTaskId = dragOverTaskId.value
+          const capturedDragOverPosition = dragOverPosition.value
+          
+          console.log('[TAREFAS-PAGE] 📍 About to call moveTask with captured positioning', {
+            taskId: task.id,
+            fromColumnId,
+            targetColumnId,
+            capturedDragOverTaskId,
+            capturedDragOverPosition,
+            hasPositioning: !!(capturedDragOverTaskId && capturedDragOverPosition)
+          })
+          
           moveTask(
             task.id,
             targetColumnId,
-            dragOverTaskId.value || undefined,
-            dragOverPosition.value || undefined
+            capturedDragOverTaskId || undefined,
+            capturedDragOverPosition || undefined
           )
-          console.log('5️⃣ [DROP] moveTask completado')
+          
+          console.log('[TAREFAS-PAGE] ✅ moveTask called successfully')
         } catch (stateError) {
-          console.error('❌ [DROP] Erro ao iniciar exit:', stateError)
-          // Continuar mesmo com erro
+          console.error('[TAREFAS-PAGE] ❌ Error during move:', stateError)
         }
         
         try {
           await new Promise(resolve => setTimeout(resolve, 100))
-          
-          console.log('6️⃣ [DROP] Iniciando transição completa')
-          // Desabilitar executeFullTransition temporariamente para debug
-          // await executeFullTransition(
-          //   task.id,
-          //   fromColumnId,
-          //   targetColumnId,
-          //   task.priority || 'media'
-          // )
-          console.log('7️⃣ [DROP] Transição completa (desabilitada)')
-        } catch (transitionError) {
-          console.error('❌ [DROP] Erro na transição:', transitionError)
-          // Continuar mesmo com erro
-        }
-        
-        try {
-          console.log('8️⃣ [DROP] Iniciando entering animation')
           startEntering(task.id, targetColumnId)
           
           setTimeout(() => {
-            console.log('9️⃣ [DROP] Iniciando settling animation')
             startSettling(task.id, targetColumnId)
           }, 400)
         } catch (stateError) {
-          console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
-          // Continuar mesmo com erro
+          console.error('[TAREFAS-PAGE] ❌ Error during animation:', stateError)
         }
         
-        handleDragEnd()
+        console.log('[TAREFAS-PAGE] 🏁 Calling handleDragEndWithScroll after cross-column move')
+        handleDragEndWithScroll()
       } else {
-        // Mesma coluna - apenas reordenar
-        console.log('📍 [DROP] Reordenando na mesma coluna')
+        console.log('[TAREFAS-PAGE] ℹ️ Same column - just reordering', {
+          dragOverTaskId: dragOverTaskId.value,
+          dragOverPosition: dragOverPosition.value
+        })
         moveTask(
           task.id,
           targetColumnId,
           dragOverTaskId.value || undefined,
           dragOverPosition.value || undefined
         )
-        handleDragEnd()
+        console.log('[TAREFAS-PAGE] 🏁 Calling handleDragEndWithScroll after same-column reorder')
+        handleDragEndWithScroll()
       }
-      
-      console.log('✅ [DROP] Drop completado com sucesso')
     } catch (error) {
-      console.error('❌ [DROP] Erro geral:', error)
-      console.error('❌ [DROP] Stack:', (error as any)?.stack)
-      handleDragEnd()
+      console.error('[TAREFAS-PAGE] ❌ Error processing drop:', error)
+      handleDragEndWithScroll()
     } finally {
       resetDropFlag()
     }
   } catch (outerError) {
-    console.error('❌ [DROP] Erro CRÍTICO (outer):', outerError)
-    console.error('❌ [DROP] Stack (outer):', (outerError as any)?.stack)
+    console.error('[TAREFAS-PAGE] ❌ Critical error in drop:', outerError)
     resetDropFlag()
   }
 }
@@ -650,7 +601,7 @@ const deleteSelectedTasks = async () => {
     }
     deselectAll()
   } catch (error) {
-    console.error('Erro ao deletar tarefas:', error)
+    // Erro ao deletar tarefas
   } finally {
     loadingAction.value = false
   }
@@ -736,27 +687,14 @@ let unhandledRejectionListener: ((e: PromiseRejectionEvent) => void) | null = nu
 
 onMounted(async () => {
   try {
-    console.log('🚀 [onMounted] Iniciando página de tarefas...')
-    
-    // Adicionar error handler global para capturar erros não tratados
     errorListener = (e: ErrorEvent) => {
-      console.error('❌ [Global Error Handler] Erro não tratado:', e.error)
-      console.error('❌ [Global Error Handler] Message:', e.message)
-      console.error('❌ [Global Error Handler] Stack:', e.error?.stack)
-      
-      // Prevenir que o erro cause reload - CRÍTICO!
       e.preventDefault()
       return true
     }
     
     window.addEventListener('error', errorListener, true)
     
-    // Adicionar handler para promise rejections não tratadas
     unhandledRejectionListener = (e: PromiseRejectionEvent) => {
-      console.error('❌ [Unhandled Promise Rejection]:', e.reason)
-      console.error('❌ [Unhandled Promise Rejection] Stack:', e.reason?.stack)
-      
-      // Prevenir que o erro cause reload - CRÍTICO!
       e.preventDefault()
       return true
     }
@@ -768,36 +706,10 @@ onMounted(async () => {
     resizeListener = calculateKanbanHeight
     window.addEventListener('resize', resizeListener)
 
-    console.log('📥 [onMounted] Buscando colunas...')
     await fetchColumns()
-    console.log('✅ [onMounted] Colunas carregadas:')
-    customColumns.value.forEach((c, idx) => {
-      console.log(`   [${idx}] "${c.name}" (id: ${c.column_id}, status: "${c.status}", color: ${c.color})`)
-    })
-
-    console.log('📥 [onMounted] Buscando empresas...')
     await fetchCompanies()
-    console.log('✅ [onMounted] Empresas carregadas:', companies.value.length)
-
-    console.log('📥 [onMounted] Buscando tags...')
     await fetchTags()
-    console.log('✅ [onMounted] Tags carregadas:', tagDefinitions.value.length)
-
-    console.log('📥 [onMounted] Buscando tarefas...')
     await handlerFetchTasks()
-    console.log('✅ [onMounted] Tarefas carregadas:')
-    handlerTasks.value.forEach((t, idx) => {
-      console.log(`   [${idx}] "${t.title}" (id: ${t.id}, status: "${t.status}", position: ${t.position})`)
-    })
-    
-    console.log('\n🔍 [onMounted] ANÁLISE DE COMPATIBILIDADE:')
-    const validStatuses = customColumns.value.map(c => c.status)
-    console.log(`   Status válidos (das colunas): ${validStatuses.join(', ')}`)
-    
-    handlerTasks.value.forEach(t => {
-      const isValid = validStatuses.includes(t.status)
-      console.log(`   Tarefa "${t.title}" - status: "${t.status}" - ${isValid ? '✅ VÁLIDO' : '❌ INVÁLIDO (ÓRFÃ)'}`)
-    })
 
     const supabase = useSupabaseClient()
     const channel = supabase
@@ -806,9 +718,7 @@ onMounted(async () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tasks' },
         () => {
-          console.log('🔄 [Realtime] Mudança detectada em tarefas')
-          // Desabilitar refetch automático para evitar reload
-          // handlerFetchTasks()
+          // Realtime listener
         }
       )
       .subscribe()
@@ -819,10 +729,8 @@ onMounted(async () => {
 
     keydownListener = handleKeyDown
     window.addEventListener('keydown', keydownListener)
-    
-    console.log('✅ [onMounted] Página de tarefas pronta!')
   } catch (error) {
-    console.error('❌ [onMounted] Erro ao montar página de tarefas:', error)
+    // Erro ao montar página de tarefas
   }
 })
 

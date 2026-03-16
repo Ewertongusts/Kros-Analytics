@@ -2,8 +2,11 @@
   <div>
     <!-- Indicador acima (quando drag está acima) -->
     <div 
-      v-if="isDragOver && dragOverPosition === 'above'"
-      class="h-0.5 bg-blue-500 rounded mb-1 shadow-lg shadow-blue-500/50 transition-all duration-150"
+      class="h-0.5 bg-blue-500 rounded mb-1 shadow-lg shadow-blue-500/50 transition-opacity duration-200"
+      :style="{ 
+        opacity: isDragOver && dragOverPosition === 'above' ? 1 : 0,
+        pointerEvents: 'none'
+      }"
     ></div>
 
     <!-- Card Original -->
@@ -231,9 +234,6 @@ const emit = defineEmits<{
   'transition-complete': []
 }>()
 
-// Debug
-console.log('🔍 KTaskCard props:', { task: props.task.title, isOrphan: props.isOrphan })
-
 const cardElement = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
 const dragX = ref(0)
@@ -242,10 +242,11 @@ const cardWidth = ref(0)
 let dragTimeoutId: ReturnType<typeof setTimeout> | null = null
 let dragCloneTimeoutId: ReturnType<typeof setTimeout> | null = null
 let dragOverTimeoutId: ReturnType<typeof setTimeout> | null = null
+let lastDragX = 0
+let lastDragY = 0
+let noMovementTimeoutId: ReturnType<typeof setTimeout> | null = null
 
-// Reset drag state function
 const resetDragState = () => {
-  console.log('🔄 RESETTING DRAG STATE')
   isDragging.value = false
   dragX.value = 0
   dragY.value = 0
@@ -295,55 +296,38 @@ const handleDuplicate = () => {
 }
 
 const handleDragStart = (e: DragEvent) => {
-  console.log('🎯 DRAG START - Capturing cardWidth')
-  
-  // CRITICAL: Capture width BEFORE setting isDragging
   if (cardElement.value) {
     cardWidth.value = cardElement.value.offsetWidth
-    console.log('📏 Card width captured:', cardWidth.value)
   } else {
-    console.warn('⚠️ cardElement is null!')
-    cardWidth.value = 300 // Fallback
+    cardWidth.value = 300
   }
   
   isDragging.value = true
+  lastDragX = e.clientX
+  lastDragY = e.clientY
   
-  // Set initial position
   dragX.value = e.clientX - (cardWidth.value / 2)
   dragY.value = e.clientY - 20
   
-  console.log('📍 Initial position:', { dragX: dragX.value, dragY: dragY.value })
-  
-  // Set drag data - IMPORTANTE para o drop funcionar
   try {
     e.dataTransfer!.effectAllowed = 'move'
     e.dataTransfer!.setData('application/json', JSON.stringify(props.task))
-    console.log('✅ Drag data setado:', props.task.id)
   } catch (err) {
-    console.error('❌ Erro ao setar drag data:', err)
+    console.error('Erro ao setar drag data:', err)
   }
   
-  // Remove default drag image
   const emptyImage = new Image()
   e.dataTransfer?.setDragImage(emptyImage, 0, 0)
   
-  // Remove previous timeouts
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
   if (dragCloneTimeoutId) clearTimeout(dragCloneTimeoutId)
+  if (noMovementTimeoutId) clearTimeout(noMovementTimeoutId)
   
-  // Timeout to force reset if dragend doesn't fire (1 second)
-  dragTimeoutId = setTimeout(() => {
-    console.warn('⚠️ Drag timeout - forcing reset')
-    resetDragState()
-  }, 1000)
-  
-  // Timeout to remove clone if it gets stuck (10 seconds)
-  dragCloneTimeoutId = setTimeout(() => {
+  noMovementTimeoutId = setTimeout(() => {
     if (isDragging.value) {
-      console.warn('⚠️ Clone timeout - forcing reset')
       resetDragState()
     }
-  }, 10000)
+  }, 5000)
   
   emit('dragstart', props.task)
 }
@@ -353,7 +337,22 @@ const handleDrag = (e: DragEvent) => {
   if (e.clientX !== 0 && e.clientY !== 0) {
     dragX.value = e.clientX - (cardWidth.value / 2)
     dragY.value = e.clientY - 20
-    console.log('🎯 Drag position:', { dragX: dragX.value, dragY: dragY.value })
+    
+    // Detectar movimento significativo (mais de 5px)
+    const movedX = Math.abs(e.clientX - lastDragX)
+    const movedY = Math.abs(e.clientY - lastDragY)
+    
+    if (movedX > 5 || movedY > 5) {
+      if (noMovementTimeoutId) {
+        clearTimeout(noMovementTimeoutId)
+        noMovementTimeoutId = null
+      }
+      lastDragX = e.clientX
+      lastDragY = e.clientY
+    }
+    
+    dragX.value = e.clientX - (cardWidth.value / 2)
+    dragY.value = e.clientY - 20
   }
 }
 
@@ -366,14 +365,12 @@ const handleDragOver = (e: DragEvent) => {
 }
 
 const handleDragEnd = () => {
-  console.log('🛑 DRAG END - Resetting state')
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
   if (dragCloneTimeoutId) clearTimeout(dragCloneTimeoutId)
+  if (noMovementTimeoutId) clearTimeout(noMovementTimeoutId)
   
-  // Reset IMEDIATAMENTE para evitar que o card fique invisível
   resetDragState()
   
-  // Adicionar ripple effect ao soltar (após reset)
   if (cardElement.value) {
     cardElement.value.classList.add('ripple-effect')
     setTimeout(() => {
@@ -384,18 +381,14 @@ const handleDragEnd = () => {
   emit('dragend')
 }
 
-// Document-level dragend listener as final fallback
 const handleDocumentDragEnd = () => {
   if (isDragging.value) {
-    console.warn('⚠️ Document dragend fired - resetting')
     resetDragState()
   }
 }
 
-// Handler para quando animação termina
 const handleAnimationEnd = () => {
   if (props.isEntering || props.isSettling) {
-    console.log('✅ Animation complete for task:', props.task.id)
     emit('transition-complete')
   }
 }
@@ -413,6 +406,7 @@ onUnmounted(() => {
   if (dragTimeoutId) clearTimeout(dragTimeoutId)
   if (dragCloneTimeoutId) clearTimeout(dragCloneTimeoutId)
   if (dragOverTimeoutId) clearTimeout(dragOverTimeoutId)
+  if (noMovementTimeoutId) clearTimeout(noMovementTimeoutId)
 })
 </script>
 

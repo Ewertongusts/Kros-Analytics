@@ -58,7 +58,6 @@ export const useRealtimeCardTransitions = () => {
     }
   }
 
-  // Iniciar transição de entrada
   const startEntering = (taskId: string, toColumn: string) => {
     try {
       transitionMap.value.set(taskId, {
@@ -67,13 +66,11 @@ export const useRealtimeCardTransitions = () => {
         toColumn,
         timestamp: Date.now()
       })
-      console.log('✅ [startEntering] Transição iniciada:', { taskId, toColumn })
     } catch (error) {
-      console.error('❌ [startEntering] Erro:', error)
+      console.error('Erro ao iniciar entering:', error)
     }
   }
 
-  // Iniciar transição de saída
   const startExiting = (taskId: string, fromColumn: string) => {
     try {
       transitionMap.value.set(taskId, {
@@ -82,13 +79,11 @@ export const useRealtimeCardTransitions = () => {
         fromColumn,
         timestamp: Date.now()
       })
-      console.log('✅ [startExiting] Transição iniciada:', { taskId, fromColumn })
     } catch (error) {
-      console.error('❌ [startExiting] Erro:', error)
+      console.error('Erro ao iniciar exiting:', error)
     }
   }
 
-  // Iniciar transição de acomodação
   const startSettling = (taskId: string, toColumn: string) => {
     try {
       transitionMap.value.set(taskId, {
@@ -97,9 +92,8 @@ export const useRealtimeCardTransitions = () => {
         toColumn,
         timestamp: Date.now()
       })
-      console.log('✅ [startSettling] Transição iniciada:', { taskId, toColumn })
     } catch (error) {
-      console.error('❌ [startSettling] Erro:', error)
+      console.error('Erro ao iniciar settling:', error)
     }
   }
 
