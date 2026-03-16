@@ -88,55 +88,17 @@ export const useUsers = () => {
     error.value = null
     
     try {
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: userData.email,
-        password: userData.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: userData.full_name || userData.name,
-          name: userData.name,
-          role: userData.role
-        }
+      // Usar a API route do servidor para criar o usuário
+      const { data } = await $fetch('/api/admin/users', {
+        method: 'POST',
+        body: userData
       })
-
-      if (authError) throw authError
       
-      if (!authData.user) throw new Error('Failed to create auth user')
-
-      // Then create the user record in our custom table
-      const { error: userError } = await supabase
-        .from('users')
-        .insert([{
-          id: authData.user.id,
-          email: userData.email,
-          name: userData.name,
-          role: userData.role
-        }] as any)
-
-      if (userError) throw userError
-
-      // Create user profile if additional data provided
-      if (userData.full_name || userData.phone) {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert([{
-            id: authData.user.id,
-            full_name: userData.full_name,
-            name: userData.name,
-            phone: userData.phone,
-            role: userData.role
-          }] as any)
-
-        if (profileError) {
-          console.warn('Error creating user profile:', profileError)
-        }
-      }
-
+      console.log('Usuário criado com sucesso:', data)
       await fetchUsers()
-      return authData.user
+      return data.user
     } catch (err: any) {
-      error.value = err.message
+      error.value = err.message || 'Erro ao criar usuário'
       console.error('Error creating user:', err)
       throw err
     } finally {
@@ -199,14 +161,15 @@ export const useUsers = () => {
     error.value = null
     
     try {
-      // Delete from auth (this will cascade to other tables)
-      const { error: authError } = await supabase.auth.admin.deleteUser(id)
+      // Usar a API route do servidor para deletar o usuário
+      const { data } = await $fetch(`/api/admin/users/${id}`, {
+        method: 'DELETE'
+      })
       
-      if (authError) throw authError
-      
+      console.log('Usuário deletado com sucesso:', data?.message || 'Operação concluída')
       await fetchUsers()
     } catch (err: any) {
-      error.value = err.message
+      error.value = err.message || 'Erro ao deletar usuário'
       console.error('Error deleting user:', err)
       throw err
     } finally {
@@ -237,6 +200,28 @@ export const useUsers = () => {
     users: users.value.filter(u => u.role === 'user').length
   }))
 
+  // Clean up inconsistent users
+  const cleanupUsers = async () => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const { data } = await $fetch('/api/admin/users/cleanup', {
+        method: 'POST'
+      })
+      
+      console.log('Limpeza concluída:', data)
+      await fetchUsers()
+      return data
+    } catch (err: any) {
+      error.value = err.message || 'Erro na limpeza de usuários'
+      console.error('Error cleaning up users:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     users: readonly(users),
     userProfiles: readonly(userProfiles),
@@ -249,6 +234,7 @@ export const useUsers = () => {
     updateUser,
     updateUserProfile,
     deleteUser,
+    cleanupUsers,
     getUserById,
     getUserProfileById,
     getUsersByRole

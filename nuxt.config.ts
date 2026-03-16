@@ -12,6 +12,15 @@ export default defineNuxtConfig({
       callback: '/confirm',
       exclude: ['/', '/cadastro', '/recuperar-senha']
     }
+  },
+  runtimeConfig: {
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
+    public: {
+      supabase: {
+        url: process.env.SUPABASE_URL,
+        anonKey: process.env.SUPABASE_KEY
+      }
+    }
   }
 })
 

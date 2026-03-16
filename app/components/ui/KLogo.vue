@@ -8,12 +8,10 @@
         !settings.logo_url && 'rounded-xl btn-primary border border-kros-blue'
       ]"
     >
-      <ClientOnly>
-        <img v-if="settings.logo_url" :src="settings.logo_url" :alt="settings.system_name" class="w-full h-full object-contain" />
-        <span v-else class="font-black text-white italic tracking-tighter" :class="size === 'sm' ? 'text-sm' : 'text-xl'">
-          {{ settings.system_name?.charAt(0).toUpperCase() || 'K' }}
-        </span>
-      </ClientOnly>
+      <img v-if="settings.logo_url" :src="settings.logo_url" :alt="settings.system_name" class="w-full h-full object-contain" />
+      <span v-else class="font-black text-white italic tracking-tighter" :class="size === 'sm' ? 'text-sm' : 'text-xl'">
+        {{ settings.system_name?.charAt(0).toUpperCase() || 'K' }}
+      </span>
     </div>
 
     <!-- Text Logo (Hidden when collapsed) -->
