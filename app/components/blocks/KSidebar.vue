@@ -164,6 +164,7 @@ const navItems = reactive([
     icon: Wrench,
     isOpen: false,
     subItems: [
+      { name: 'Usuários', path: '/ferramentas', icon: Users },
       { name: 'Tags de Negócio', path: '/tags', icon: Hash },
       { name: 'Modelos de Envios', path: '/ferramentas/templates', icon: FileText },
     ]
