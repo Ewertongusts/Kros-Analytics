@@ -128,6 +128,7 @@
       :toggle-task-selection="toggleTaskSelection"
       @edit="openTaskModal"
       @delete="handleDeleteTask"
+      @add-task="openTaskModal(undefined, getDefaultColumnId())"
     />
 
     <!-- Grid View -->
