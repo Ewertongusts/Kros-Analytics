@@ -8,6 +8,9 @@
 
 <script setup lang="ts">
 import type { Task } from '~/composables/useTasks'
+import KCalendarDayNumber from './KCalendarDayNumber.vue'
+import KCalendarDayTasks from './KCalendarDayTasks.vue'
+import KCalendarDayMoreIndicator from './KCalendarDayMoreIndicator.vue'
 
 interface CalendarDay {
   date: number

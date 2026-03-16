@@ -8,6 +8,9 @@
 
 <script setup lang="ts">
 import type { Task } from '~/composables/useTasks'
+import KAppointmentTitle from './KAppointmentTitle.vue'
+import KAppointmentDate from './KAppointmentDate.vue'
+import KCalendarPriorityBadge from './KCalendarPriorityBadge.vue'
 
 defineProps<{ appointment: Task }>()
 </script>

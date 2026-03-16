@@ -9,6 +9,8 @@
 
 <script setup lang="ts">
 import type { Task } from '~/composables/useTasks'
+import KAppointmentInfo from './KAppointmentInfo.vue'
+import KCalendarStatusBadge from './KCalendarStatusBadge.vue'
 
 defineProps<{ appointment: Task }>()
 defineEmits<{ select: [] }>()
