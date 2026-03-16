@@ -97,9 +97,8 @@
                 <div
                   class="px-1.5 py-0.5 rounded text-xs font-medium"
                   :class="[
-                    appointment.status === 'done' ? 'bg-green-500/20 text-green-300' :
-                    appointment.status === 'in_progress' ? 'bg-yellow-500/20 text-yellow-300' :
-                    appointment.status === 'todo' ? 'bg-blue-500/20 text-blue-300' :
+                    appointment.status === 'concluida' ? 'bg-green-500/20 text-green-300' :
+                    appointment.status === 'em_progresso' ? 'bg-blue-500/20 text-blue-300' :
                     'bg-gray-500/20 text-gray-300'
                   ]"
                 >
@@ -236,24 +235,24 @@ const weekAppointments = computed(() => {
   
   // Início da semana (domingo)
   startOfWeek.setDate(today.getDate() - today.getDay())
-  const startOfWeekStr = startOfWeek.toISOString().split('T')[0]
+  startOfWeek.setHours(0, 0, 0, 0)
   
   // Fim da semana (sábado)
   endOfWeek.setDate(today.getDate() + (6 - today.getDay()))
-  const endOfWeekStr = endOfWeek.toISOString().split('T')[0]
+  endOfWeek.setHours(23, 59, 59, 999)
   
   return props.tasks
     .filter(task => {
       if (!task.due_date) return false
-      const taskDateStr = task.due_date.split('T')[0]
-      return taskDateStr >= startOfWeekStr && taskDateStr <= endOfWeekStr
+      const taskDate = new Date(task.due_date)
+      return taskDate >= startOfWeek && taskDate <= endOfWeek
     })
     .sort((a, b) => {
       // Ordenar por data e depois por prioridade
-      const dateA = a.due_date!.split('T')[0]
-      const dateB = b.due_date!.split('T')[0]
-      if (dateA !== dateB) {
-        return dateA.localeCompare(dateB)
+      const dateA = new Date(a.due_date!)
+      const dateB = new Date(b.due_date!)
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA.getTime() - dateB.getTime()
       }
       
       const priorityOrder = { alta: 0, media: 1, baixa: 2 }
@@ -263,38 +262,31 @@ const weekAppointments = computed(() => {
 })
 
 const formatAppointmentDate = (dateStr: string) => {
-  if (!dateStr) return '-'
-  
-  // Usar apenas a parte da data para evitar problemas de timezone
-  const taskDateStr = dateStr.split('T')[0]
-  const taskDate = new Date(taskDateStr + 'T12:00:00') // Meio-dia para evitar problemas de timezone
-  
+  const date = new Date(dateStr)
   const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
-  
   const tomorrow = new Date(today)
   tomorrow.setDate(today.getDate() + 1)
-  const tomorrowStr = tomorrow.toISOString().split('T')[0]
   
-  if (taskDateStr === todayStr) {
+  // Resetar horas para comparação
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate())
+  
+  if (dateOnly.getTime() === todayOnly.getTime()) {
     return 'Hoje'
-  } else if (taskDateStr === tomorrowStr) {
+  } else if (dateOnly.getTime() === tomorrowOnly.getTime()) {
     return 'Amanhã'
   } else {
     return new Intl.DateTimeFormat('pt-BR', { 
       weekday: 'short', 
       day: 'numeric',
-      month: 'short',
-      timeZone: 'America/Sao_Paulo'
-    }).format(taskDate)
+      month: 'short'
+    }).format(date)
   }
 }
 
 const getStatusLabel = (status: string) => {
   const labels = {
-    'todo': 'A Fazer',
-    'in_progress': 'Em Progresso',
-    'done': 'Concluído',
     'pendente': 'Pendente',
     'em_progresso': 'Em Progresso',
     'concluida': 'Concluída',
@@ -327,10 +319,9 @@ const calendarDays = computed(() => {
     const dayTasks = props.tasks
       .filter(task => {
         if (!task.due_date) return false
-        // Usar apenas a parte da data (YYYY-MM-DD) para evitar problemas de timezone
-        const taskDateStr = task.due_date.split('T')[0]
-        const currentDateStr = date.toISOString().split('T')[0]
-        return taskDateStr === currentDateStr
+        const taskDate = new Date(task.due_date)
+        taskDate.setHours(0, 0, 0, 0)
+        return taskDate.getTime() === date.getTime()
       })
       .sort((a, b) => {
         const priorityOrder = { alta: 0, media: 1, baixa: 2 }
