@@ -6,10 +6,15 @@ export const useColumnDragDrop = () => {
   const dragOverColumnId = ref<string | null>(null)
   const dragOverSide = ref<'left' | 'right' | null>(null)
   const isDraggingColumn = ref(false)
+  let lastUpdateTime = 0
+  let lastRecordedSide: 'left' | 'right' | null = null
+  const DEBOUNCE_MS = 100 // Debounce de 100ms para evitar flickering
 
   const handleColumnDragStart = (columnId: string, e: DragEvent) => {
     draggedColumnId.value = columnId
     isDraggingColumn.value = true
+    lastUpdateTime = 0
+    lastRecordedSide = null
 
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = 'move'
@@ -26,20 +31,36 @@ export const useColumnDragDrop = () => {
         e.dataTransfer.dropEffect = 'move'
       }
       
+      const now = Date.now()
+      
+      // Só atualiza se passou tempo suficiente desde a última atualização
+      if (now - lastUpdateTime < DEBOUNCE_MS) {
+        return
+      }
+      
       const target = e.currentTarget as HTMLElement
       const rect = target.getBoundingClientRect()
-      const midpoint = rect.width / 2
+      const relativeX = e.clientX - rect.left
+      const normalizedX = relativeX / rect.width
       
-      const newSide = e.clientX >= rect.left + midpoint ? 'right' : 'left'
+      // Usa um threshold maior (40%) para evitar flickering no meio
+      const newSide = normalizedX >= 0.4 ? 'right' : 'left'
       
-      dragOverColumnId.value = columnId
-      dragOverSide.value = newSide
+      // Só atualiza se realmente mudou de lado
+      if (newSide !== lastRecordedSide) {
+        dragOverColumnId.value = columnId
+        dragOverSide.value = newSide
+        lastRecordedSide = newSide
+        lastUpdateTime = now
+      }
     }
   }
 
   const handleColumnDragLeave = () => {
     dragOverColumnId.value = null
     dragOverSide.value = null
+    lastRecordedSide = null
+    lastUpdateTime = 0
   }
 
   const handleColumnDrop = (
@@ -58,6 +79,8 @@ export const useColumnDragDrop = () => {
       draggedColumnId.value = null
       dragOverColumnId.value = null
       dragOverSide.value = null
+      lastRecordedSide = null
+      lastUpdateTime = 0
       isDraggingColumn.value = false
       return
     }
@@ -85,6 +108,8 @@ export const useColumnDragDrop = () => {
     draggedColumnId.value = null
     dragOverColumnId.value = null
     dragOverSide.value = null
+    lastRecordedSide = null
+    lastUpdateTime = 0
     isDraggingColumn.value = false
   }
 
@@ -92,6 +117,8 @@ export const useColumnDragDrop = () => {
     draggedColumnId.value = null
     dragOverColumnId.value = null
     dragOverSide.value = null
+    lastRecordedSide = null
+    lastUpdateTime = 0
     isDraggingColumn.value = false
   }
 
