@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-between gap-3 p-3 border-b border-white/10">
     <button
-      @click="$emit('previous-month')"
+      @click="$emit('previous')"
       class="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,7 +14,7 @@
     </h2>
     
     <button
-      @click="$emit('next-month')"
+      @click="$emit('next')"
       class="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,15 +23,15 @@
     </button>
 
     <button
-      @click="$emit('go-to-today')"
+      @click="$emit('today')"
       class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
       :style="{ 
         backgroundColor: 'var(--kros-blue, #FF0000)',
         color: 'white',
         opacity: 0.85
       }"
-      @mouseenter="($event.target as HTMLElement).style.opacity = '1'"
-      @mouseleave="($event.target as HTMLElement).style.opacity = '0.85'"
+      @mouseenter="$event.target.style.opacity = '1'"
+      @mouseleave="$event.target.style.opacity = '0.85'"
     >
       Hoje
     </button>
@@ -46,8 +46,8 @@ interface Props {
 defineProps<Props>()
 
 defineEmits<{
-  'previous-month': []
-  'next-month': []
-  'go-to-today': []
+  previous: []
+  next: []
+  today: []
 }>()
 </script>

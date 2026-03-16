@@ -2,7 +2,7 @@
   <div
     class="h-16 p-1.5 rounded-lg border border-white/10 flex flex-col cursor-pointer transition-all hover:bg-white/10"
     :class="dayClasses"
-    @click="$emit('click', day)"
+    @click="day.tasks.length > 0 && $emit('select', day.tasks[0])"
   >
     <!-- Número do dia -->
     <div :class="dateClasses">
@@ -17,7 +17,7 @@
         class="text-[10px] px-1 py-0.5 rounded truncate leading-none"
         :class="getTaskClasses(task)"
         :title="task.title"
-        @click.stop="$emit('task-click', task)"
+        @click.stop="$emit('select', task)"
       >
         {{ task.title }}
       </div>
@@ -52,8 +52,7 @@ interface Props {
 const props = defineProps<Props>()
 
 defineEmits<{
-  click: [day: CalendarDay]
-  'task-click': [task: Task]
+  select: [task: Task]
 }>()
 
 const dayClasses = computed(() => [
@@ -68,13 +67,8 @@ const dateClasses = computed(() => [
 ])
 
 const getTaskClasses = (task: Task) => {
-  switch (task.priority) {
-    case 'alta':
-      return 'bg-red-500/40 text-red-100 border border-red-500/60'
-    case 'media':
-      return 'bg-yellow-500/40 text-yellow-100 border border-yellow-500/60'
-    default:
-      return 'bg-blue-500/40 text-blue-100 border border-blue-500/60'
-  }
+  return task.priority === 'alta' ? 'bg-red-500/40 text-red-100 border border-red-500/60' :
+         task.priority === 'media' ? 'bg-yellow-500/40 text-yellow-100 border border-yellow-500/60' :
+         'bg-blue-500/40 text-blue-100 border border-blue-500/60'
 }
 </script>

@@ -17,8 +17,7 @@
         v-for="(day, index) in calendarDays"
         :key="index"
         :day="day"
-        @click="$emit('day-click', day)"
-        @task-click="$emit('task-click', $event)"
+        @select="$emit('select', $event)"
       />
     </div>
   </div>
@@ -42,8 +41,7 @@ interface Props {
 defineProps<Props>()
 
 defineEmits<{
-  'day-click': [day: CalendarDay]
-  'task-click': [task: Task]
+  select: [task: Task]
 }>()
 
 const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']

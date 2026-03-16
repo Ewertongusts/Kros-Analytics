@@ -16,5 +16,5 @@
 </template>
 
 <script setup lang="ts">
-// Componente simples sem props ou emits
+// Componente simples de legenda - sem props necessárias
 </script>
