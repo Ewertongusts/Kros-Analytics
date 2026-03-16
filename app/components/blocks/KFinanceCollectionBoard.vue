@@ -103,6 +103,9 @@
       :selected-total="selectedTotal"
       :tag-definitions="tagDefinitions"
       @batch-action="batchAction"
+      @add-tag-batch="handleAddTagBatch"
+      @remove-tag-batch="handleRemoveTagBatch"
+      @remove-all-tags-batch="handleRemoveAllTagsBatch"
       @clear-selection="clearSelection"
     />
 
@@ -278,22 +281,6 @@
       @close="isBatchMsgModalOpen = false"
       @sent="handleBatchSent"
     />
-
-    <!-- Modal de Confirmação de Pagamento em Massa -->
-    <BlocksKFinanceBatchPaidModal 
-      :is-open="isBatchPaidModalOpen"
-      :payments="selectedPaymentsForBatch"
-      @close="isBatchPaidModalOpen = false"
-      @confirm="confirmBatchPaid"
-    />
-
-    <!-- Modal de Confirmação de Estorno em Massa -->
-    <BlocksKFinanceBatchPendingModal 
-      :is-open="isBatchPendingModalOpen"
-      :payments="selectedPaymentsForBatch"
-      @close="isBatchPendingModalOpen = false"
-      @confirm="confirmBatchPending"
-    />
   </div>
 </template>
 
@@ -406,18 +393,6 @@ const batchAction = async (type: string) => {
     emit('batch-delete', selectedPayments)
     clearSelection()
   }
-}
-
-const confirmBatchPaid = () => {
-  emit('batch-mark-paid', selectedPaymentsForBatch.value)
-  closeBatchModals()
-  clearSelection()
-}
-
-const confirmBatchPending = () => {
-  emit('batch-mark-pending', selectedPaymentsForBatch.value)
-  closeBatchModals()
-  clearSelection()
 }
 
 const handleDelete = async (payment: any) => {
@@ -628,6 +603,173 @@ const handleUpdateTags = (data: { id: string, tags: string[] }) => {
     
     // Emitir evento para o pai atualizar o array
     emit('update-payments', newPayments)
+  }
+}
+
+const handleAddTagBatch = async (tagName: string) => {
+  console.log('🏷️ [handleAddTagBatch] Adicionando tag', tagName, 'para', selectedIds.value.length, 'itens')
+  
+  const selectedPayments = getSelectedPayments()
+  if (selectedPayments.length === 0) return
+  
+  try {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    // Atualizar tags para cada pagamento selecionado
+    for (let i = 0; i < selectedPayments.length; i++) {
+      const payment = selectedPayments[i]
+      const currentTags = payment.tags || []
+      
+      // Adicionar tag se não existir
+      if (!currentTags.includes(tagName)) {
+        const newTags = [...currentTags, tagName]
+        
+        // Atualizar na tabela companies
+        await supabase
+          .from('companies')
+          .update({ tags: newTags } as any)
+          .eq('id', payment.company_id)
+        
+        // Atualizar no array local
+        const index = props.payments.findIndex(p => p.id === payment.id)
+        if (index !== -1) {
+          props.payments[index].tags = newTags
+        }
+      }
+    }
+    
+    // Registrar no histórico
+    await supabase.from('payment_history').insert({
+      action_type: 'batch_tags_added',
+      description: `Tag "${tagName}" adicionada para ${selectedPayments.length} assinatura(s)`,
+      user_id: user.value?.id,
+      user_name: user.value?.email?.split('@')[0] || 'Sistema',
+      metadata: {
+        tag_name: tagName,
+        count: selectedPayments.length,
+        company_ids: selectedPayments.map(p => p.company_id)
+      }
+    } as any)
+    
+    const { success } = useToast()
+    success('Tags adicionadas', `Tag "${tagName}" adicionada para ${selectedPayments.length} assinatura(s)`)
+    
+    clearSelection()
+    emit('sync')
+  } catch (err: any) {
+    console.error('❌ Erro ao adicionar tags:', err)
+    const { error } = useToast()
+    error('Erro ao adicionar tags', err.message)
+  }
+}
+
+const handleRemoveTagBatch = async (tagName: string) => {
+  console.log('🏷️ [handleRemoveTagBatch] Removendo tag', tagName, 'de', selectedIds.value.length, 'itens')
+  
+  const selectedPayments = getSelectedPayments()
+  if (selectedPayments.length === 0) return
+  
+  try {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    // Remover tag de cada pagamento selecionado
+    for (let i = 0; i < selectedPayments.length; i++) {
+      const payment = selectedPayments[i]
+      const currentTags = payment.tags || []
+      
+      // Remover tag se existir
+      if (currentTags.includes(tagName)) {
+        const newTags = currentTags.filter((t: string) => t !== tagName)
+        
+        // Atualizar na tabela companies
+        await supabase
+          .from('companies')
+          .update({ tags: newTags } as any)
+          .eq('id', payment.company_id)
+        
+        // Atualizar no array local
+        const index = props.payments.findIndex(p => p.id === payment.id)
+        if (index !== -1) {
+          props.payments[index].tags = newTags
+        }
+      }
+    }
+    
+    // Registrar no histórico
+    await supabase.from('payment_history').insert({
+      action_type: 'batch_tags_removed',
+      description: `Tag "${tagName}" removida de ${selectedPayments.length} assinatura(s)`,
+      user_id: user.value?.id,
+      user_name: user.value?.email?.split('@')[0] || 'Sistema',
+      metadata: {
+        tag_name: tagName,
+        count: selectedPayments.length,
+        company_ids: selectedPayments.map(p => p.company_id)
+      }
+    } as any)
+    
+    const { success } = useToast()
+    success('Tags removidas', `Tag "${tagName}" removida de ${selectedPayments.length} assinatura(s)`)
+    
+    clearSelection()
+    emit('sync')
+  } catch (err: any) {
+    console.error('❌ Erro ao remover tags:', err)
+    const { error } = useToast()
+    error('Erro ao remover tags', err.message)
+  }
+}
+
+const handleRemoveAllTagsBatch = async () => {
+  console.log('🏷️ [handleRemoveAllTagsBatch] Removendo TODAS as tags de', selectedIds.value.length, 'itens')
+  
+  const selectedPayments = getSelectedPayments()
+  if (selectedPayments.length === 0) return
+  
+  try {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    
+    // Remover todas as tags de cada pagamento selecionado
+    for (let i = 0; i < selectedPayments.length; i++) {
+      const payment = selectedPayments[i]
+      
+      // Atualizar na tabela companies
+      await supabase
+        .from('companies')
+        .update({ tags: [] } as any)
+        .eq('id', payment.company_id)
+      
+      // Atualizar no array local
+      const index = props.payments.findIndex(p => p.id === payment.id)
+      if (index !== -1) {
+        props.payments[index].tags = []
+      }
+    }
+    
+    // Registrar no histórico
+    await supabase.from('payment_history').insert({
+      action_type: 'batch_tags_cleared',
+      description: `Todas as tags removidas de ${selectedPayments.length} assinatura(s)`,
+      user_id: user.value?.id,
+      user_name: user.value?.email?.split('@')[0] || 'Sistema',
+      metadata: {
+        count: selectedPayments.length,
+        company_ids: selectedPayments.map(p => p.company_id)
+      }
+    } as any)
+    
+    const { success } = useToast()
+    success('Tags removidas', `Todas as tags removidas de ${selectedPayments.length} assinatura(s)`)
+    
+    clearSelection()
+    emit('sync')
+  } catch (err: any) {
+    console.error('❌ Erro ao remover todas as tags:', err)
+    const { error } = useToast()
+    error('Erro ao remover tags', err.message)
   }
 }
 
