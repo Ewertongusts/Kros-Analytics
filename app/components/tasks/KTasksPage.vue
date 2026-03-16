@@ -82,16 +82,27 @@
                   <h4 class="text-sm font-medium text-white truncate">{{ task.title }}</h4>
                   <p v-if="task.description" class="text-xs text-white/50 truncate mt-1">{{ task.description }}</p>
                 </div>
-                <button
-                  v-if="task.id"
-                  @click.stop="deleteTask(task.id)"
-                  class="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all"
-                  title="Deletar"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    @click.stop="handleDuplicateTask(task)"
+                    class="p-1 rounded hover:bg-blue-500/20 text-white/40 hover:text-blue-400 transition-all"
+                    title="Duplicar"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button
+                    v-if="task.id"
+                    @click.stop="deleteTask(task.id)"
+                    class="p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all"
+                    title="Deletar"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div class="flex items-center gap-2 mt-2 text-xs text-white/40">
                 <span v-if="task.priority" class="px-1.5 py-0.5 rounded bg-white/5">{{ task.priority }}</span>
@@ -128,6 +139,7 @@
       :toggle-task-selection="toggleTaskSelection"
       @edit="openTaskModal"
       @delete="handleDeleteTask"
+      @duplicate="handleDuplicateTask"
       @add-task="openTaskModal(undefined, getDefaultColumnId())"
     />
 
@@ -136,6 +148,7 @@
       v-else-if="viewMode === 'grid'"
       :tasks="tasks"
       @open-task-modal="openTaskModal"
+      @duplicate-task="handleDuplicateTask"
       @toggle-selection="toggleTaskSelection"
     />
 
@@ -215,6 +228,7 @@ const {
   closeTaskModal,
   handleSaveTask,
   deleteTask,
+  duplicateTask,
   loading
 } = useTaskHandlers()
 
@@ -318,6 +332,10 @@ const handleDeleteTask = async (task: Task) => {
   if (task.id) {
     await deleteTask(task.id)
   }
+}
+
+const handleDuplicateTask = async (task: Task) => {
+  await duplicateTask(task)
 }
 
 const handleDeleteColumn = async (columnId: string) => {
