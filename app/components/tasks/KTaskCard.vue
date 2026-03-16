@@ -290,11 +290,12 @@ const getCheckboxStyle = () => {
   
   return {
     backgroundColor: props.isSelected ? 'var(--kros-blue, #3b82f6)' : 'transparent',
-    border: props.isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+    border: props.isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.2)',
     backgroundImage: props.isSelected ? `url('data:image/svg+xml,${encodedSvg}')` : 'none',
     backgroundSize: 'contain',
     backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
+    backgroundRepeat: 'no-repeat',
+    opacity: props.isSelected ? '1' : '0.5'
   }
 }
 

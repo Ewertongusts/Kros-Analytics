@@ -31,7 +31,7 @@
                 handleTaskDropWithPosition(e, column.column_id)
               }
             }"
-            class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-300 ease-out relative"
+            class="flex-shrink-0 w-[220px] rounded-xl bg-[#0f0f11] border border-white/5 transition-all duration-300 ease-out relative"
             :class="[
               draggedColumnId === column.column_id ? 'opacity-50' : ''
             ]"
@@ -174,6 +174,15 @@
             <div class="p-2.5 border-b border-orange-500/30 bg-orange-500/5 rounded-t-xl">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5 flex-1">
+                  <!-- Checkbox Select All (aparece quando há seleções) -->
+                  <input
+                    v-if="selectedCount > 0"
+                    type="checkbox"
+                    :checked="isColumnFullySelected(orphanTasks.map(t => t.id!))"
+                    @click.stop="toggleColumnTasks(orphanTasks.map(t => t.id!))"
+                    class="w-4 h-4 rounded-md cursor-pointer appearance-none transition-all flex-shrink-0"
+                    :style="getColumnCheckboxStyle('orphan')"
+                  />
                   <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
                   <h3 class="font-semibold text-orange-400 text-xs">Tarefas Órfãs</h3>
                 </div>
@@ -326,6 +335,21 @@
       @save="handleSaveTask"
     />
 
+    <!-- Modal de Criar Coluna -->
+    <TasksKCreateColumnModal
+      :is-open="isCreateColumnModalOpen"
+      @close="isCreateColumnModalOpen = false"
+      @create="handleCreateColumn"
+    />
+
+    <!-- Modal de Confirmação de Delete -->
+    <TasksKConfirmDeleteModal
+      :is-open="isConfirmDeleteOpen"
+      :message="confirmDeleteMessage"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
+
   </LayoutsKPageLayout>
 </template>
 
@@ -340,6 +364,7 @@ import { useColumnDragDrop } from '~/composables/useColumnDragDrop'
 import { useRealtimeCardTransitions } from '~/composables/useRealtimeCardTransitions'
 import { useAdvancedTransitions } from '~/composables/useAdvancedTransitions'
 import { useTaskSelection } from '~/composables/useTaskSelection'
+import { useConfirmDelete } from '~/composables/useConfirmDelete'
 
 definePageMeta({
   middleware: 'auth'
@@ -393,8 +418,9 @@ const getColumnCheckboxStyle = (columnId: string) => {
   if (taskIds.length === 0) {
     return {
       backgroundColor: 'transparent',
-      border: '2px solid rgba(255, 255, 255, 0.3)',
-      backgroundImage: 'none'
+      border: '2px solid rgba(255, 255, 255, 0.2)',
+      backgroundImage: 'none',
+      opacity: '0.5'
     }
   }
   
@@ -413,11 +439,12 @@ const getColumnCheckboxStyle = (columnId: string) => {
     }
   }
   
-  // Se não está totalmente selecionado, mostrar vazio
+  // Se não está totalmente selecionado, mostrar vazio com baixa opacidade
   return {
     backgroundColor: 'transparent',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    backgroundImage: 'none'
+    border: '2px solid rgba(255, 255, 255, 0.2)',
+    backgroundImage: 'none',
+    opacity: '0.5'
   }
 }
 
@@ -453,6 +480,8 @@ const columnToRename = ref<any>(null)
 const isProcessingDrop = ref(false)
 const viewMode = ref<'kanban' | 'list' | 'grid' | 'calendar'>('kanban')
 const isBulkTransferModalOpen = ref(false)
+const isCreateColumnModalOpen = ref(false)
+const { isOpen: isConfirmDeleteOpen, message: confirmDeleteMessage, confirm: confirmDelete, handleConfirm, handleCancel } = useConfirmDelete()
 
 const calculateKanbanHeight = () => {
   const kanbanContainer = document.querySelector('.overflow-x-auto')
@@ -463,16 +492,18 @@ const calculateKanbanHeight = () => {
 }
 
 const addNewColumn = () => {
-  const columnName = prompt('Nome da nova coluna:')
-  if (!columnName) return
-  
+  isCreateColumnModalOpen.value = true
+}
+
+const handleCreateColumn = (columnName: string, color: string) => {
   addColumn({
     column_id: `custom_${Date.now()}`,
     name: columnName,
-    color: '#8b5cf6',
+    color: color,
     status: `custom_${Date.now()}`,
     position: customColumns.value.length
   })
+  isCreateColumnModalOpen.value = false
 }
 
 const orphanTasks = computed(() => {
@@ -494,7 +525,10 @@ const getTasksInColumn = (columnId: string) => {
 }
 
 const removeColumn = async (columnId: string) => {
-  const confirmed = confirm('Deseja remover esta coluna? As tarefas não serão deletadas.')
+  isConfirmDeleteOpen.value = true
+  confirmDeleteMessage.value = 'Deseja remover esta coluna? As tarefas não serão deletadas.'
+  
+  const confirmed = await confirmDelete('Deseja remover esta coluna? As tarefas não serão deletadas.')
   if (confirmed) {
     await deleteColumn(columnId)
   }
@@ -677,7 +711,7 @@ const deleteSelectedTasks = async () => {
   const selectedIds = getSelectedTaskIds()
   if (selectedIds.length === 0) return
 
-  const confirmed = confirm(`Deseja deletar ${selectedIds.length} tarefa(s)?`)
+  const confirmed = await confirmDelete(`Deseja deletar ${selectedIds.length} ${selectedIds.length === 1 ? 'tarefa' : 'tarefas'}?`)
   if (!confirmed) return
 
   loadingAction.value = true

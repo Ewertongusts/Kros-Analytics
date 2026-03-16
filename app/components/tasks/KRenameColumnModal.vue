@@ -4,28 +4,28 @@
       <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <!-- Backdrop -->
         <div 
-          class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          class="absolute inset-0 bg-black/70 backdrop-blur-md"
           @click="close"
         ></div>
 
         <!-- Modal -->
-        <div class="relative bg-[#1a1a1c] border border-white/10 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="relative bg-[#0f0f11] border border-white/5 rounded-xl shadow-2xl w-full max-w-xs overflow-hidden">
           <!-- Header -->
-          <div class="px-6 py-5 border-b border-white/5">
-            <h2 class="text-base font-semibold text-white">Renomear Coluna</h2>
-            <p class="text-xs text-white/40 mt-1">{{ column?.name }}</p>
+          <div class="px-5 py-4 border-b border-white/5">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Renomear Coluna</h2>
+            <p class="text-xs text-white/30 mt-1">{{ column?.name }}</p>
           </div>
 
           <!-- Content -->
-          <div class="p-6 space-y-5">
+          <div class="p-5 space-y-4">
             <!-- Input -->
             <div>
-              <label class="block text-xs font-medium text-white/60 mb-2.5 uppercase tracking-wide">Novo nome</label>
+              <label class="block text-xs font-bold text-white/40 mb-2 uppercase tracking-wider">Novo nome</label>
               <input
                 v-model="newName"
                 type="text"
                 placeholder="Digite o novo nome..."
-                class="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20 focus:bg-white/[0.08] transition-all"
+                class="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-kros-blue focus:ring-1 focus:ring-kros-blue/50 focus:bg-white/8 transition-all"
                 @keyup.enter="submit"
                 @keyup.escape="close"
                 autofocus
@@ -34,16 +34,16 @@
 
             <!-- Color picker -->
             <div>
-              <label class="block text-xs font-medium text-white/60 mb-3 uppercase tracking-wide">Cor</label>
-              <div class="flex gap-2.5">
+              <label class="block text-xs font-bold text-white/40 mb-2 uppercase tracking-wider">Cor</label>
+              <div class="flex gap-2">
                 <button
                   v-for="color in colors"
                   :key="color"
                   @click="selectedColor = color"
                   :style="{ backgroundColor: color }"
                   :class="[
-                    'w-7 h-7 rounded-md transition-all flex-shrink-0',
-                    selectedColor === color ? 'ring-2 ring-white/40 scale-110' : 'hover:scale-105 opacity-70 hover:opacity-100'
+                    'w-8 h-8 rounded-md transition-all flex-shrink-0',
+                    selectedColor === color ? 'ring-2 ring-white ring-offset-1 ring-offset-[#0f0f11] scale-105' : 'hover:scale-105 opacity-60 hover:opacity-100'
                   ]"
                 ></button>
               </div>
@@ -51,17 +51,17 @@
           </div>
 
           <!-- Footer -->
-          <div class="bg-white/[0.02] border-t border-white/5 px-6 py-4 flex gap-2.5 justify-end">
+          <div class="bg-white/[0.02] border-t border-white/5 px-5 py-3 flex gap-2 justify-end">
             <button
               @click="close"
-              class="px-4 py-2 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-all text-sm font-medium"
+              class="px-3 py-2 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-all text-xs font-semibold uppercase tracking-wide"
             >
               Cancelar
             </button>
             <button
               @click="submit"
               :disabled="!newName.trim()"
-              class="px-5 py-2 text-white rounded-lg transition-all text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+              class="px-3 py-2 text-white rounded-lg transition-all text-xs font-bold uppercase tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
               :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
             >
               Salvar
