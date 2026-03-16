@@ -222,6 +222,6 @@ Expected logs:
 ## 📞 Need Help?
 
 If logs don't match expected flow:
-1. Check `.kiro/CROSS_COLUMN_DRAG_DROP_FIX.md` for detailed explanation
+1. Check [DRAG_DROP_DEBUGGING.md](./DRAG_DROP_DEBUGGING.md) for detailed explanation
 2. Look at the "Troubleshooting" section
 3. Compare your logs with the "Complete Flow Logs" section above
