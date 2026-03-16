@@ -1,14 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import type { Task } from './useTasks'
-
-export interface CardTransitionState {
-  taskId: string
-  isMoving: boolean
-  fromColumn: string
-  toColumn: string
-  progress: number
-  startTime: number
-}
+import type { CardTransitionState } from './useRealtimeCardTransitions'
 
 export const useCardTransitions = () => {
   const transitionStates = ref<Map<string, CardTransitionState>>(new Map())

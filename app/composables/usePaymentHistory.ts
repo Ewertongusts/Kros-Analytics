@@ -1,15 +1,5 @@
 import { ref, computed } from 'vue'
-
-export interface PaymentRecord {
-  id: string
-  expense_id: string
-  user_id: string
-  amount: number
-  paid_date: string
-  payment_method?: string
-  notes?: string
-  created_at: string
-}
+import type { PaymentRecord } from './usePaymentRecords'
 
 export interface PaymentFilters {
   search: string

@@ -1,15 +1,5 @@
 import { ref, computed } from 'vue'
-
-export interface Category {
-  id: string
-  user_id: string
-  name: string
-  color?: string
-  icon?: string
-  description?: string
-  created_at: string
-  updated_at: string
-}
+import type { Category } from './useExpenses'
 
 export const useCategories = () => {
   const supabase = useSupabaseClient()
