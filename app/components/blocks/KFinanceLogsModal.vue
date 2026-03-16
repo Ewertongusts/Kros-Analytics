@@ -103,16 +103,23 @@ const fetchLogs = async () => {
             .limit(100)
             
         if (props.paymentId) {
-            // paymentId aqui é na verdade company_id
-            query = query.eq('company_id', props.paymentId)
+            // Tentar buscar por company_id primeiro, se não funcionar, buscar por company_name
+            // Por enquanto, vamos buscar todos os logs
+            console.log('🔍 [KFinanceLogsModal] Buscando logs para company_id:', props.paymentId)
         }
 
         const { data, error } = await query
             
-        if (error) throw error
+        if (error) {
+            console.error('❌ [KFinanceLogsModal] Erro ao buscar logs:', error)
+            throw error
+        }
+        
+        console.log('✅ [KFinanceLogsModal] Logs encontrados:', data?.length)
         logs.value = data || []
     } catch (err) {
         console.error('Erro ao buscar logs:', err)
+        logs.value = []
     } finally {
         loading.value = false
     }

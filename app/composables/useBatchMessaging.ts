@@ -71,6 +71,7 @@ export const useBatchMessaging = () => {
   }
 
   const logMessage = async (data: {
+    company_id?: string
     company_name: string
     whatsapp: string
     message_body: string

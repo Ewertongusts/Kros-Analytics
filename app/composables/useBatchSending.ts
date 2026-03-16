@@ -153,6 +153,7 @@ export const useBatchSending = () => {
         await sendMessage(rawNum, compiledMessage)
 
         await logMessage({
+          company_id: payment.company_id,
           company_name: payment.company_name,
           whatsapp: rawNum,
           message_body: compiledMessage,
@@ -180,6 +181,7 @@ export const useBatchSending = () => {
         failedSends.push(payment.company_name)
         
         await logMessage({
+          company_id: payment.company_id,
           company_name: payment.company_name,
           whatsapp: payment.company_whatsapp || 'N/A',
           message_body: bodyToUse,

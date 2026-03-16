@@ -223,6 +223,7 @@ const handleSend = async () => {
       
       // Cria log
       await (useSupabaseClient() as any).from('message_logs').insert({
+         company_id: props.payment.company_id,
          company_name: props.payment.company_name,
          whatsapp: rawNum,
          message_body: compiledMessage.value,
@@ -235,6 +236,7 @@ const handleSend = async () => {
       error('Erro ao enviar', `Não foi possível enviar para ${props.payment.company_name}`)
       
       await (useSupabaseClient() as any).from('message_logs').insert({
+         company_id: props.payment.company_id,
          company_name: props.payment.company_name,
          whatsapp: rawNum,
          message_body: compiledMessage.value,
@@ -251,6 +253,7 @@ const handleSend = async () => {
     
     apiResult.value = { ok: false, body: err?.message || 'Erro de rede desconhecido' }
     await (useSupabaseClient() as any).from('message_logs').insert({
+       company_id: props.payment.company_id,
        company_name: props.payment.company_name,
        whatsapp: props.payment.company_whatsapp || 'N/A',
        message_body: compiledMessage.value,
