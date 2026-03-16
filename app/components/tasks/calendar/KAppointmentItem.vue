@@ -1,11 +1,7 @@
 <template>
   <div class="p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer" @click="$emit('select')">
     <div class="flex items-start justify-between gap-2">
-      <div class="flex-1 min-w-0">
-        <h4 class="text-xs font-medium text-white truncate">{{ appointment.title }}</h4>
-        <p class="text-xs text-white/60 mt-0.5">{{ formatAppointmentDate(appointment.due_date) }}</p>
-        <KCalendarPriorityBadge :priority="appointment.priority" />
-      </div>
+      <KAppointmentInfo :appointment="appointment" />
       <KCalendarStatusBadge :status="appointment.status" />
     </div>
   </div>
@@ -13,7 +9,6 @@
 
 <script setup lang="ts">
 import type { Task } from '~/composables/useTasks'
-import { formatAppointmentDate } from '~/utils/calendarUtils'
 
 defineProps<{ appointment: Task }>()
 defineEmits<{ select: [] }>()
