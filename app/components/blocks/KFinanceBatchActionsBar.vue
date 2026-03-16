@@ -71,22 +71,14 @@
               </div>
             </button>
 
-            <div v-if="isBatchTagPickerOpen" class="absolute top-full left-0 mt-2 w-48 bg-[#111112] border border-white/10 rounded-xl shadow-2xl z-[150] p-1 animate-in slide-in-from-top-2 duration-200">
-              <div class="max-h-48 overflow-y-auto custom-scrollbar">
-                <div class="px-3 py-2 border-b border-white/5 mb-1">
-                  <p class="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Adicionar Tag</p>
-                </div>
-                <button 
-                  v-for="tag in tagDefinitions" 
-                  :key="tag.id"
-                  @click="handleAddTag(tag.name)"
-                  class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all text-left group/btag"
-                >
-                  <div :style="{ backgroundColor: tag.color }" class="w-2 h-2 rounded-sm shrink-0"></div>
-                  <span class="text-[9px] font-bold text-white/60 uppercase tracking-widest truncate group-hover/btag:text-white">{{ tag.name }}</span>
-                </button>
-              </div>
-            </div>
+            <BlocksKBatchTagModal 
+              :isOpen="isBatchTagPickerOpen"
+              title="Adicionar Tag"
+              :tags="tagDefinitions"
+              mode="add"
+              backgroundColor="#2a2a2a"
+              @select="handleAddTag"
+            />
           </div>
 
           <!-- Remove Tags -->
@@ -102,32 +94,14 @@
               </div>
             </button>
 
-            <div v-if="isBatchRemoveTagPickerOpen" class="absolute top-full left-0 mt-2 w-48 bg-[#111112] border border-white/10 rounded-xl shadow-2xl z-[150] p-1 animate-in slide-in-from-top-2 duration-200">
-              <div class="max-h-48 overflow-y-auto custom-scrollbar">
-                <div class="px-3 py-2 border-b border-white/5 mb-1">
-                  <p class="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Remover Tag</p>
-                </div>
-                
-                <!-- Opção para remover TODAS as tags -->
-                <button 
-                  @click="handleRemoveAllTags"
-                  class="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-500/20 transition-all text-left group/rtag border-b border-white/5 mb-1"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                  <span class="text-[9px] font-black text-red-400 uppercase tracking-widest group-hover/rtag:text-red-300">Remover Todas</span>
-                </button>
-                
-                <button 
-                  v-for="tag in tagDefinitions" 
-                  :key="tag.id"
-                  @click="handleRemoveTag(tag.name)"
-                  class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition-all text-left group/rtag"
-                >
-                  <div :style="{ backgroundColor: tag.color }" class="w-2 h-2 rounded-sm shrink-0"></div>
-                  <span class="text-[9px] font-bold text-white/60 uppercase tracking-widest truncate group-hover/rtag:text-red-400">{{ tag.name }}</span>
-                </button>
-              </div>
-            </div>
+            <BlocksKBatchTagModal 
+              :isOpen="isBatchRemoveTagPickerOpen"
+              title="Remover Tag"
+              :tags="tagDefinitions"
+              mode="remove"
+              backgroundColor="#2a2a2a"
+              @select="handleRemoveTagFromModal"
+            />
           </div>
         </div>
       </div>
@@ -162,13 +136,12 @@ const handleAddTag = (tagName: string) => {
   isBatchTagPickerOpen.value = false
 }
 
-const handleRemoveTag = (tagName: string) => {
-  emit('remove-tag-batch', tagName)
-  isBatchRemoveTagPickerOpen.value = false
-}
-
-const handleRemoveAllTags = () => {
-  emit('remove-all-tags-batch')
+const handleRemoveTagFromModal = (tagName: string) => {
+  if (tagName === 'remove-all') {
+    emit('remove-all-tags-batch')
+  } else {
+    emit('remove-tag-batch', tagName)
+  }
   isBatchRemoveTagPickerOpen.value = false
 }
 </script>

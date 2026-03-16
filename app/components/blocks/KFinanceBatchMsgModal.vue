@@ -68,12 +68,14 @@
               v-model="skipRecent"
               v-model:days="skipRecentDays"
             />
+
           </template>
 
           <!-- Progress -->
           <FinanceBatchKBatchMsgProgress
             :progress="progress"
             :total="payments.length"
+            :current-company="currentCompanyName"
             :countdown="countdown"
           />
         </div>
@@ -100,7 +102,7 @@
           <button 
             v-else
             @click="isMinimized = true"
-            class="flex-[2] bg-white/5 py-4 rounded-xl text-xs font-black uppercase text-white/40 hover:text-white transition-all"
+            class="flex-[2] bg-kros-blue py-4 rounded-xl text-xs font-black uppercase text-white hover:opacity-90 transition-all"
           >
             MINIMIZAR
           </button>
@@ -114,9 +116,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useCrm } from '~/composables/useCrm'
 import { useBatchSending } from '~/composables/useBatchSending'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   isOpen: boolean
@@ -134,7 +137,8 @@ const {
   initializeStatus, 
   loadLastSentRecords, 
   checkSkipLimit,
-  sendBatch 
+  sendBatch,
+  currentCompanyName
 } = useBatchSending()
 
 const isMinimized = ref(false)
@@ -165,6 +169,23 @@ onMounted(async () => {
   // Inicializa status
   initializeStatus(props.payments)
   await loadLastSentRecords(props.payments)
+
+  // Bloquear navegação durante envio
+  const router = useRouter()
+  const { warning } = useToast()
+  
+  const unsubscribe = router.beforeEach((to, from, next) => {
+    if (submitting.value) {
+      warning('Campanha em andamento!', 'Aguarde a conclusão antes de sair da página.')
+      next(false)
+    } else {
+      next()
+    }
+  })
+
+  onBeforeUnmount(() => {
+    unsubscribe()
+  })
 })
 
 const handleSendBatch = async () => {

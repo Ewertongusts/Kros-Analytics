@@ -384,9 +384,14 @@ const batchAction = async (type: string) => {
   } else if (type === 'mark-pending') {
     openBatchPendingModal(selectedPayments)
   } else if (type === 'whatsapp-api') {
+    console.log('🔍 [handleBatchAction] Validando WhatsApp para', selectedPayments.length, 'pagamentos')
     const validatedPayments = await validateWhatsAppForBatch(selectedPayments)
+    console.log('✅ [handleBatchAction] Pagamentos validados:', validatedPayments?.length || 0)
     if (validatedPayments) {
+      console.log('📱 [handleBatchAction] Abrindo modal de envio')
       openBatchMsgModal(validatedPayments)
+    } else {
+      console.log('❌ [handleBatchAction] Validação falhou ou foi cancelada')
     }
   } else if (type === 'auto-billing-on') {
     console.log('Emitindo evento batch-delete com', selectedPayments.length, 'assinaturas')
