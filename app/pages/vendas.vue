@@ -428,7 +428,7 @@ const filteredSales = computed(() => {
     : sales.filter((sale: any) => sale.sale_type === activeFilter.value)
 })
 
-const summary = computed(() => computeSummary(salesData.value))
+const summary = computed(() => computeSummary(filteredSales.value))
 
 const openNewSaleModal = () => {
   openSelectTypeModal()

@@ -249,16 +249,28 @@ export const useSaleCrud = () => {
         maxValue: 0,
         totalValue: 0,
         totalCount: 0,
-        produtos: { count: 0, total: 0 },
-        servicos: { count: 0, total: 0 },
-        personalizados: { count: 0, total: 0 },
-        total: { count: 0, total: 0 }
+        produtosPagos: { count: 0, total: 0 },
+        servicosPagos: { count: 0, total: 0 },
+        produtosPendentes: { count: 0, total: 0 },
+        servicosPendentes: { count: 0, total: 0 },
+        totalPago: { count: 0, total: 0 },
+        totalAReceber: { count: 0, total: 0 }
       }
     }
 
-    const produtos = sales.filter((s) => s.sale_type === 'produto')
-    const servicos = sales.filter((s) => s.sale_type === 'servico')
-    const personalizados = sales.filter((s) => s.sale_type === 'personalizado')
+    // Produtos e serviços PAGOS (efetivamente vendidos)
+    const produtosPagos = sales.filter((s) => s.sale_type === 'produto' && s.payment_status === 'paid')
+    const servicosPagos = sales.filter((s) => s.sale_type === 'servico' && s.payment_status === 'paid')
+    
+    // Produtos e serviços pendentes
+    const produtosPendentes = sales.filter((s) => s.sale_type === 'produto' && s.payment_status === 'pending')
+    const servicosPendentes = sales.filter((s) => s.sale_type === 'servico' && s.payment_status === 'pending')
+    
+    // Vendas pagas
+    const vendasPagas = sales.filter((s) => s.payment_status === 'paid')
+    
+    // Total a receber (produtos e serviços pendentes)
+    const totalPendentes = [...produtosPendentes, ...servicosPendentes]
 
     const totalValue = sales.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
     const maxValue = Math.max(...sales.map(s => s.final_value || s.monthly_price || 0), 0)
@@ -269,21 +281,29 @@ export const useSaleCrud = () => {
       maxValue: maxValue,
       totalValue: totalValue,
       totalCount: sales.length,
-      produtos: {
-        count: produtos.length,
-        total: produtos.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
+      produtosPagos: {
+        count: produtosPagos.length,
+        total: produtosPagos.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
       },
-      servicos: {
-        count: servicos.length,
-        total: servicos.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
+      servicosPagos: {
+        count: servicosPagos.length,
+        total: servicosPagos.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
       },
-      personalizados: {
-        count: personalizados.length,
-        total: personalizados.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
+      produtosPendentes: {
+        count: produtosPendentes.length,
+        total: produtosPendentes.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
       },
-      total: {
-        count: sales.length,
-        total: totalValue
+      servicosPendentes: {
+        count: servicosPendentes.length,
+        total: servicosPendentes.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
+      },
+      totalPago: {
+        count: vendasPagas.length,
+        total: vendasPagas.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
+      },
+      totalAReceber: {
+        count: totalPendentes.length,
+        total: totalPendentes.reduce((sum, s) => sum + (s.final_value || s.monthly_price || 0), 0)
       }
     }
   }
