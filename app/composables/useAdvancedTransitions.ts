@@ -221,27 +221,78 @@ export const useAdvancedTransitions = () => {
     priority: string
   ) => {
     try {
-      showSyncIndicator(taskId)
-      animateNearbyCards(fromColumnId, taskId)
-      animateColumnReceiving(toColumnId)
-      animateColumnExpand(toColumnId)
+      console.log('🎬 [executeFullTransition] Iniciando transição completa')
+      
+      try {
+        showSyncIndicator(taskId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em showSyncIndicator:', e)
+      }
+      
+      try {
+        animateNearbyCards(fromColumnId, taskId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em animateNearbyCards:', e)
+      }
+      
+      try {
+        animateColumnReceiving(toColumnId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em animateColumnReceiving:', e)
+      }
+      
+      try {
+        animateColumnExpand(toColumnId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em animateColumnExpand:', e)
+      }
 
       await new Promise(resolve => setTimeout(resolve, 300))
 
-      addMorphingAnimation(taskId)
+      try {
+        addMorphingAnimation(taskId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em addMorphingAnimation:', e)
+      }
 
       await new Promise(resolve => setTimeout(resolve, 400))
 
-      addCustomBounce(taskId, priority)
-      addRippleEffect(taskId)
-      addDropGlow(taskId)
+      try {
+        addCustomBounce(taskId, priority)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em addCustomBounce:', e)
+      }
+      
+      try {
+        addRippleEffect(taskId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em addRippleEffect:', e)
+      }
+      
+      try {
+        addDropGlow(taskId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em addDropGlow:', e)
+      }
 
       await new Promise(resolve => setTimeout(resolve, 600))
 
-      hideSyncIndicator(taskId)
+      try {
+        hideSyncIndicator(taskId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro em hideSyncIndicator:', e)
+      }
+      
+      console.log('✅ [executeFullTransition] Transição completa')
     } catch (error) {
-      console.error('Erro na transição:', error)
-      hideSyncIndicator(taskId)
+      console.error('❌ [executeFullTransition] Erro na transição:', error)
+      console.error('❌ [executeFullTransition] Stack:', (error as any)?.stack)
+      
+      try {
+        hideSyncIndicator(taskId)
+      } catch (e) {
+        console.error('❌ [executeFullTransition] Erro ao limpar em catch:', e)
+      }
     }
   }
 

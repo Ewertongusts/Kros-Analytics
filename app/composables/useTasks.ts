@@ -24,8 +24,8 @@ export const useTasks = () => {
   const fetchTasks = async () => {
     loading.value = true
     try {
-      console.log('🔍 Iniciando busca de tarefas...')
-      console.log('👤 Usuário atual:', user.value?.id)
+      console.log('🔍 [fetchTasks] Iniciando busca de tarefas...')
+      console.log('👤 [fetchTasks] Usuário atual:', user.value?.id)
       const query = (supabase.from('tasks') as any)
         .select('*')
         .order('status', { ascending: true })
@@ -34,21 +34,21 @@ export const useTasks = () => {
       const { data, error } = await query
 
       if (error) {
-        console.error('❌ Erro ao buscar tarefas:', error)
+        console.error('❌ [fetchTasks] Erro ao buscar tarefas:', error)
         throw error
       }
-      console.log('✅ Tarefas recebidas do banco:', data?.length || 0, data)
+      console.log('✅ [fetchTasks] Tarefas recebidas do banco:', data?.length || 0)
+      console.log('   Tarefas:', data?.map(t => ({ id: t.id, title: t.title, status: t.status })))
       tasks.value = data || []
-      console.log('📦 tasks.value atualizado:', tasks.value.length)
+      console.log('📦 [fetchTasks] tasks.value atualizado:', tasks.value.length)
     } catch (err: any) {
-      console.error('❌ Erro ao buscar tarefas:', err)
+      console.error('❌ [fetchTasks] Erro geral:', err)
     } finally {
       loading.value = false
     }
   }
 
   const createTask = async (task: Task) => {
-    loading.value = true
     try {
       console.log('👤 Verificando usuário...', user.value)
       
@@ -89,18 +89,16 @@ export const useTasks = () => {
       }
       
       console.log('✅ Tarefa criada com sucesso:', data)
-      await fetchTasks()
+      // Adicionar tarefa ao estado local em vez de fazer refetch
+      tasks.value.push(data)
       return { success: true, data }
     } catch (err: any) {
       console.error('❌ Erro ao criar tarefa:', err)
       return { success: false, error: err.message }
-    } finally {
-      loading.value = false
     }
   }
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
-    loading.value = true
     try {
       const updateData: any = {
         updated_at: new Date().toISOString()
@@ -121,31 +119,26 @@ export const useTasks = () => {
         .eq('id', id)
 
       if (error) throw error
-      await fetchTasks()
+      console.log('✅ [updateTask] Tarefa atualizada no banco:', id)
       return { success: true }
     } catch (err: any) {
-      console.error('Erro ao atualizar tarefa:', err)
+      console.error('❌ [updateTask] Erro ao atualizar tarefa:', err)
       return { success: false, error: err.message }
-    } finally {
-      loading.value = false
     }
   }
 
   const deleteTask = async (id: string) => {
-    loading.value = true
     try {
       const { error } = await (supabase.from('tasks') as any)
         .delete()
         .eq('id', id)
 
       if (error) throw error
-      await fetchTasks()
+      console.log('✅ [deleteTask] Tarefa deletada do banco:', id)
       return { success: true }
     } catch (err: any) {
-      console.error('Erro ao deletar tarefa:', err)
+      console.error('❌ [deleteTask] Erro ao deletar tarefa:', err)
       return { success: false, error: err.message }
-    } finally {
-      loading.value = false
     }
   }
 

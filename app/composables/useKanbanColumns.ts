@@ -12,11 +12,144 @@ export interface KanbanColumn {
   updated_at?: string
 }
 
+const DEFAULT_COLUMNS = [
+  { column_id: 'col_todo', name: 'A Fazer', status: 'todo', color: '#ef4444', position: 0 },
+  { column_id: 'col_in_progress', name: 'Em Progresso', status: 'in_progress', color: '#f59e0b', position: 1 },
+  { column_id: 'col_done', name: 'Concluído', status: 'done', color: '#10b981', position: 2 }
+]
+
 export const useKanbanColumns = () => {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
   const columns = ref<KanbanColumn[]>([])
   const loading = ref(false)
+
+  const cleanupOrphanColumns = async () => {
+    if (!user.value?.id) return
+
+    try {
+      console.log('🧹 [cleanupOrphanColumns] Limpando colunas órfãs...')
+      const userId = user.value.id || user.value.sub
+
+      // Deletar colunas que não têm um status válido
+      const { error } = await (supabase
+        .from('kanban_columns') as any)
+        .delete()
+        .neq('status', 'todo')
+        .neq('status', 'in_progress')
+        .neq('status', 'done')
+        .eq('user_id', userId)
+
+      if (error) {
+        console.error('❌ [cleanupOrphanColumns] Erro ao deletar colunas órfãs:', error)
+      } else {
+        console.log('✅ [cleanupOrphanColumns] Colunas órfãs deletadas')
+      }
+    } catch (err) {
+      console.error('❌ [cleanupOrphanColumns] Erro geral:', err)
+    }
+  }
+
+  const migrateOrphanTasks = async () => {
+    if (!user.value?.id) return
+
+    try {
+      console.log('🔄 [migrateOrphanTasks] Migrando tarefas órfãs...')
+      
+      // Buscar tarefas sem column_id
+      const { data: orphanTasks, error: fetchError } = await (supabase
+        .from('tasks') as any)
+        .select('id, status')
+        .is('column_id', null)
+
+      if (fetchError) {
+        console.error('❌ [migrateOrphanTasks] Erro ao buscar tarefas órfãs:', fetchError)
+        return
+      }
+
+      if (!orphanTasks || orphanTasks.length === 0) {
+        console.log('✅ [migrateOrphanTasks] Nenhuma tarefa órfã encontrada')
+        return
+      }
+
+      console.log(`📊 [migrateOrphanTasks] Encontradas ${orphanTasks.length} tarefas órfãs`)
+
+      // Atualizar cada tarefa com column_id baseado no status
+      for (const task of orphanTasks) {
+        const columnId = task.status === 'todo' ? 'col_todo' 
+                        : task.status === 'in_progress' ? 'col_in_progress'
+                        : 'col_done'
+
+        const { error: updateError } = await (supabase
+          .from('tasks') as any)
+          .update({ column_id: columnId })
+          .eq('id', task.id)
+
+        if (updateError) {
+          console.error(`❌ [migrateOrphanTasks] Erro ao atualizar tarefa ${task.id}:`, updateError)
+        } else {
+          console.log(`✅ [migrateOrphanTasks] Tarefa ${task.id} migrada para ${columnId}`)
+        }
+      }
+
+      console.log('✅ [migrateOrphanTasks] Migração concluída')
+    } catch (err) {
+      console.error('❌ [migrateOrphanTasks] Erro geral:', err)
+    }
+  }
+
+  const initializeDefaultColumns = async () => {
+    if (!user.value?.id) {
+      console.warn('⚠️ [initializeDefaultColumns] Usuário não autenticado')
+      return
+    }
+
+    try {
+      console.log('🔄 [initializeDefaultColumns] Inicializando colunas padrão...')
+      const userId = user.value.id || user.value.sub
+      console.log(`   userId: ${userId}`)
+
+      for (const defaultCol of DEFAULT_COLUMNS) {
+        console.log(`   Verificando coluna: ${defaultCol.name} (status: ${defaultCol.status})`)
+        
+        const { data: existing, error: checkError } = await (supabase
+          .from('kanban_columns') as any)
+          .select('*')
+          .eq('column_id', defaultCol.column_id)
+          .eq('user_id', userId)
+          .single()
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error(`   ❌ Erro ao verificar coluna:`, checkError)
+          continue
+        }
+
+        if (!existing) {
+          console.log(`   📝 Criando coluna padrão: ${defaultCol.name}`)
+          const { data: created, error: insertError } = await (supabase
+            .from('kanban_columns') as any)
+            .insert([{
+              ...defaultCol,
+              user_id: userId
+            }])
+            .select()
+            .single()
+
+          if (insertError) {
+            console.error(`   ❌ Erro ao criar coluna:`, insertError)
+          } else {
+            console.log(`   ✅ Coluna criada:`, created)
+          }
+        } else {
+          console.log(`   ✅ Coluna já existe:`, existing)
+        }
+      }
+      
+      console.log('✅ [initializeDefaultColumns] Inicialização concluída')
+    } catch (err) {
+      console.error('❌ [initializeDefaultColumns] Erro geral:', err)
+    }
+  }
 
   const fetchColumns = async () => {
     if (!user.value?.id) {
@@ -28,18 +161,26 @@ export const useKanbanColumns = () => {
     loading.value = true
     try {
       console.log('🔍 Buscando colunas customizadas do banco...')
-      const { data, error } = await supabase
-        .from('kanban_columns')
+      
+      // Migrar tarefas órfãs primeiro
+      await migrateOrphanTasks()
+      
+      // Inicializar colunas padrão se não existirem
+      await initializeDefaultColumns()
+
+      const { data, error } = await (supabase
+        .from('kanban_columns') as any)
         .select('*')
         .order('position', { ascending: true })
 
       if (error) {
-        console.error('❌ Erro ao buscar colunas:', error)
+        console.error('❌ [fetchColumns] Erro ao buscar colunas:', error)
         loadFromLocalStorage()
         return
       }
 
-      console.log('✅ Colunas recebidas:', data?.length || 0)
+      console.log('✅ [fetchColumns] Colunas recebidas:', data?.length || 0)
+      console.log('   Colunas:', data?.map((c: any) => ({ id: c.column_id, name: c.name, status: c.status })))
       columns.value = data || []
       saveToLocalStorage()
     } catch (err) {
@@ -73,8 +214,8 @@ export const useKanbanColumns = () => {
       }
 
       console.log('📤 Adicionando coluna:', newColumn)
-      const { data, error } = await supabase
-        .from('kanban_columns')
+      const { data, error } = await (supabase
+        .from('kanban_columns') as any)
         .insert([newColumn])
         .select()
         .single()
@@ -95,7 +236,7 @@ export const useKanbanColumns = () => {
     if (!user.value?.id) {
       const idx = columns.value.findIndex(c => c.column_id === columnId)
       if (idx !== -1) {
-        columns.value[idx] = { ...columns.value[idx], ...updates }
+        columns.value[idx] = { ...columns.value[idx], ...updates } as any
         saveToLocalStorage()
       }
       return
@@ -103,12 +244,12 @@ export const useKanbanColumns = () => {
 
     loading.value = true
     try {
-      const { error } = await supabase
-        .from('kanban_columns')
+      const { error } = await (supabase
+        .from('kanban_columns') as any)
         .update({
           ...updates,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('column_id', columnId)
 
       if (error) throw error
@@ -116,7 +257,7 @@ export const useKanbanColumns = () => {
       console.log('✅ Coluna atualizada')
       const idx = columns.value.findIndex(c => c.column_id === columnId)
       if (idx !== -1) {
-        columns.value[idx] = { ...columns.value[idx], ...updates }
+        columns.value[idx] = { ...columns.value[idx], ...updates } as any
         saveToLocalStorage()
       }
     } catch (err) {
@@ -135,8 +276,12 @@ export const useKanbanColumns = () => {
 
     loading.value = true
     try {
-      const { error } = await supabase
-        .from('kanban_columns')
+      console.log(`🗑️ [deleteColumn] Deletando coluna: ${columnId}`)
+      
+      // Não deletar as tarefas, apenas remover a coluna
+      // As tarefas ficarão órfãs e aparecerão na seção "Tarefas Órfãs"
+      const { error } = await (supabase
+        .from('kanban_columns') as any)
         .delete()
         .eq('column_id', columnId)
 
@@ -161,16 +306,13 @@ export const useKanbanColumns = () => {
       return
     }
 
-    // Criar novo array com a coluna movida (mantém reatividade)
     const newColumns = columns.value.filter(c => c.column_id !== columnId)
     newColumns.splice(newPosition, 0, column)
 
-    // Atualizar posições
     newColumns.forEach((col, idx) => {
       col.position = idx
     })
 
-    // Atualizar o ref com o novo array (força reatividade)
     columns.value = newColumns
     console.log('✅ Colunas reordenadas localmente:', columns.value.map(c => ({ name: c.name, position: c.position })))
 
@@ -182,10 +324,9 @@ export const useKanbanColumns = () => {
 
     loading.value = true
     try {
-      // Atualizar todas as posições no banco
       for (const col of columns.value) {
-        const { error } = await supabase
-          .from('kanban_columns')
+        const { error } = await (supabase
+          .from('kanban_columns') as any)
           .update({ position: col.position })
           .eq('column_id', col.column_id)
         
@@ -199,7 +340,6 @@ export const useKanbanColumns = () => {
       saveToLocalStorage()
     } catch (err) {
       console.error('❌ Erro ao mover coluna:', err)
-      // Reverter em caso de erro
       await fetchColumns()
     } finally {
       loading.value = false
@@ -235,6 +375,8 @@ export const useKanbanColumns = () => {
     updateColumn,
     deleteColumn,
     moveColumn,
-    clearLocalStorage
+    clearLocalStorage,
+    migrateOrphanTasks,
+    cleanupOrphanColumns
   }
 }

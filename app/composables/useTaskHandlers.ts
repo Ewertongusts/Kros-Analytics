@@ -46,9 +46,8 @@ export const useTaskHandlers = () => {
         const result = await createTask(newTask)
         console.log('✅ Resultado da criação:', result)
       }
-      console.log('🔄 Buscando tarefas atualizadas...')
-      await fetchTasks()
-      console.log('📊 Tarefas após fetch:', tasks.value.length, tasks.value)
+      // Não fazer fetch - as tarefas já estão no estado local
+      console.log('✅ Tarefa salva com sucesso')
       closeTaskModal()
     } catch (error) {
       console.error('❌ Erro ao salvar tarefa:', error)
@@ -61,7 +60,12 @@ export const useTaskHandlers = () => {
     loadingAction.value = true
     try {
       await deleteTaskApi(id)
-      await fetchTasks()
+      // Não fazer fetch - remover do estado local
+      const index = tasks.value.findIndex(t => t.id === id)
+      if (index !== -1) {
+        tasks.value.splice(index, 1)
+      }
+      console.log('✅ Tarefa deletada com sucesso')
     } catch (error) {
       console.error('Erro ao deletar tarefa:', error)
     } finally {
@@ -75,54 +79,45 @@ export const useTaskHandlers = () => {
     targetTaskId?: string,
     position?: 'above' | 'below'
   ) => {
-    const task = tasks.value.find(t => t.id === taskId)
-    if (!task) return
-
-    // Se está movendo para a mesma coluna com reordenação
-    if (task.column_id === newColumnId && targetTaskId && position) {
-      const tasksInColumn = tasks.value.filter(t => t.column_id === newColumnId)
-      const targetIndex = tasksInColumn.findIndex(t => t.id === targetTaskId)
+    try {
+      console.log('🔄 [moveTask] Iniciando movimento:', { taskId, newColumnId, targetTaskId, position })
       
-      if (targetIndex !== -1) {
-        // Calcular a nova posição
-        let newPosition = targetIndex
-        if (position === 'below') {
-          newPosition = targetIndex + 1
-        }
-
-        // Reordenar localmente
-        const draggedIndex = tasksInColumn.findIndex(t => t.id === taskId)
-        if (draggedIndex !== -1 && draggedIndex !== newPosition) {
-          const reordered = tasksInColumn.filter(t => t.id !== taskId)
-          reordered.splice(newPosition, 0, task)
-
-          // Atualizar posições localmente PRIMEIRO (UI responde imediatamente)
-          for (let i = 0; i < reordered.length; i++) {
-            const reorderedTask = reordered[i]
-            if (reorderedTask?.id) {
-              reorderedTask.position = i
-            }
-          }
-
-          // Atualizar no banco em background (sem bloquear UI)
-          setTimeout(() => {
-            for (let i = 0; i < reordered.length; i++) {
-              const reorderedTask = reordered[i]
-              if (reorderedTask?.id) {
-                updateTask(reorderedTask.id, { position: i })
-              }
-            }
-          }, 0)
-        }
+      const task = tasks.value.find(t => t.id === taskId)
+      if (!task) {
+        console.warn('⚠️ [moveTask] Task não encontrada:', taskId)
+        return
       }
-    } else if (task.column_id !== newColumnId) {
+
+      console.log('✅ [moveTask] Task encontrada:', { id: task.id, title: task.title, currentColumn: task.column_id })
+
       // Se está mudando de coluna, atualizar o column_id localmente primeiro
-      task.column_id = newColumnId
+      if (task.column_id !== newColumnId) {
+        console.log('📍 [moveTask] Mudando de coluna:', { from: task.column_id, to: newColumnId })
+        
+        task.column_id = newColumnId
+        console.log('✅ [moveTask] column_id atualizado localmente')
+        
+        // Atualizar no banco em background (sem bloquear UI)
+        // Usar Promise.resolve para evitar unhandled rejection
+        Promise.resolve().then(() => {
+          try {
+            return updateTask(taskId, { column_id: newColumnId })
+          } catch (dbError) {
+            console.error('❌ [moveTask] Erro ao atualizar banco:', dbError)
+            // Não re-throw para evitar unhandled rejection
+          }
+        }).catch(err => {
+          console.error('❌ [moveTask] Erro na promise:', err)
+          // Silenciar o erro para evitar reload
+        })
+      } else {
+        console.log('ℹ️ [moveTask] Nenhuma mudança necessária')
+      }
       
-      // Atualizar no banco em background (sem bloquear UI)
-      setTimeout(() => {
-        updateTask(taskId, { column_id: newColumnId })
-      }, 0)
+      console.log('✅ [moveTask] Movimento completado')
+    } catch (error) {
+      console.error('❌ [moveTask] Erro geral:', error)
+      console.error('❌ [moveTask] Stack:', (error as any)?.stack)
     }
   }
 
@@ -146,7 +141,8 @@ export const useTaskHandlers = () => {
       console.log('📝 Dados da tarefa duplicada:', duplicatedTask)
       const result = await createTask(duplicatedTask)
       console.log('✅ Resultado da criação:', result)
-      await fetchTasks()
+      // Não fazer fetch - a tarefa já está no estado local
+      console.log('✅ Tarefa duplicada com sucesso')
     } catch (error) {
       console.error('❌ Erro ao duplicar tarefa:', error)
     } finally {

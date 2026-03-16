@@ -60,32 +60,47 @@ export const useRealtimeCardTransitions = () => {
 
   // Iniciar transição de entrada
   const startEntering = (taskId: string, toColumn: string) => {
-    transitionMap.value.set(taskId, {
-      taskId,
-      state: 'entering',
-      toColumn,
-      timestamp: Date.now()
-    })
+    try {
+      transitionMap.value.set(taskId, {
+        taskId,
+        state: 'entering',
+        toColumn,
+        timestamp: Date.now()
+      })
+      console.log('✅ [startEntering] Transição iniciada:', { taskId, toColumn })
+    } catch (error) {
+      console.error('❌ [startEntering] Erro:', error)
+    }
   }
 
   // Iniciar transição de saída
   const startExiting = (taskId: string, fromColumn: string) => {
-    transitionMap.value.set(taskId, {
-      taskId,
-      state: 'exiting',
-      fromColumn,
-      timestamp: Date.now()
-    })
+    try {
+      transitionMap.value.set(taskId, {
+        taskId,
+        state: 'exiting',
+        fromColumn,
+        timestamp: Date.now()
+      })
+      console.log('✅ [startExiting] Transição iniciada:', { taskId, fromColumn })
+    } catch (error) {
+      console.error('❌ [startExiting] Erro:', error)
+    }
   }
 
   // Iniciar transição de acomodação
   const startSettling = (taskId: string, toColumn: string) => {
-    transitionMap.value.set(taskId, {
-      taskId,
-      state: 'settling',
-      toColumn,
-      timestamp: Date.now()
-    })
+    try {
+      transitionMap.value.set(taskId, {
+        taskId,
+        state: 'settling',
+        toColumn,
+        timestamp: Date.now()
+      })
+      console.log('✅ [startSettling] Transição iniciada:', { taskId, toColumn })
+    } catch (error) {
+      console.error('❌ [startSettling] Erro:', error)
+    }
   }
 
   // Completar transição

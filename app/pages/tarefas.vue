@@ -5,207 +5,248 @@
       message="Carregando Tarefas..." 
     />
 
-    <div v-else class="space-y-6 mb-20 animate-in fade-in duration-700" :style="{ paddingTop: `calc(100vh - ${kanbanHeight}px)` }">
-      <!-- Kanban Board - Fixed no topo -->
-      <div class="flex gap-3 overflow-x-auto items-start fixed left-0 right-0 z-40" :style="{ top: `${kanbanHeight}px`, height: `calc(100vh - ${kanbanHeight}px)`, paddingLeft: '120px', paddingRight: '40px' }">
-        <!-- Colunas Customizadas -->
-        <div 
-          v-for="(column, index) in displayColumns"
-          :key="column.column_id"
-          :data-column="column.column_id"
-          @dragover="(e) => {
-            handleColumnDragOver(column.column_id, e, customColumns)
-            handleDragOverWithScroll(e)
-          }"
-          @dragleave="handleColumnDragLeave"
-          @drop="(e) => {
-            handleColumnDrop(column.column_id, customColumns, moveColumn, e)
-            if (!e.dataTransfer?.types.includes('column-drag')) {
-              handleTaskDropWithPosition(e, column.column_id)
-            }
-          }"
-          class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-300 ease-out relative"
-          :class="[
-            draggedColumnId === column.column_id ? 'opacity-50' : ''
-          ]"
-          :style="{
-            transform: draggedColumnId && draggedColumnId !== column.column_id ? `translateX(${
-              displayColumns.findIndex(c => c.column_id === draggedColumnId) < index ? '-12px' : 
-              displayColumns.findIndex(c => c.column_id === draggedColumnId) > index ? '12px' : '0px'
-            })` : 'translateX(0px)',
-            transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)'
-          }"
-        >
-          <!-- Indicador de inserção à esquerda (antes de 50%) -->
-          <div 
-            v-if="dragOverColumnId === column.column_id && dragOverSide === 'left' && draggedColumnId !== column.column_id"
-            class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl transition-all duration-200 shadow-lg column-indicator"
-            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 16px var(--kros-blue, #FF0000)' }"
-          ></div>
-          
-          <!-- Indicador de inserção à direita (depois de 50%) -->
-          <div 
-            v-if="dragOverColumnId === column.column_id && dragOverSide === 'right' && draggedColumnId !== column.column_id"
-            class="absolute right-0 top-0 bottom-0 w-1.5 rounded-r-xl transition-all duration-200 shadow-lg column-indicator"
-            :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 16px var(--kros-blue, #FF0000)' }"
-          ></div>
-          <!-- Header da Coluna -->
-          <div 
-            class="p-2.5 border-b border-white/5"
-            draggable="true"
-            @dragstart="handleColumnDragStart(column.column_id, $event)"
-            @dragend="handleColumnDragEnd"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5 flex-1 cursor-grab active:cursor-grabbing" :class="{ 'opacity-50': draggedColumnId === column.column_id }">
-                <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm4-8h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2z" />
-                </svg>
-                <div class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: column.color }"></div>
-                <h3 class="font-semibold text-white text-xs">{{ column.name }}</h3>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 bg-white/5 text-white/60 rounded text-[10px] font-medium">
-                  {{ getTasksInColumn(column.column_id).length }}
-                </span>
-                <button
-                  @click="openTaskModal(undefined, column.column_id)"
-                  class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                  title="Nova tarefa"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-                <button
-                  @click="renameColumn(column)"
-                  class="p-1 rounded hover:bg-blue-500/20 text-white/40 hover:text-blue-400 transition-colors"
-                  title="Renomear coluna"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  @click="removeColumn(column.column_id)"
-                  class="p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
-                  title="Remover coluna"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
+    <!-- View Toggle -->
+    <TasksKTasksViewToggle 
+      v-model="viewMode"
+    />
 
-          <!-- Cards Container -->
-          <div class="p-2 space-y-2 min-h-[100px]">
-            <TasksKTaskCard
-              v-for="task in getTasksInColumn(column.column_id)"
-              :key="task.id"
-              :data-task="task.id"
-              :task="task"
-              :is-drag-over="dragOverTaskId === task.id"
-              :drag-over-position="dragOverPosition"
-              :is-selected="isTaskSelected(task.id!)"
-              :is-entering="isEntering(task.id!)"
-              :is-exiting="isExiting(task.id!)"
-              :is-settling="isSettling(task.id!)"
-              :is-syncing="isSyncing(task.id!)"
-              @edit="openTaskModal"
-              @delete="(t: Task) => deleteTask(t.id!)"
-              @duplicate="duplicateTask"
-              @select="toggleTaskSelection"
-              @dragstart="handleTaskDragStart(task, column.status)"
-              @dragend="handleDragEndWithScroll"
-              @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
-              @dragleave="handleDragLeave"
-              @drop="(e: DragEvent) => {
+    <div v-if="!handlerLoading" class="space-y-6 mb-20 animate-in fade-in duration-700">
+      <!-- Kanban View -->
+      <div v-if="viewMode === 'kanban'" class="space-y-6 pb-20">
+        <!-- Kanban Board Container -->
+        <div class="flex gap-3 overflow-x-auto items-start pb-8">
+          <!-- Colunas Customizadas -->
+          <div 
+            v-for="(column, index) in displayColumns"
+            :key="column.column_id"
+            :data-column="column.column_id"
+            @dragover="(e) => {
+              handleColumnDragOver(column.column_id, e, customColumns)
+              handleDragOverWithScroll(e)
+            }"
+            @dragleave="handleColumnDragLeave"
+            @drop="(e) => {
+              handleColumnDrop(column.column_id, customColumns, moveColumn, e)
+              if (!e.dataTransfer?.types.includes('column-drag')) {
                 handleTaskDropWithPosition(e, column.column_id)
-                handleDragEndWithScroll()
-              }"
-              @transition-complete="completeTransition(task.id!)"
-            />
-            <div v-if="getTasksInColumn(column.column_id).length === 0" class="flex items-center justify-center py-6 text-white/20">
-              <div class="text-center">
-                <svg class="w-6 h-6 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-[10px]">Nenhuma tarefa</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Botão Adicionar Coluna -->
-        <div class="flex-shrink-0 w-[220px]">
-          <button
-            @click="addNewColumn"
-            class="w-full p-2.5 bg-[#1a1a1c] hover:bg-white/5 border border-dashed border-white/10 hover:border-white/20 rounded-xl transition-all text-white/30 hover:text-white/50 flex items-center justify-center gap-1.5"
+              }
+            }"
+            class="flex-shrink-0 w-[220px] rounded-xl bg-[#1a1a1c] border border-white/5 transition-all duration-300 ease-out relative"
+            :class="[
+              draggedColumnId === column.column_id ? 'opacity-50' : ''
+            ]"
+            :style="{
+              transform: draggedColumnId && draggedColumnId !== column.column_id ? `translateX(${
+                displayColumns.findIndex(c => c.column_id === draggedColumnId) < index ? '-12px' : 
+                displayColumns.findIndex(c => c.column_id === draggedColumnId) > index ? '12px' : '0px'
+              })` : 'translateX(0px)',
+              transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+            }"
           >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="text-xs font-medium">Add Column</span>
-          </button>
-        </div>
+            <!-- Indicador de inserção à esquerda -->
+            <div 
+              v-if="dragOverColumnId === column.column_id && dragOverSide === 'left' && draggedColumnId !== column.column_id"
+              class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl transition-all duration-200 shadow-lg column-indicator"
+              :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 16px var(--kros-blue, #FF0000)' }"
+            />
+            
+            <!-- Indicador de inserção à direita -->
+            <div 
+              v-if="dragOverColumnId === column.column_id && dragOverSide === 'right' && draggedColumnId !== column.column_id"
+              class="absolute right-0 top-0 bottom-0 w-1.5 rounded-r-xl transition-all duration-200 shadow-lg column-indicator"
+              :style="{ backgroundColor: 'var(--kros-blue, #FF0000)', boxShadow: '0 0 16px var(--kros-blue, #FF0000)' }"
+            />
 
-        <!-- Coluna de Tarefas Órfãs (se houver) - SEMPRE POR ÚLTIMO -->
-        <div 
-          v-if="orphanTasks.length > 0"
-          class="flex-shrink-0 w-[220px] rounded-xl bg-transparent border border-orange-500/30 transition-all duration-200"
-          @dragover="handleDragOverWithScroll"
-        >
-          <!-- Header da Coluna -->
-          <div class="p-2.5 border-b border-orange-500/30 bg-orange-500/5 rounded-t-xl">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5 flex-1">
-                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                <h3 class="font-semibold text-orange-400 text-xs">Tarefas Órfãs</h3>
+            <!-- Header da Coluna -->
+            <div 
+              class="p-2.5 border-b border-white/5"
+              draggable="true"
+              @dragstart="handleColumnDragStart(column.column_id, $event)"
+              @dragend="handleColumnDragEnd"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 flex-1 cursor-grab active:cursor-grabbing" :class="{ 'opacity-50': draggedColumnId === column.column_id }">
+                  <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm4-8h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2z" />
+                  </svg>
+                  <div class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: column.color }"></div>
+                  <h3 class="font-semibold text-white text-xs">{{ column.name }}</h3>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="px-1.5 py-0.5 bg-white/5 text-white/60 rounded text-[10px] font-medium">
+                    {{ getTasksInColumn(column.column_id).length }}
+                  </span>
+                  <button
+                    @click="openTaskModal(undefined, column.column_id)"
+                    class="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                    title="Nova tarefa"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                  <button
+                    @click="renameColumn(column)"
+                    class="p-1 rounded hover:bg-blue-500/20 text-white/40 hover:text-blue-400 transition-colors"
+                    title="Renomear coluna"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    @click="removeColumn(column.column_id)"
+                    class="p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
+                    title="Remover coluna"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <span class="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded text-[10px] font-medium">
-                {{ orphanTasks.length }}
-              </span>
             </div>
-            <p class="text-[9px] text-orange-400/60 mt-1">Tarefas sem coluna visível</p>
+
+            <!-- Cards Container -->
+            <div class="p-2 space-y-2 min-h-[100px]">
+              <TasksKTaskCard
+                v-for="task in getTasksInColumn(column.column_id)"
+                :key="task.id"
+                :data-task="task.id"
+                :task="task"
+                :is-drag-over="dragOverTaskId === task.id"
+                :drag-over-position="dragOverPosition"
+                :is-selected="isTaskSelected(task.id!)"
+                :is-entering="isEntering(task.id!)"
+                :is-exiting="isExiting(task.id!)"
+                :is-settling="isSettling(task.id!)"
+                :is-syncing="isSyncing(task.id!)"
+                @edit="openTaskModal"
+                @delete="(t: Task) => deleteTask(t.id!)"
+                @duplicate="duplicateTask"
+                @select="toggleTaskSelection"
+                @dragstart="handleTaskDragStart(task, column.status)"
+                @dragend="handleDragEndWithScroll"
+                @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
+                @dragleave="handleDragLeave"
+                @drop="(e: DragEvent) => {
+                  handleTaskDropWithPosition(e, column.column_id)
+                  handleDragEndWithScroll()
+                }"
+                @transition-complete="completeTransition(task.id!)"
+              />
+              <div v-if="getTasksInColumn(column.column_id).length === 0" class="flex items-center justify-center py-6 text-white/20">
+                <div class="text-center">
+                  <svg class="w-6 h-6 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p class="text-[10px]">Nenhuma tarefa</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Cards Container -->
-          <div class="p-2 space-y-2 min-h-[100px]">
-            <TasksKTaskCard
-              v-for="task in orphanTasks"
-              :key="task.id"
-              :data-task="task.id"
-              :task="task"
-              :is-orphan="true"
-              :is-drag-over="dragOverTaskId === task.id"
-              :drag-over-position="dragOverPosition"
-              :is-selected="isTaskSelected(task.id!)"
-              :is-entering="isEntering(task.id!)"
-              :is-exiting="isExiting(task.id!)"
-              :is-settling="isSettling(task.id!)"
-              :is-syncing="isSyncing(task.id!)"
-              @edit="openTaskModal"
-              @delete="(t: Task) => deleteTask(t.id!)"
-              @duplicate="duplicateTask"
-              @select="toggleTaskSelection"
-              @dragstart="handleTaskDragStart(task, task.status || 'todo')"
-              @dragend="handleDragEndWithScroll"
-              @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
-              @dragleave="handleDragLeave"
-              @drop="(e: DragEvent) => {
-                handleTaskDropWithPosition(e, task.status || 'todo')
-                handleDragEndWithScroll()
-              }"
-              @transition-complete="completeTransition(task.id!)"
-            />
+          <!-- Botão Adicionar Coluna -->
+          <div class="flex-shrink-0 w-[220px]">
+            <button
+              @click="addNewColumn"
+              class="w-full p-2.5 bg-[#1a1a1c] hover:bg-white/5 border border-dashed border-white/10 hover:border-white/20 rounded-xl transition-all text-white/30 hover:text-white/50 flex items-center justify-center gap-1.5"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="text-xs font-medium">Add Column</span>
+            </button>
+          </div>
+
+          <!-- Tarefas Órfãs (como última coluna) -->
+          <div v-if="orphanTasks.length > 0" 
+            class="flex-shrink-0 w-[220px] rounded-xl bg-transparent border border-orange-500/30 transition-all duration-200"
+            @dragover="handleDragOverWithScroll"
+          >
+            <!-- Header da Coluna -->
+            <div class="p-2.5 border-b border-orange-500/30 bg-orange-500/5 rounded-t-xl">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 flex-1">
+                  <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                  <h3 class="font-semibold text-orange-400 text-xs">Tarefas Órfãs</h3>
+                </div>
+                <span class="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded text-[10px] font-medium">
+                  {{ orphanTasks.length }}
+                </span>
+              </div>
+              <p class="text-[9px] text-orange-400/60 mt-1">Sem coluna visível</p>
+            </div>
+
+            <!-- Cards Container -->
+            <div class="p-2 space-y-2 min-h-[100px]">
+              <TasksKTaskCard
+                v-for="task in orphanTasks"
+                :key="task.id"
+                :data-task="task.id"
+                :task="task"
+                :is-orphan="true"
+                :is-drag-over="dragOverTaskId === task.id"
+                :drag-over-position="dragOverPosition"
+                :is-selected="isTaskSelected(task.id!)"
+                :is-entering="isEntering(task.id!)"
+                :is-exiting="isExiting(task.id!)"
+                :is-settling="isSettling(task.id!)"
+                :is-syncing="isSyncing(task.id!)"
+                @edit="openTaskModal"
+                @delete="(t: Task) => deleteTask(t.id!)"
+                @duplicate="duplicateTask"
+                @select="toggleTaskSelection"
+                @dragstart="handleTaskDragStart(task, task.column_id || 'orphan')"
+                @dragend="handleDragEndWithScroll"
+                @dragover="(e: DragEvent) => handleDragOver(e, task.id, moveTask)"
+                @dragleave="handleDragLeave"
+                @drop="(e: DragEvent) => {
+                  handleTaskDropWithPosition(e, task.column_id || 'orphan')
+                  handleDragEndWithScroll()
+                }"
+                @transition-complete="completeTransition(task.id!)"
+              />
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- List View -->
+      <TasksKTasksListView
+        v-else-if="viewMode === 'list'"
+        :tasks="handlerTasks"
+        :columns="customColumns"
+        :is-task-selected="isTaskSelected"
+        :toggle-task-selection="toggleTaskSelection"
+        @edit="openTaskModal"
+        @delete="handleDeleteTask"
+      />
+
+      <!-- Grid View -->
+      <TasksKTasksGridViewContainer 
+        v-else-if="viewMode === 'grid'"
+        :tasks="handlerTasks"
+        @open-task-modal="openTaskModal"
+        @toggle-selection="toggleTaskSelection"
+      />
+
+      <!-- Calendar View -->
+      <TasksKTasksCalendarView
+        v-else-if="viewMode === 'calendar'"
+        :tasks="handlerTasks"
+        @open-task-modal="openTaskModal"
+      />
     </div>
 
-    <!-- Modal de Renomear Coluna -->
+    <!-- Bulk Actions Bar -->
+    <TasksKTasksBulkActionsBar 
+      v-if="selectedCount > 0"
+      :selected-count="selectedCount"
+      @delete-selected="deleteSelectedTasks"
+      @clear-selection="deselectAll"
+    />
+
     <TasksKRenameColumnModal
       :is-open="isRenameModalOpen"
       :column="columnToRename"
@@ -214,66 +255,61 @@
     />
 
     <!-- Modal de Tarefa -->
-      <BlocksKTaskModal 
-        v-if="isTaskModalOpen"
-        :is-open="isTaskModalOpen"
-        :task="selectedTask"
-        :companies="companies"
-        :tag-definitions="tagDefinitions"
-        :submitting="loadingAction"
-        :default-column-id="defaultColumnId"
-        @close="closeTaskModal"
-        @save="handleSaveTask"
-      />
+    <BlocksKTaskModal 
+      v-if="isTaskModalOpen"
+      :is-open="isTaskModalOpen"
+      :task="selectedTask"
+      :companies="companies"
+      :tag-definitions="tagDefinitions"
+      :submitting="loadingAction"
+      :default-column-id="defaultColumnId"
+      @close="closeTaskModal"
+      @save="handleSaveTask"
+    />
 
-      <!-- Preview de Drag e Drop -->
-      <!-- Removido temporariamente -->
-
-      <!-- Botão Flutuante de Ações -->
-      <div v-if="selectedCount > 0" class="fixed bottom-8 right-8 flex flex-col gap-3 z-50">
-        <!-- Contador de seleção -->
-        <div class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold">
-          {{ selectedCount }} selecionado(s)
-        </div>
-        
-        <!-- Botão Deletar -->
-        <button
-          @click="deleteSelectedTasks"
-          :style="{ backgroundColor: '#ef4444' }"
-          class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
-          title="Deletar selecionados"
-        >
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-
-        <!-- Botão Limpar seleção -->
-        <button
-          @click="deselectAll"
-          :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
-          class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
-          title="Limpar seleção"
-        >
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+    <!-- Botão Flutuante de Ações -->
+    <div v-if="selectedCount > 0" class="fixed bottom-8 right-8 flex flex-col gap-3 z-50">
+      <!-- Contador de seleção -->
+      <div class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold">
+        {{ selectedCount }} selecionado(s)
       </div>
-
-      <!-- Botão Flutuante de Ações (quando nenhuma tarefa selecionada) -->
+      
+      <!-- Botão Deletar -->
       <button
-        v-else
-        :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
-        class="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90 z-50"
-        title="Ações"
+        @click="deleteSelectedTasks"
+        :style="{ backgroundColor: '#ef4444' }"
+        class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
+        title="Deletar selecionados"
       >
         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
       </button>
 
+      <!-- Botão Limpar seleção -->
+      <button
+        @click="deselectAll"
+        :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
+        class="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90"
+        title="Limpar seleção"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
 
+    <!-- Botão Flutuante de Ações (quando nenhuma tarefa selecionada) -->
+    <button
+      v-else
+      :style="{ backgroundColor: 'var(--kros-blue, #3b82f6)' }"
+      class="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:opacity-90 z-50"
+      title="Ações"
+    >
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+    </button>
   </LayoutsKPageLayout>
 </template>
 
@@ -287,6 +323,7 @@ import { useTaskHistory } from '~/composables/useTaskHistory'
 import { useColumnDragDrop } from '~/composables/useColumnDragDrop'
 import { useRealtimeCardTransitions } from '~/composables/useRealtimeCardTransitions'
 import { useAdvancedTransitions } from '~/composables/useAdvancedTransitions'
+import { useTaskSelection } from '~/composables/useTaskSelection'
 
 definePageMeta({
   middleware: 'auth'
@@ -307,7 +344,8 @@ const {
   handleSaveTask,
   moveTask,
   deleteTask,
-  duplicateTask
+  duplicateTask,
+  loading: handlerLoading
 } = useTaskHandlers()
 
 const { dragOverTaskId, dragOverPosition, handleDragStart, handleDragEnd, handleDragOver, handleDragLeave, handleDrop } = useTaskDragDrop()
@@ -333,10 +371,10 @@ const {
 const kanbanHeight = ref(50)
 const isRenameModalOpen = ref(false)
 const columnToRename = ref<any>(null)
-const isProcessingDrop = ref(false) // Previne race conditions em drops simultâneos
+const isProcessingDrop = ref(false)
+const viewMode = ref<'kanban' | 'list' | 'grid' | 'calendar'>('kanban')
 
 const calculateKanbanHeight = () => {
-  // Medir a distância real do topo até o kanban
   const kanbanContainer = document.querySelector('.overflow-x-auto')
   if (kanbanContainer) {
     const rect = kanbanContainer.getBoundingClientRect()
@@ -357,30 +395,76 @@ const addNewColumn = () => {
   })
 }
 
-
-
-// Tarefas órfãs (tarefas sem column_id atribuído)
 const orphanTasks = computed(() => {
-  return handlerTasks.value.filter(t => !t.column_id)
+  const validColumnIds = customColumns.value.map(c => c.column_id)
+  console.log(`\n🔍 [orphanTasks] Procurando tarefas órfãs...`)
+  console.log(`   columnIds válidos: ${validColumnIds.join(', ')}`)
+  
+  const orphans = handlerTasks.value.filter(t => {
+    const isOrphan = !validColumnIds.includes(t.column_id || '')
+    if (isOrphan) {
+      console.log(`   ❌ Tarefa órfã: "${t.title}" (column_id: "${t.column_id}")`)
+    }
+    return isOrphan
+  })
+  
+  console.log(`   📊 Total de tarefas órfãs: ${orphans.length}\n`)
+  return orphans
 })
 
-// Colunas para exibição
 const displayColumns = computed(() => {
-  // Criar novo array para forçar Vue a detectar mudanças de ordem
   return [...customColumns.value]
 })
 
-// Função para obter tasks de uma coluna específica
 const getTasksInColumn = (columnId: string) => {
-  return handlerTasks.value
-    .filter(t => t.column_id === columnId && !isExiting(t.id!))
+  // Encontrar a coluna
+  const column = customColumns.value.find(c => c.column_id === columnId)
+  
+  if (!column) {
+    console.warn(`❌ [getTasksInColumn] Coluna não encontrada para columnId: ${columnId}`)
+    return []
+  }
+  
+  console.log(`\n📊 [getTasksInColumn] Filtrando tarefas para coluna: "${column.name}"`)
+  console.log(`   columnId: ${columnId}`)
+  console.log(`   Total de tarefas no sistema: ${handlerTasks.value.length}`)
+  
+  // Log detalhado de cada tarefa
+  handlerTasks.value.forEach((t, idx) => {
+    const columnMatch = t.column_id === columnId
+    const notExiting = !isExiting(t.id!)
+    const matches = columnMatch && notExiting
+    
+    console.log(`   [${idx}] "${t.title}" (id: ${t.id})`)
+    console.log(`       - column_id: "${t.column_id}" (esperado: "${columnId}") - Match: ${columnMatch}`)
+    console.log(`       - isExiting: ${isExiting(t.id!)} - NotExiting: ${notExiting}`)
+    console.log(`       - RESULTADO: ${matches ? '✅ INCLUÍDA' : '❌ EXCLUÍDA'}`)
+  })
+  
+  const filtered = handlerTasks.value
+    .filter(t => {
+      const columnMatch = t.column_id === columnId
+      const notExiting = !isExiting(t.id!)
+      return columnMatch && notExiting
+    })
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  
+  console.log(`   📈 RESULTADO FINAL: ${filtered.length} tarefas para coluna "${column.name}"\n`)
+  return filtered
 }
 
-const removeColumn = (columnId: string) => {
+const removeColumn = async (columnId: string) => {
   const confirmed = confirm('Deseja remover esta coluna? As tarefas não serão deletadas.')
   if (confirmed) {
-    deleteColumn(columnId)
+    await deleteColumn(columnId)
+    // Não precisa refetch - as tarefas já estão no estado local
+    console.log('✅ Coluna removida')
+  }
+}
+
+const handleDeleteTask = async (task: Task) => {
+  if (task.id) {
+    await deleteTask(task.id)
   }
 }
 
@@ -404,8 +488,9 @@ const syncData = async () => {
   await handlerFetchTasks()
 }
 
-const handleTaskDragStart = (task: Task, source: string) => {
-  handleDragStart(task, source)
+const handleTaskDragStart = (task: Task, columnId: string) => {
+  // Usar o columnId diretamente
+  handleDragStart(task, columnId)
 }
 
 const dropTimeoutId = ref<NodeJS.Timeout | null>(null)
@@ -419,108 +504,134 @@ const resetDropFlag = () => {
 }
 
 const handleTaskDropWithPosition = async (e: DragEvent, targetColumnId: string) => {
-  // Prevenir múltiplos drops simultâneos
-  if (isProcessingDrop.value) {
-    return
-  }
-  
-  isProcessingDrop.value = true
-  
-  // Reset automático após 5 segundos (segurança contra travamento)
-  dropTimeoutId.value = setTimeout(() => {
-    console.warn('⚠️ [DROP] Timeout - resetando flag de processamento')
-    resetDropFlag()
-  }, 5000)
-  
   try {
-    // Obter a tarefa sendo arrastada
-    const draggedTaskData = e.dataTransfer?.getData('application/json')
-    if (!draggedTaskData) {
-      handleDrop(e, targetColumnId, moveTask)
-      return
-    }
-
-    let task
-    try {
-      task = JSON.parse(draggedTaskData)
-    } catch (parseError) {
-      console.error('❌ [DROP] Erro ao fazer parse dos dados:', parseError)
-      handleDrop(e, targetColumnId, moveTask)
-      return
-    }
-
-    const fromColumnId = task.column_id
+    // Prevenir comportamento padrão do navegador IMEDIATAMENTE
+    e.preventDefault()
+    e.stopPropagation()
     
-    // Se está mudando de coluna, iniciar transição completa
-    if (fromColumnId !== targetColumnId) {
+    if (isProcessingDrop.value) {
+      console.warn('⚠️ [DROP] Já está processando um drop, ignorando')
+      return
+    }
+    
+    isProcessingDrop.value = true
+    console.log('🎯 [DROP] Iniciando drop para coluna:', targetColumnId)
+    
+    dropTimeoutId.value = setTimeout(() => {
+      console.warn('⚠️ [DROP] Timeout - resetando flag de processamento')
+      resetDropFlag()
+    }, 5000)
+    
+    try {
+      // Validar que temos dados de drag
+      const draggedTaskData = e.dataTransfer?.getData('application/json')
+      if (!draggedTaskData) {
+        console.warn('⚠️ [DROP] Sem dados de drag, ignorando')
+        resetDropFlag()
+        return
+      }
+
+      // Parse dos dados com validação
+      let task: any
       try {
-        // 1. Iniciar estado de saída IMEDIATAMENTE (oculta o card)
-        startExiting(task.id, fromColumnId)
+        task = JSON.parse(draggedTaskData)
+        console.log('✅ [DROP] Task parseada:', { id: task.id, title: task.title, fromColumn: task.column_id })
+      } catch (parseError) {
+        console.error('❌ [DROP] Erro ao fazer parse dos dados:', parseError)
+        resetDropFlag()
+        return
+      }
+
+      // Validar que task tem ID
+      if (!task.id) {
+        console.error('❌ [DROP] Task sem ID:', task)
+        resetDropFlag()
+        return
+      }
+
+      const fromColumnId = task.column_id
+      
+      // Se está mudando de coluna
+      if (fromColumnId !== targetColumnId) {
+        console.log('📍 [DROP] Movendo de coluna:', { from: fromColumnId, to: targetColumnId })
         
-        // 2. Usar nextTick para garantir que Vue re-renderize ANTES de atualizar dados
-        await nextTick()
+        try {
+          console.log('1️⃣ [DROP] Iniciando exit animation')
+          startExiting(task.id, fromColumnId)
+          
+          await nextTick()
+          console.log('2️⃣ [DROP] Vue re-renderizou')
+          
+          await new Promise(resolve => setTimeout(resolve, 150))
+          console.log('3️⃣ [DROP] Aguardou 150ms')
+          
+          console.log('4️⃣ [DROP] Chamando moveTask')
+          moveTask(
+            task.id,
+            targetColumnId,
+            dragOverTaskId.value || undefined,
+            dragOverPosition.value || undefined
+          )
+          console.log('5️⃣ [DROP] moveTask completado')
+        } catch (stateError) {
+          console.error('❌ [DROP] Erro ao iniciar exit:', stateError)
+          // Continuar mesmo com erro
+        }
         
-        // 3. Aguardar mais tempo para garantir que o DOM foi completamente atualizado
-        await new Promise(resolve => setTimeout(resolve, 150))
+        try {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
+          console.log('6️⃣ [DROP] Iniciando transição completa')
+          // Desabilitar executeFullTransition temporariamente para debug
+          // await executeFullTransition(
+          //   task.id,
+          //   fromColumnId,
+          //   targetColumnId,
+          //   task.priority || 'media'
+          // )
+          console.log('7️⃣ [DROP] Transição completa (desabilitada)')
+        } catch (transitionError) {
+          console.error('❌ [DROP] Erro na transição:', transitionError)
+          // Continuar mesmo com erro
+        }
         
-        // 4. AGORA fazer o drop (atualizar dados) - DEPOIS de Vue re-renderizar
-        // Chamar moveTask diretamente em vez de handleDrop para ter controle total
+        try {
+          console.log('8️⃣ [DROP] Iniciando entering animation')
+          startEntering(task.id, targetColumnId)
+          
+          setTimeout(() => {
+            console.log('9️⃣ [DROP] Iniciando settling animation')
+            startSettling(task.id, targetColumnId)
+          }, 400)
+        } catch (stateError) {
+          console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
+          // Continuar mesmo com erro
+        }
+        
+        handleDragEnd()
+      } else {
+        // Mesma coluna - apenas reordenar
+        console.log('📍 [DROP] Reordenando na mesma coluna')
         moveTask(
-          task.id!,
+          task.id,
           targetColumnId,
           dragOverTaskId.value || undefined,
           dragOverPosition.value || undefined
         )
-      } catch (stateError) {
-        console.error('❌ [DROP] Erro ao iniciar exit:', stateError)
+        handleDragEnd()
       }
       
-      try {
-        // 4. Aguardar um pouco para o DOM atualizar
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        // 5. Executar transição completa com todas as animações avançadas
-        await executeFullTransition(
-          task.id,
-          fromColumnId,
-          targetColumnId,
-          task.priority || 'media'
-        )
-      } catch (transitionError) {
-        console.error('❌ [DROP] Erro na transição:', transitionError)
-      }
-      
-      try {
-        // 6. Iniciar transições de entrada/acomodação
-        startEntering(task.id, targetColumnId)
-        
-        setTimeout(() => {
-          startSettling(task.id, targetColumnId)
-        }, 400)
-      } catch (stateError) {
-        console.error('❌ [DROP] Erro ao atualizar estados:', stateError)
-      }
-      
-      // Limpar estado de drag
+      console.log('✅ [DROP] Drop completado com sucesso')
+    } catch (error) {
+      console.error('❌ [DROP] Erro geral:', error)
+      console.error('❌ [DROP] Stack:', (error as any)?.stack)
       handleDragEnd()
-    } else {
-      // Mesma coluna, apenas fazer o drop
-      moveTask(
-        task.id!,
-        targetColumnId,
-        dragOverTaskId.value || undefined,
-        dragOverPosition.value || undefined
-      )
-      handleDragEnd()
+    } finally {
+      resetDropFlag()
     }
-  } catch (error) {
-    console.error('❌ [DROP] Erro geral:', error)
-    try {
-      handleDrop(e, targetColumnId, moveTask)
-    } catch (fallbackError) {
-      console.error('❌ [DROP] Erro no fallback:', fallbackError)
-    }
-  } finally {
+  } catch (outerError) {
+    console.error('❌ [DROP] Erro CRÍTICO (outer):', outerError)
+    console.error('❌ [DROP] Stack (outer):', (outerError as any)?.stack)
     resetDropFlag()
   }
 }
@@ -545,7 +656,6 @@ const deleteSelectedTasks = async () => {
   }
 }
 
-// Auto-scroll horizontal durante drag
 let scrollInterval: number | null = null
 
 const handleDragOverWithScroll = (e: DragEvent) => {
@@ -555,22 +665,19 @@ const handleDragOverWithScroll = (e: DragEvent) => {
   if (!container) return
   
   const rect = container.getBoundingClientRect()
-  const scrollSpeed = 8 // Reduzido de 15 para 8
-  const edgeSize = 150 // Aumentado de 100 para 150
+  const scrollSpeed = 8
+  const edgeSize = 150
   
-  // Limpar intervalo anterior
   if (scrollInterval) {
     clearInterval(scrollInterval)
     scrollInterval = null
   }
   
-  // Scroll para direita
   if (e.clientX > rect.right - edgeSize) {
     scrollInterval = window.setInterval(() => {
       container.scrollLeft += scrollSpeed
     }, 16)
   }
-  // Scroll para esquerda
   else if (e.clientX < rect.left + edgeSize) {
     scrollInterval = window.setInterval(() => {
       container.scrollLeft -= scrollSpeed
@@ -624,21 +731,74 @@ const handleKeyDown = (e: KeyboardEvent) => {
 let unsubscribe: (() => void) | null = null
 let keydownListener: ((e: KeyboardEvent) => void) | null = null
 let resizeListener: (() => void) | null = null
+let errorListener: ((e: ErrorEvent) => void) | null = null
+let unhandledRejectionListener: ((e: PromiseRejectionEvent) => void) | null = null
 
 onMounted(async () => {
   try {
+    console.log('🚀 [onMounted] Iniciando página de tarefas...')
+    
+    // Adicionar error handler global para capturar erros não tratados
+    errorListener = (e: ErrorEvent) => {
+      console.error('❌ [Global Error Handler] Erro não tratado:', e.error)
+      console.error('❌ [Global Error Handler] Message:', e.message)
+      console.error('❌ [Global Error Handler] Stack:', e.error?.stack)
+      
+      // Prevenir que o erro cause reload - CRÍTICO!
+      e.preventDefault()
+      return true
+    }
+    
+    window.addEventListener('error', errorListener, true)
+    
+    // Adicionar handler para promise rejections não tratadas
+    unhandledRejectionListener = (e: PromiseRejectionEvent) => {
+      console.error('❌ [Unhandled Promise Rejection]:', e.reason)
+      console.error('❌ [Unhandled Promise Rejection] Stack:', e.reason?.stack)
+      
+      // Prevenir que o erro cause reload - CRÍTICO!
+      e.preventDefault()
+      return true
+    }
+    
+    window.addEventListener('unhandledrejection', unhandledRejectionListener, true)
+    
     calculateKanbanHeight()
     
-    // Usar referência para poder remover depois
     resizeListener = calculateKanbanHeight
     window.addEventListener('resize', resizeListener)
 
+    console.log('📥 [onMounted] Buscando colunas...')
     await fetchColumns()
-    await fetchCompanies()
-    await fetchTags()
-    await handlerFetchTasks()
+    console.log('✅ [onMounted] Colunas carregadas:')
+    customColumns.value.forEach((c, idx) => {
+      console.log(`   [${idx}] "${c.name}" (id: ${c.column_id}, status: "${c.status}", color: ${c.color})`)
+    })
 
-    // Real-time subscription
+    console.log('📥 [onMounted] Buscando empresas...')
+    await fetchCompanies()
+    console.log('✅ [onMounted] Empresas carregadas:', companies.value.length)
+
+    console.log('📥 [onMounted] Buscando tags...')
+    await fetchTags()
+    console.log('✅ [onMounted] Tags carregadas:', tagDefinitions.value.length)
+
+    console.log('📥 [onMounted] Buscando tarefas...')
+    await handlerFetchTasks()
+    console.log('✅ [onMounted] Tarefas carregadas:')
+    handlerTasks.value.forEach((t, idx) => {
+      console.log(`   [${idx}] "${t.title}" (id: ${t.id}, status: "${t.status}", position: ${t.position})`)
+    })
+    
+    console.log('\n🔍 [onMounted] ANÁLISE DE COMPATIBILIDADE:')
+    const validStatuses = customColumns.value.map(c => c.status)
+    console.log(`   Status válidos (das colunas): ${validStatuses.join(', ')}`)
+    
+    handlerTasks.value.forEach(t => {
+      const isValid = validStatuses.includes(t.status)
+      console.log(`   Tarefa "${t.title}" - status: "${t.status}" - ${isValid ? '✅ VÁLIDO' : '❌ INVÁLIDO (ÓRFÃ)'}`)
+    })
+
     const supabase = useSupabaseClient()
     const channel = supabase
       .channel('tasks-changes')
@@ -646,7 +806,9 @@ onMounted(async () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tasks' },
         () => {
-          handlerFetchTasks()
+          console.log('🔄 [Realtime] Mudança detectada em tarefas')
+          // Desabilitar refetch automático para evitar reload
+          // handlerFetchTasks()
         }
       )
       .subscribe()
@@ -655,22 +817,21 @@ onMounted(async () => {
       supabase.removeChannel(channel)
     }
 
-    // Keyboard shortcuts
     keydownListener = handleKeyDown
     window.addEventListener('keydown', keydownListener)
+    
+    console.log('✅ [onMounted] Página de tarefas pronta!')
   } catch (error) {
-    console.error('Erro ao montar página de tarefas:', error)
+    console.error('❌ [onMounted] Erro ao montar página de tarefas:', error)
   }
 })
 
 onUnmounted(() => {
-  // Limpar subscription
   if (unsubscribe) {
     unsubscribe()
     unsubscribe = null
   }
   
-  // Limpar event listeners
   if (keydownListener) {
     window.removeEventListener('keydown', keydownListener)
     keydownListener = null
@@ -681,13 +842,21 @@ onUnmounted(() => {
     resizeListener = null
   }
   
-  // Limpar scroll interval se estiver ativo
+  if (errorListener) {
+    window.removeEventListener('error', errorListener, true)
+    errorListener = null
+  }
+  
+  if (unhandledRejectionListener) {
+    window.removeEventListener('unhandledrejection', unhandledRejectionListener, true)
+    unhandledRejectionListener = null
+  }
+  
   if (scrollInterval) {
     clearInterval(scrollInterval)
     scrollInterval = null
   }
   
-  // Limpar drop timeout se estiver ativo
   if (dropTimeoutId.value) {
     clearTimeout(dropTimeoutId.value)
     dropTimeoutId.value = null
@@ -696,7 +865,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Scrollbar customizado - Premium e fino */
 div::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -716,7 +884,6 @@ div::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.4);
 }
 
-/* Animações de entrada */
 @keyframes slideInUp {
   from {
     opacity: 0;
@@ -728,7 +895,6 @@ div::-webkit-scrollbar-thumb:hover {
   }
 }
 
-/* Aplicar animação aos cards */
 :deep(.space-y-3 > div) {
   animation: slideInUp 0.3s ease-out;
 }

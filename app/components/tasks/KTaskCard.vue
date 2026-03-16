@@ -222,6 +222,16 @@ const props = defineProps<{
   isSyncing?: boolean
 }>()
 
+const emit = defineEmits<{
+  dragstart: [task: any]
+  dragend: []
+  select: [taskId: string]
+  edit: [task: any]
+  delete: [task: any]
+  duplicate: [task: any]
+  'transition-complete': []
+}>()
+
 // Debug
 console.log('🔍 KTaskCard props:', { task: props.task.title, isOrphan: props.isOrphan })
 
@@ -304,6 +314,15 @@ const handleDragStart = (e: DragEvent) => {
   dragY.value = e.clientY - 20
   
   console.log('📍 Initial position:', { dragX: dragX.value, dragY: dragY.value })
+  
+  // Set drag data - IMPORTANTE para o drop funcionar
+  try {
+    e.dataTransfer!.effectAllowed = 'move'
+    e.dataTransfer!.setData('application/json', JSON.stringify(props.task))
+    console.log('✅ Drag data setado:', props.task.id)
+  } catch (err) {
+    console.error('❌ Erro ao setar drag data:', err)
+  }
   
   // Remove default drag image
   const emptyImage = new Image()

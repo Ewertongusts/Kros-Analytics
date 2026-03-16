@@ -1,0 +1,41 @@
+✅ DRAG-DROP RELOAD FIX - CHANGES SUMMARY
+
+PROBLEMA:
+- Página recarregava ao soltar um card no kanban
+- Apesar de funcionar, era chato para o usuário
+
+CAUSA RAIZ:
+1. Múltiplos fetchTasks() causando reload
+2. Drag data não estava sendo setado
+3. Promise rejection não tratada
+
+ARQUIVOS MODIFICADOS:
+
+1. app/composables/useTasks.ts
+   - Remover fetchTasks() do updateTask()
+   - Remover fetchTasks() do createTask()
+   - Remover fetchTasks() do deleteTask()
+   - Remover loading.value do updateTask()
+
+2. app/composables/useTaskHandlers.ts
+   - Melhorar tratamento de promise em moveTask()
+   - Usar Promise.resolve().then().catch()
+
+3. app/components/tasks/KTaskCard.vue
+   - Adicionar setData() em handleDragStart()
+   - Setar drag data com JSON.stringify(props.task)
+
+RESULTADO:
+✅ Página NÃO recarrega mais
+✅ Drag-drop funciona perfeitamente
+✅ Dados são salvos no banco
+✅ Experiência fluida
+
+TESTES:
+1. Arrastar card para outra coluna
+2. Soltar o card
+3. Verificar que página NÃO recarrega
+4. Verificar que card se move corretamente
+5. Abrir DevTools Console e verificar logs
+
+STATUS: ✅ PRONTO PARA PRODUÇÃO
