@@ -79,28 +79,13 @@ export const useAnalytics = () => {
             console.log('🔍 [fetchStats] Filtros: companies.is_active = true')
             
             const { data: paymentsData, error: paymentsError } = await (supabase.from('payments') as any)
-                .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_enabled, cron_message, companies!inner(id, name, whatsapp, is_active, tags, billing_cycle)')
+                .select('id, company_id, amount, status, due_date, paid_at, plan_name, notes, auto_billing_enabled, cron_enabled, cron_message, last_alert_at, companies!inner(id, name, whatsapp, is_active, tags, billing_cycle)')
                 .eq('companies.is_active', true)
                 .order('due_date', { ascending: true })
 
             if (paymentsData) {
                 
-                // 2.1 Buscar últimos logs para identificar o último alerta
-                const { data: logsData } = await supabase
-                    .from('message_logs')
-                    .select('payment_id, created_at')
-                    .order('created_at', { ascending: false })
-
-                const lastAlertsMap = new Map()
-                if (logsData) {
-                    (logsData as any[]).forEach(log => {
-                        if (!lastAlertsMap.has(log.payment_id)) {
-                            lastAlertsMap.set(log.payment_id, log.created_at)
-                        }
-                    })
-                }
-
-                // 2.2 Buscar payment_history para verificar pagamentos do ciclo atual
+                // 2.1 Buscar payment_history para verificar pagamentos do ciclo atual
                 const { data: paymentHistoryData } = await supabase
                     .from('payment_history')
                     .select('company_id, action_type, created_at')
@@ -209,7 +194,7 @@ export const useAnalytics = () => {
                     return {
                         ...p,
                         status: enrichedStatus,
-                        last_alert_at: lastAlertsMap.get(p.id) || null,
+                        last_alert_at: p.last_alert_at || null,
                         company_ltv: companyInfo?.ltv || 0,
                         company_created_at: companyInfo?.created_at || p.due_date,
                         company_rep: companyInfo?.representative_name || '',

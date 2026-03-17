@@ -249,33 +249,51 @@ export const useSubscriptionsManager = () => {
         updated_at: new Date().toISOString()
       }
       
-      const { data, error: err } = await supabase
+      const { error: err } = await supabase
         .from('subscriptions')
         .update(updateData)
         .eq('id', id)
-        .select('*')
-        .single()
       
       if (err) throw err
       
-      // Buscar os dados completos com relações após atualizar
-      const { data: fullData } = await supabase
+      // Buscar os dados básicos após atualizar
+      const { data: fullDataArray, error: fetchErr } = await supabase
         .from('subscriptions')
-        .select(`
-          *,
-          customer:companies!customer_id(id, name, email, representative_name),
-          plan:plans!plan_id(id, name, price, billing_cycle)
-        `)
+        .select('*')
         .eq('id', id)
-        .single()
+      
+      if (fetchErr) throw fetchErr
+      
+      const fullData = fullDataArray?.[0]
+      if (!fullData) throw new Error('Assinatura não encontrada após atualização')
+      
+      // Buscar dados da empresa e plano separadamente
+      let customerData = null
+      let planData = null
+      
+      if (fullData.customer_id) {
+        const { data: companyArray } = await supabase
+          .from('companies')
+          .select('id, name, email, representative_name')
+          .eq('id', fullData.customer_id)
+        customerData = companyArray?.[0]
+      }
+      
+      if (fullData.plan_id) {
+        const { data: planArray } = await supabase
+          .from('plans')
+          .select('id, name, price, billing_cycle')
+          .eq('id', fullData.plan_id)
+        planData = planArray?.[0]
+      }
       
       const updatedSub = {
         ...fullData,
-        customer_name: fullData?.customer?.representative_name || fullData?.customer?.name,
-        customer_actual_name: fullData?.customer?.name,
-        customer_email: fullData?.customer?.email,
-        plan_name: fullData?.plan?.name,
-        plan_billing_cycle: fullData?.plan?.billing_cycle
+        customer_name: customerData?.representative_name || customerData?.name,
+        customer_actual_name: customerData?.name,
+        customer_email: customerData?.email,
+        plan_name: planData?.name,
+        plan_billing_cycle: planData?.billing_cycle
       }
       
       const index = subscriptions.value.findIndex(s => s.id === id)

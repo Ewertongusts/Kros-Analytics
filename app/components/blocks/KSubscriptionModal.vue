@@ -243,16 +243,38 @@ const handleSave = async () => {
   let result
   
   if (props.editingSubscription) {
-    // Editar assinatura existente
-    result = await updateSubscription(props.editingSubscription.id, {
-      customer_id: form.customer.id,
-      plan_id: form.plan.id,
-      status: form.status as any,
-      start_date: form.start_date,
-      due_day: form.due_day,
-      amount: form.plan.price,
-      notes: form.notes || undefined
-    })
+    // Verificar se é um payment ou uma subscription
+    // Payments têm company_id, subscriptions têm customer_id
+    const isPayment = props.editingSubscription.company_id && (props.editingSubscription.plan_id || props.editingSubscription.amount)
+    
+    if (isPayment) {
+      // Se for um payment, atualizar as notas e o amount
+      const supabase = useSupabaseClient()
+      const { error: err } = await supabase
+        .from('payments')
+        .update({
+          amount: form.plan.price,
+          notes: form.notes || null
+        })
+        .eq('id', props.editingSubscription.id)
+      
+      if (err) {
+        result = { success: false, error: err.message }
+      } else {
+        result = { success: true, data: { ...props.editingSubscription, amount: form.plan.price, notes: form.notes } }
+      }
+    } else {
+      // Se for uma subscription, atualizar a tabela subscriptions
+      result = await updateSubscription(props.editingSubscription.id, {
+        customer_id: form.customer.id,
+        plan_id: form.plan.id,
+        status: form.status as any,
+        start_date: form.start_date,
+        due_day: form.due_day,
+        amount: form.plan.price,
+        notes: form.notes || undefined
+      })
+    }
   } else {
     // Criar nova assinatura
     result = await createSubscription({
@@ -333,6 +355,30 @@ watch(() => props.isOpen, (val) => {
     form.notes = props.editingSubscription.notes || ''
   }
 })
+
+watch(() => props.editingSubscription, (val) => {
+  if (val && props.isOpen) {
+    // Atualizar formulário quando editingSubscription muda
+    form.customer = {
+      id: val.customer_id,
+      name: val.customer_name || val.customer_actual_name,
+      representative_name: val.customer_name,
+      whatsapp: val.customer_whatsapp,
+      email: val.customer_email
+    }
+    form.plan = {
+      id: val.plan_id,
+      name: val.plan_name,
+      price: val.amount,
+      billing_cycle: val.plan_billing_cycle,
+      type: 'Plano Recorrente'
+    }
+    form.start_date = val.start_date
+    form.due_day = val.due_day
+    form.status = val.status === 'Pendente' ? 'active' : val.status
+    form.notes = val.notes || ''
+  }
+}, { deep: true })
 </script>
 
 <style scoped>

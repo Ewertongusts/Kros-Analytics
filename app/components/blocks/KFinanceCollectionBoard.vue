@@ -397,6 +397,74 @@ const batchAction = async (type: string) => {
     console.log('Emitindo evento batch-delete com', selectedPayments.length, 'assinaturas')
     emit('batch-delete', selectedPayments)
     clearSelection()
+  } else if (type === 'delete') {
+    console.log('🗑️ [batchAction] Iniciando exclusão em massa de', selectedPayments.length, 'pagamentos')
+    const confirmed = await confirm(
+      `Deseja excluir ${selectedPayments.length} assinatura(s)? Esta ação não pode ser desfeita.`,
+      'Excluir Assinaturas'
+    )
+    if (!confirmed) {
+      console.log('🗑️ [batchAction] Exclusão cancelada pelo usuário')
+      return
+    }
+    
+    try {
+      const supabase = useSupabaseClient()
+      let successCount = 0
+      let failureCount = 0
+      
+      for (const payment of selectedPayments) {
+        try {
+          console.log('🗑️ [batchAction] Deletando pagamentos para company_id:', payment.company_id)
+          
+          // 1. Deletar pagamentos relacionados PRIMEIRO
+          const { error: paymentsError } = await supabase
+            .from('payments')
+            .delete()
+            .eq('company_id', payment.company_id)
+          
+          if (paymentsError) {
+            console.error('❌ [batchAction] Erro ao deletar pagamentos:', paymentsError)
+            failureCount++
+            continue
+          }
+          
+          // 2. Excluir assinatura
+          const { error: subError } = await supabase
+            .from('subscriptions')
+            .delete()
+            .eq('id', payment.id)
+          
+          if (subError) {
+            console.error('❌ [batchAction] Erro ao excluir assinatura:', subError)
+            failureCount++
+            continue
+          }
+          
+          console.log('✅ [batchAction] Assinatura excluída:', payment.id)
+          successCount++
+        } catch (err) {
+          console.error('❌ [batchAction] Erro ao processar:', err)
+          failureCount++
+        }
+      }
+      
+      clearSelection()
+      
+      const { success, error: showError } = useToast()
+      if (failureCount > 0) {
+        showError('Erro parcial', `${successCount} apagadas, ${failureCount} erros`)
+      } else {
+        success('Assinaturas apagadas', `${successCount} assinatura(s) foram apagadas permanentemente`)
+      }
+      
+      // Emitir evento para o componente pai recarregar dados
+      emit('delete-success', selectedPayments.map(p => p.id))
+    } catch (err) {
+      console.error('❌ [batchAction] Erro geral:', err)
+      const { error: showError } = useToast()
+      showError('Erro', 'Falha ao apagar assinaturas')
+    }
   }
 }
 

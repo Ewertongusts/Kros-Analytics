@@ -190,7 +190,9 @@ const {
 const handleSubscriptionCreated = async () => {
   subscriptionModal.isOpen = false
   subscriptionModal.editingSubscription = null
-  await Promise.all([fetchStats(), fetchSubscriptions()])
+  // Forçar recalculação dos dados
+  refreshKey.value++
+  await Promise.all([fetchStats(true, false), fetchSubscriptions()])
   success('Assinatura salva', 'Assinatura salva com sucesso')
 }
 
@@ -340,9 +342,13 @@ watch(() => stats.value.paymentsList?.map(p => `${p.id}-${p.status}`).join(','),
   }
 }, { deep: true })
 
-const handleDeleteSuccess = (id: string) => {
+const handleDeleteSuccess = async (ids: string | string[]) => {
   // Remover do array local usando o composable
-  subscriptions.value = subscriptions.value.filter(s => s.id !== id)
+  const idsArray = Array.isArray(ids) ? ids : [ids]
+  subscriptions.value = subscriptions.value.filter(s => !idsArray.includes(s.id))
+  // Recarregar dados
+  await Promise.all([fetchStats(), fetchSubscriptions()])
+  refreshKey.value++
 }
 
 
@@ -355,12 +361,8 @@ const handleEditSubscription = (subscription: any) => {
 
 // Adaptar dados de subscriptions para o formato esperado pelo componente
 const adaptedSubscriptions = computed(() => {
-  // Usar paymentHistory (que vem de useAnalytics e tem dados corretos de CRON)
-  // em vez de subscriptions (que vem de useSubscriptionsManager)
-  const adapted = paymentHistory.value.map(payment => {
-    // Encontrar a assinatura correspondente para dados adicionais
-    const subscription = subscriptions.value.find(s => s.customer_id === payment.company_id)
-    
+  // Usar subscriptions diretamente
+  const adapted = subscriptions.value.map(subscription => {
     // Calcular próximo vencimento baseado no due_day
     const today = new Date()
     const currentDay = today.getDate()
@@ -377,41 +379,36 @@ const adaptedSubscriptions = computed(() => {
       nextDueDate = new Date(currentYear, currentMonth + 1, dueDay)
     }
     
+    // Encontrar pagamentos relacionados no paymentHistory
+    const relatedPayments = paymentHistory.value.filter(p => p.company_id === subscription.customer_id)
+    
     // Calcular status de pagamento baseado nas faturas
-    const paymentStatus = calculatePaymentStatus(subscription || payment, paymentHistory.value)
+    const paymentStatus = calculatePaymentStatus(subscription, relatedPayments.length > 0 ? relatedPayments : paymentHistory.value)
     
     return {
-      ...payment,
-      // Dados da assinatura
-      customer_id: payment.company_id,
-      customer_name: subscription?.customer_name || payment.company_name || 'Cliente não vinculado',
-      customer_actual_name: subscription?.customer_actual_name || payment.company_name || 'Empresa não vinculada',
-      customer_whatsapp: subscription?.customer_whatsapp || payment.company_whatsapp || '',
-      tags: subscription?.tags || [],
-      plan_name: payment.plan_name || 'Plano não vinculado',
-      plan_billing_cycle: subscription?.plan_billing_cycle || null,
+      ...subscription,
       // Dados adaptados
-      company_name: subscription?.customer_name || payment.company_name || 'Cliente não vinculado',
-      company_actual_name: subscription?.customer_actual_name || payment.company_name || 'Empresa não vinculada',
-      company_id: payment.company_id,
-      company_whatsapp: subscription?.customer_whatsapp || payment.company_whatsapp || '',
-      due_date: payment.due_date || nextDueDate.toISOString().split('T')[0],
+      company_name: subscription?.customer_name || subscription?.customer_actual_name || 'Cliente não vinculado',
+      company_actual_name: subscription?.customer_actual_name || subscription?.customer_name || 'Empresa não vinculada',
+      company_id: subscription.customer_id,
+      company_whatsapp: subscription?.customer_whatsapp || '',
+      due_date: subscription?.due_date || nextDueDate.toISOString().split('T')[0],
       due_day: dueDay,
-      start_date: subscription?.start_date || payment.created_at,
+      start_date: subscription?.start_date,
       subscription_status: subscription?.status || 'active',
       payment_status: paymentStatus,
       payment_status_label: getStatusLabel(paymentStatus),
       payment_status_class: getStatusClass(paymentStatus),
       payment_status_icon: getStatusIcon(paymentStatus),
       status: subscription?.status || 'active',
-      last_alert_at: payment.last_alert_at || null,
-      // Campos de CRON (vêm direto de payment que tem os dados corretos!)
-      cron_enabled: payment.cron_enabled || false,
-      cron_period: payment.cron_period || null,
-      cron_scheduled_time: payment.cron_scheduled_time || null,
-      cron_next_execution: payment.cron_next_execution || null,
-      cron_message: payment.cron_message || null,
-      _key: `${payment.id}-${paymentStatus}-${payment.cron_enabled}-${payment.updated_at || Date.now()}`
+      last_alert_at: subscription?.last_alert_at || null,
+      // Campos de CRON
+      cron_enabled: subscription?.cron_enabled || false,
+      cron_period: subscription?.cron_period || null,
+      cron_scheduled_time: subscription?.cron_scheduled_time || null,
+      cron_next_execution: subscription?.cron_next_execution || null,
+      cron_message: subscription?.cron_message || null,
+      _key: `${subscription.id}-${paymentStatus}-${subscription.cron_enabled}-${subscription.updated_at || Date.now()}`
     }
   })
   
