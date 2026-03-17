@@ -51,9 +51,8 @@ export const useSubscriptionsManager = () => {
         .from('subscriptions')
         .select(`
           *,
-          customer:companies!customer_id(id, name, email, tags, representative_name, whatsapp),
-          plan:plans!plan_id(id, name, price, billing_cycle),
-          payments(id, cron_enabled, cron_period, cron_scheduled_time, cron_next_execution, cron_message)
+          customer:companies!customer_id(id, name, email, tags, representative_name, whatsapp, payments(id, cron_enabled, cron_period, cron_scheduled_time, cron_next_execution, cron_message)),
+          plan:plans!plan_id(id, name, price, billing_cycle)
         `)
       
       // Remover filtro por user_id pois a tabela subscriptions não tem essa coluna
@@ -79,7 +78,7 @@ export const useSubscriptionsManager = () => {
       // Atualizar com novos dados
       subscriptions.value = (data || []).map((sub: any) => {
         // Pegar o primeiro pagamento (mais recente) para obter dados de CRON
-        const latestPayment = sub.payments?.[0]
+        const latestPayment = sub.customer?.payments?.[0]
         
         return {
           ...sub,
