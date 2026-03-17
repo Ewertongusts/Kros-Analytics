@@ -44,7 +44,12 @@
        <span v-else class="font-semibold text-white/40" :class="isCompact ? 'text-[10px]' : 'text-xs'">-</span>
     </td>
     <td :class="['font-medium', isCompact ? 'px-3 py-3' : 'px-4 py-5']">
-       <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDate(payment.due_date) }}</span>
+       <span :class="['font-semibold tabular-nums text-white/60', isCompact ? 'text-[10px]' : 'text-xs']">{{ formatDateWithYear(payment.due_date) }}</span>
+    </td>
+    <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
+       <span :class="['font-semibold text-white/70 uppercase', isCompact ? 'text-[9px]' : 'text-[10px]']">
+         {{ formatBillingCycle(payment.plan_billing_cycle) }}
+       </span>
     </td>
     <td :class="isCompact ? 'px-3 py-3' : 'px-4 py-5'">
        <span :class="['font-black tabular-nums text-white/90 tracking-tight', isCompact ? 'text-[11px]' : 'text-xs']">{{ formatCurrency(payment.amount) }}</span>
@@ -232,6 +237,32 @@ const calculateLTV = (payment: any): number => {
   
   // Caso contrário, assumir 12 meses (1 ano) como padrão
   return payment.amount * 12
+}
+
+// Formatar data com ano (DD/MM/YYYY)
+const formatDateWithYear = (dateString: string): string => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+// Formatar ciclo de cobrança
+const formatBillingCycle = (cycle: string | null): string => {
+  if (!cycle) return '-'
+  const cycleMap: Record<string, string> = {
+    'mensal': 'Mensal',
+    'trimestral': 'Trimestral',
+    'semestral': 'Semestral',
+    'anual': 'Anual',
+    'monthly': 'Mensal',
+    'quarterly': 'Trimestral',
+    'semi-annual': 'Semestral',
+    'annual': 'Anual'
+  }
+  return cycleMap[cycle.toLowerCase()] || cycle
 }
 </script>
 
