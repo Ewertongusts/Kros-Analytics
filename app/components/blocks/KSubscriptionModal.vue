@@ -285,8 +285,7 @@ watch(() => props.isOpen, (val) => {
     form.plan = {
       id: props.editingSubscription.plan_id,
       name: props.editingSubscription.plan_name,
-      price: props.editingSubscription.amount,
-      billing_cycle: props.editingSubscription.plan_billing_cycle
+      price: props.editingSubscription.amount
     }
     form.start_date = props.editingSubscription.start_date
     form.due_day = props.editingSubscription.due_day
