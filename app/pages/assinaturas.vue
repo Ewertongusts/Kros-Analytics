@@ -389,6 +389,7 @@ const adaptedSubscriptions = computed(() => {
       customer_whatsapp: subscription?.customer_whatsapp || payment.company_whatsapp || '',
       tags: subscription?.tags || [],
       plan_name: payment.plan_name || 'Plano não vinculado',
+      plan_billing_cycle: subscription?.plan_billing_cycle || null,
       // Dados adaptados
       company_name: subscription?.customer_name || payment.company_name || 'Cliente não vinculado',
       company_actual_name: subscription?.customer_actual_name || payment.company_name || 'Empresa não vinculada',
