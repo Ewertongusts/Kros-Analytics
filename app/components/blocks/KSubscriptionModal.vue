@@ -277,12 +277,16 @@ watch(() => props.isOpen, (val) => {
     // Preencher formulário com dados da assinatura sendo editada
     form.customer = {
       id: props.editingSubscription.customer_id,
-      name: props.editingSubscription.customer_name
+      name: props.editingSubscription.customer_name || props.editingSubscription.customer_actual_name,
+      representative_name: props.editingSubscription.customer_name,
+      whatsapp: props.editingSubscription.customer_whatsapp,
+      email: props.editingSubscription.customer_email
     }
     form.plan = {
       id: props.editingSubscription.plan_id,
       name: props.editingSubscription.plan_name,
-      price: props.editingSubscription.amount
+      price: props.editingSubscription.amount,
+      billing_cycle: props.editingSubscription.plan_billing_cycle
     }
     form.start_date = props.editingSubscription.start_date
     form.due_day = props.editingSubscription.due_day
