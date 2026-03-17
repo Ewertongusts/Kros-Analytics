@@ -253,22 +253,29 @@ export const useSubscriptionsManager = () => {
         .from('subscriptions')
         .update(updateData)
         .eq('id', id)
+        .select('*')
+        .single()
+      
+      if (err) throw err
+      
+      // Buscar os dados completos com relações após atualizar
+      const { data: fullData } = await supabase
+        .from('subscriptions')
         .select(`
           *,
           customer:companies!customer_id(id, name, email, representative_name),
           plan:plans!plan_id(id, name, price, billing_cycle)
         `)
+        .eq('id', id)
         .single()
       
-      if (err) throw err
-      
       const updatedSub = {
-        ...data,
-        customer_name: data.customer?.representative_name || data.customer?.name,
-        customer_actual_name: data.customer?.name,
-        customer_email: data.customer?.email,
-        plan_name: data.plan?.name,
-        plan_billing_cycle: data.plan?.billing_cycle
+        ...fullData,
+        customer_name: fullData?.customer?.representative_name || fullData?.customer?.name,
+        customer_actual_name: fullData?.customer?.name,
+        customer_email: fullData?.customer?.email,
+        plan_name: fullData?.plan?.name,
+        plan_billing_cycle: fullData?.plan?.billing_cycle
       }
       
       const index = subscriptions.value.findIndex(s => s.id === id)

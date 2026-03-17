@@ -22,9 +22,41 @@
       </div>
       
       <!-- Seleção de Plano -->
-      <SubscriptionsKSubscriptionPlanSelector
-        v-model="form.plan"
-      />
+      <div class="space-y-2">
+        <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 pl-1">
+          Plano *
+        </label>
+        
+        <!-- Modo Edição: Mostrar plano como desabilitado -->
+        <div v-if="editingSubscription && form.plan && !isEditingPlan" class="relative group">
+          <input 
+            :value="`${form.plan.name} - R$ ${formatCurrency(form.plan.price)}`"
+            disabled
+            type="text"
+            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-2.5 text-xs text-white/40 outline-none font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+          <!-- Botão para editar plano -->
+          <button
+            type="button"
+            @click="isEditingPlan = true"
+            class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-white p-1"
+            title="Clique para trocar o plano"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modo Criação ou Editando Plano: Seletor normal -->
+        <SubscriptionsKSubscriptionPlanSelector
+          v-else
+          v-model="form.plan"
+          :is-editing="false"
+          :show-label="!isEditingPlan"
+        />
+      </div>
       
       <!-- Informações da Assinatura -->
       <div class="space-y-3">
@@ -113,6 +145,7 @@ const loading = ref(false)
 const showCustomerModal = ref(false)
 const customerLoading = ref(false)
 const customerPrefilledName = ref('')
+const isEditingPlan = ref(false)
 
 const getDefaultDate = () => new Date().toISOString().split('T')[0]
 
@@ -120,6 +153,10 @@ const getDefaultDueDay = () => {
   const today = new Date()
   const dueDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 dias a partir de hoje
   return dueDate.getDate()
+}
+
+const formatCurrency = (value: number) => {
+  return value.toFixed(2).replace('.', ',')
 }
 
 const form = reactive({
@@ -249,6 +286,7 @@ const handleSave = async () => {
 
 const close = () => {
   resetForm()
+  isEditingPlan.value = false
   emit('close')
 }
 
@@ -285,7 +323,9 @@ watch(() => props.isOpen, (val) => {
     form.plan = {
       id: props.editingSubscription.plan_id,
       name: props.editingSubscription.plan_name,
-      price: props.editingSubscription.amount
+      price: props.editingSubscription.amount,
+      billing_cycle: props.editingSubscription.plan_billing_cycle,
+      type: 'Plano Recorrente'
     }
     form.start_date = props.editingSubscription.start_date
     form.due_day = props.editingSubscription.due_day
